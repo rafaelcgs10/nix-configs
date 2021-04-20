@@ -1,0 +1,20 @@
+output Virtual2
+off
+output Virtual3
+off
+output Virtual4
+off
+output Virtual5
+off
+output Virtual6
+off
+output Virtual7
+off
+output Virtual8
+off
+output Virtual1
+crtc 0
+mode 1280x800
+pos 0x0
+primary
+rate 59.81
