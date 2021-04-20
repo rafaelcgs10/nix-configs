@@ -60,8 +60,8 @@
 ;;
 ;; LSP tweaks
 (setq gc-cons-threshold 400000000)
-(setq read-process-output-max (* 2048 4096))
-(setq lsp-idle-delay 0.200)
+(setq read-process-output-max (* 2048 2048))
+(setq lsp-idle-delay 0.800)
 ;; (setq lsp-completion-provider :comapany-capf)
 ;; (setq lsp-enable-completion-at-point t)
 (setq prettify-symbols-mode t)
@@ -72,7 +72,7 @@
 ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
 (setq lsp-solargraph-multi-root t)
 (setq company-minimum-prefix-length 1
-      company-idle-delay 0.1)
+      company-idle-delay 0.4)
 ;; (setq mode-require-final-newline nil)
 
 (global-prettify-symbols-mode -1)
@@ -96,25 +96,25 @@
     :weight bold :height 2.5 :box (:line-width 10 :color "red")))
 
 ;; Hooks
-(add-hook 'prog-mode-hook #'lsp)
-(add-hook 'lsp-mode-hook 'lsp-ui-mode)
+;; (add-hook 'prog-mode-hook #'lsp)
+;; (add-hook 'lsp-mode-hook 'lsp-ui-mode)
 (add-hook 'ruby-mode-hook 'chruby-use-corresponding)
-(add-hook 'prog-mode-hook 'origami-mode)
+;; (add-hook 'prog-mode-hook 'origami-mode)
 (add-hook 'before-save-hook 'my-prog-nuke-trailing-whitespace)
 ;; (add-hook 'lsp-mode-hook 'dynamic-completion-mode)
 ;; (add-hook 'ruby-mode-hook 'highlight-indentation-current-column-mode)
 
 ;; Keys
-(with-eval-after-load 'evil
-  (define-key evil-motion-state-map (kbd "z a") 'origami-toggle-all-nodes))
-(with-eval-after-load 'evil
-  (define-key evil-motion-state-map (kbd "z c") 'origami-close-node))
-(with-eval-after-load 'evil
-  (define-key evil-motion-state-map (kbd "Z c") 'origami-close-node-recursively))
-(with-eval-after-load 'evil
-  (define-key evil-motion-state-map (kbd "z o") 'origami-open-node))
-(with-eval-after-load 'evil
-  (define-key evil-motion-state-map (kbd "Z o") 'origami-open-node-recursively))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-motion-state-map (kbd "z a") 'origami-toggle-all-nodes))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-motion-state-map (kbd "z c") 'origami-close-node))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-motion-state-map (kbd "Z c") 'origami-close-node-recursively))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-motion-state-map (kbd "z o") 'origami-open-node))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-motion-state-map (kbd "Z o") 'origami-open-node-recursively))
 (global-set-key "\M-d" 'lsp-ui-peek-find-definitions)
 (global-set-key "\M-r" 'lsp-ui-peek-find-references)
 (global-set-key "\M-m" 'rinari-find-model)
@@ -151,7 +151,7 @@
           treemacs-no-png-images                 nil
           treemacs-no-delete-other-windows       t
           treemacs-project-follow-cleanup        nil
-          treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+          ;; treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
           treemacs-position                      'left
           treemacs-recenter-distance             0.1
           treemacs-recenter-after-file-follow    nil
@@ -165,7 +165,7 @@
           treemacs-sorting                       'alphabetic-asc
           treemacs-space-between-root-nodes      t
           treemacs-tag-follow-cleanup            t
-          treemacs-tag-follow-delay              1.0
+          treemacs-tag-follow-delay              0.5
           treemacs-width                         35)
 
     (treemacs-follow-mode t)
@@ -188,11 +188,6 @@
 (use-package! treemacs-projectile
   :after treemacs projectile
   :ensure t)
-
-(use-package! treemacs-icons-dired
-  :after treemacs dired
-  :ensure t
-  :config (treemacs-icons-dired-mode))
 
 (use-package! treemacs-magit
   :after treemacs magit
