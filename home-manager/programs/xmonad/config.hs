@@ -386,7 +386,7 @@ myKeysP =
 main :: IO ()
 main = do
     -- Launching three instances of xmobar on their monitors.
-    xmproc0 <- spawnPipe "xmobar -x 0 /home/rafael/nix-configs/home-manager/programs/xomand/xmobarrc"
+    xmproc0 <- spawnPipe "xmobar -x 0 /home/rafael/nix-configs/home-manager/programs/xmonad/xmobarrc"
     -- the xmonad, ya know...what the WM is named after!
     xmonad $ fullscreenSupport $ withNavigation2DConfig myNavigation2DConfig $ ewmh def
         { manageHook = ( isFullscreen --> doFullFloat ) <+> myManageHook <+> manageDocks
