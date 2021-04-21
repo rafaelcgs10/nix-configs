@@ -4,11 +4,6 @@ let
   # nix-doom-emacs = import ./doom-emacs.nix;
   emacs-overlay = builtins.fetchTarball "https://github.com/nix-community/emacs-overlay/archive/15ed1f372a83ec748ac824bdc5b573039c18b82f.tar.gz";
   emacsPkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
-  pkgs2003 = import
-  (builtins.fetchTarball https://github.com/NixOS/nixpkgs-channels/archive/nixos-20.03.tar.gz)
-    # reuse the current configuration
-    { inherit config; };
-  inherit (pkgs) haskellPackages;
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -60,7 +55,7 @@ in {
     pkgs.autorandr
     pkgs.tree
     pkgs.zsh
-    pkgs.nix
+    # pkgs.nix
     pkgs.rnix-lsp
     pkgs.lazydocker
     pkgs.libgccjit
