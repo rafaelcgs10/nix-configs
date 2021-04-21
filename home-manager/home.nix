@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 let
-  # nix-doom-emacs = import ./doom-emacs.nix;
   emacs-overlay = builtins.fetchTarball "https://github.com/nix-community/emacs-overlay/archive/15ed1f372a83ec748ac824bdc5b573039c18b82f.tar.gz";
   emacsPkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
 in {
@@ -10,9 +9,7 @@ in {
   home.stateVersion = "21.03";
 
   imports = [
-    # ./programs/i3.nix
     ./programs/xmonad/default.nix
-    # ./doom-emacs-custom.nix
   ];
 
   home.username = "rafael";
@@ -55,7 +52,6 @@ in {
     pkgs.autorandr
     pkgs.tree
     pkgs.zsh
-    # pkgs.nix
     pkgs.rnix-lsp
     pkgs.lazydocker
     pkgs.libgccjit
