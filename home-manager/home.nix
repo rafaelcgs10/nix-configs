@@ -214,6 +214,16 @@ in {
     enable = true;
 
     settings = {
+      scrolling.history = 10000;
+      TERM = "xterm-256color";
+
+      window = {
+        padding = {
+          x = 5;
+          y = 5;
+        };
+      };
+
       draw_bold_text_with_bright_colors = true;
       font = {
         normal.family = "Mononoki Nerd Font";
