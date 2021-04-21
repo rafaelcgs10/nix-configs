@@ -94,7 +94,7 @@ myEditor :: String
 myEditor = "emacsclient -c -a emacs "  -- Sets emacs as editor for tree select
 
 myBorderWidth :: Dimension
-myBorderWidth = 2          -- Sets border width for windows
+myBorderWidth = 1          -- Sets border width for windows
 
 myNormColor :: String
 myNormColor   = "#282c34"  -- Border color of normal windows
@@ -411,11 +411,11 @@ main = do
                         , ppCurrent = xmobarColor "#98be65" ""                -- Current workspace in xmobar
                         , ppVisible = xmobarColor "#aaaaaa" ""                -- Visible but not current workspace
                         , ppHidden = xmobarColor "#447799" ""                 -- Hidden workspaces in xmobar
+                        , ppLayout = xmobarColor "#447799" ""                 -- Layout in xmobar
                         , ppHiddenNoWindows = xmobarColor "#222222" ""        -- Hidden workspaces (no windows)
                         , ppTitle = xmobarColor "#ffffff" "" . shorten 60     -- Title of active window in xmobar
-                        , ppSep =  "<fc=#ffffff> <fn=2>|</fn> </fc>"                     -- Separators in xmobar
+                        , ppSep =  "<fc=#ffffff> <fn=2>|</fn> </fc>"          -- Separators in xmobar
                         , ppUrgent = xmobarColor "#C45500" "" . wrap "!" "!"  -- Urgent workspace
-                        , ppExtras  = [windowCount]                           -- # of windows current workspace
                         , ppOrder  = \(ws:l:t:ex) -> [ws,l]++ex++[t]
                         }
         } `additionalKeysP` myKeysP
