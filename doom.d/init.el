@@ -19,7 +19,7 @@
        ;;japanese
 
        :completion
-       (company +auto +childframe)   ; the ultimate code completion backend
+       (company +auto)   ; the ultimate code completion backend
        ;; (helm +fuzzy)              ; the *other* search engine for love and life
        ;;ido             ; the other *other* search engine...
        (ivy +fuzzy +prescient +icons)               ; a search engine for love and life

@@ -59,7 +59,8 @@
 (setq projectile-project-search-path '("~/Documents"))
 ;;
 ;; LSP tweaks
-(setq gc-cons-threshold 400000000)
+(advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
+(setq gc-cons-threshold 500000000)
 (setq read-process-output-max (* 2048 2048))
 (setq lsp-idle-delay 0.800)
 ;; (setq lsp-completion-provider :comapany-capf)
@@ -70,7 +71,7 @@
 (setq scroll-conservatively 101)
 (setq lsp-solargraph-use-bundler nil)
 ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
-(setq lsp-solargraph-multi-root t)
+;; (setq lsp-solargraph-multi-root t)
 (setq company-minimum-prefix-length 1
       company-idle-delay 0.4)
 ;; (setq mode-require-final-newline nil)
@@ -98,7 +99,7 @@
 ;; Hooks
 ;; (add-hook 'prog-mode-hook #'lsp)
 ;; (add-hook 'lsp-mode-hook 'lsp-ui-mode)
-(add-hook 'ruby-mode-hook 'chruby-use-corresponding)
+;; (add-hook 'ruby-mode-hook 'chruby-use-corresponding)
 ;; (add-hook 'prog-mode-hook 'origami-mode)
 (add-hook 'before-save-hook 'my-prog-nuke-trailing-whitespace)
 ;; (add-hook 'lsp-mode-hook 'dynamic-completion-mode)
