@@ -26,7 +26,7 @@ in {
   home.sessionVariables = {
     PAGER = "less";
     EDITOR = "vim";
-    DOOMDIR = "$HOME/nix-configs/.doom.d";
+    DOOMDIR = "$HOME/nix-configs/doom.d";
     EMACSDIR = "$HOME/.emacs.d";
     DOOMLOCALDIR = "$HOME/.doom_local";
     DIRENV_ALLOW_NIX = 1;
@@ -38,6 +38,7 @@ in {
       EMACSDIR=/home/rafael/.emacs.d
       DOOMBIN="$EMACSDIR"/bin/doom
       DOOMLOCALDIR=/home/rafael/.doom_local
+      mkdir -p "$DOOMLOCALDIR"
       if [ ! -f "$DOOMBIN" ]; then
         echo "-------------> Installing DOOM EMACS"
         echo "$DOOMBIN"
@@ -60,6 +61,7 @@ in {
     pkgs.tree
     pkgs.zsh
     pkgs.nix
+    pkgs.rnix-lsp
     pkgs.lazydocker
     pkgs.libgccjit
     pkgs.xorg.xwininfo
@@ -152,10 +154,8 @@ in {
       VISUAL = EDITOR;
       GIT_EDITOR = EDITOR;
       DOOMLOCALDIR = "$HOME/.doom_local";
-      # DOOMDIR = "$HOME/.doom.d";
       DOOMDIR = "$HOME/nix-configs/doom.d";
       DIRENV_ALLOW_NIX = 1;
-      # DOOMDIR = "/home/rafael/Documents/nix-configs/doom.d";
     };
   };
 
