@@ -293,6 +293,13 @@ in {
     cycle = true;
   };
 
+  services.picom = {
+    enable = true;
+    blur = false;
+    shadow = true;
+    shadowOpacity = "0.65";
+  };
+
   gtk = {
     enable = true;
     theme.name = "Adwaita-dark";
