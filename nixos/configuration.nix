@@ -155,6 +155,7 @@
     proggyfonts
     mononoki
     font-awesome_4
+    font-awesome_5
     papirus-icon-theme
     iosevka
     emacs-all-the-icons-fonts

@@ -130,7 +130,6 @@ myColorizer = colorRangeFromClassName
                   (0xc0,0xa7,0x9a) -- inactive fg
                   (0x28,0x2c,0x34) -- active fg
 
-
 -- Open scratch pads
 myScratchPads :: [NamedScratchpad]
 myScratchPads = [ NS "terminal" spawnTerm findTerm manageScratch
@@ -263,7 +262,7 @@ xmobarEscape = concatMap doubleLts
 myWorkspaces = clickable . (map xmobarEscape)
                $ (["web", "emacs", "3", "4", "5", "6", "7", "8", "9", "10"])
   where
-        clickable l = [ "<action=xdotool key super+" ++ show (n) ++ "> " ++ ws ++ " </action>" |
+        clickable l = [ ws |
                       (i,ws) <- zip ([1..9])  l,
                       let n = i ]
 
@@ -385,8 +384,6 @@ myKeysP =
 
 main :: IO ()
 main = do
-    -- Launching three instances of xmobar on their monitors.
-    xmproc0 <- spawnPipe "xmobar -x 0 /home/rafael/nix-configs/home-manager/programs/xmonad/xmobarrc"
     -- the xmonad, ya know...what the WM is named after!
     xmonad $ fullscreenSupport $ withNavigation2DConfig myNavigation2DConfig $ ewmh def
         { manageHook = ( isFullscreen --> doFullFloat ) <+> myManageHook <+> manageDocks
@@ -406,16 +403,4 @@ main = do
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
-        , logHook = workspaceHistoryHook <+> dynamicLogWithPP xmobarPP
-                        { ppOutput = \x -> hPutStrLn xmproc0 x
-                        , ppCurrent = xmobarColor "#98be65" ""                -- Current workspace in xmobar
-                        , ppVisible = xmobarColor "#aaaaaa" ""                -- Visible but not current workspace
-                        , ppHidden = xmobarColor "#447799" ""                 -- Hidden workspaces in xmobar
-                        , ppLayout = xmobarColor "#447799" ""                 -- Layout in xmobar
-                        , ppHiddenNoWindows = xmobarColor "#222222" ""        -- Hidden workspaces (no windows)
-                        , ppTitle = xmobarColor "#ffffff" "" . shorten 60     -- Title of active window in xmobar
-                        , ppSep =  "<fc=#ffffff> <fn=2>|</fn> </fc>"          -- Separators in xmobar
-                        , ppUrgent = xmobarColor "#C45500" "" . wrap "!" "!"  -- Urgent workspace
-                        , ppOrder  = \(ws:l:t:ex) -> [ws,l]++ex++[t]
-                        }
         } `additionalKeysP` myKeysP
