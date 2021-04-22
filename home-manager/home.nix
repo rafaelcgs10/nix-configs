@@ -66,7 +66,7 @@ in {
     pkgs.xmobar
     pkgs.xdotool
     pkgs.lxrandr
-    pkgs.lxrandr
+    pkgs.lxappearance
     pkgs.texlive.combined.scheme-small
 
     pkgs.networkmanagerapplet
@@ -314,7 +314,19 @@ in {
 
   gtk = {
     enable = true;
-    theme.name = "Adwaita-dark";
+    theme.package = pkgs.qogir-theme;
+    # theme.name = "Adwaita-dark";
+    theme.name = "Qogir-dark";
+    iconTheme = {
+      name = "Zafiro-icons";
+      package = pkgs.zafiro-icons;
+    };
+  };
+
+  xsession.pointerCursor = {
+    package = pkgs.qogir-icon-theme;
+    name = "Qogir-dark";
+    size = 28;
   };
 
   # Autoload nix shells
