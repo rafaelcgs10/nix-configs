@@ -97,7 +97,7 @@ myBorderWidth :: Dimension
 myBorderWidth = 1          -- Sets border width for windows
 
 myNormColor :: String
-myNormColor   = "#282c34"  -- Border color of normal windows
+myNormColor   = "#222222"  -- Border color of normal windows
 
 myFocusColor :: String
 myFocusColor  = "#FFFFFF"  -- Border color of focused windows
@@ -118,8 +118,8 @@ myStartupHook = do
           setWMName "LG3D"
           spawnOnOnce "emacs" "emacs"
           spawnOnOnce "web" "vivaldi"
-          spawnOnce "slack"
           spawnOnce "flameshot"
+          spawnOnce "copyq"
           spawnOnce "autorandr -c"
 
 myColorizer :: Window -> Bool -> X (String, String)
@@ -234,6 +234,7 @@ myManageHook = composeAll
      -- I'm doing it this way because otherwise I would have to write out
      -- the full name of my workspaces.
      [ className =? "TelegramDesktop"     --> doFloat
+     , className =? "copyq"     --> doFloat
      , className =? "spotify"     --> doFloat
      , className =? "Vivaldi-stable"     --> doShift ( myWorkspaces !! 0 )
      , className =? "Emacs"     --> doShift ( myWorkspaces !! 1 )

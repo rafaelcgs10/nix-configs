@@ -80,7 +80,7 @@ in {
     pkgs.slack
     pkgs.flameshot
     pkgs.nitrogen
-    pkgs.lxqt.qlipper
+    pkgs.copyq
 
     emacsPkgs.emacsGcc
   ];
