@@ -1,8 +1,15 @@
 { config, pkgs, ... }:
 
 let
+  unstable = import <nixpkgs-unstable> { };
   emacs-overlay = builtins.fetchTarball "https://github.com/nix-community/emacs-overlay/archive/15ed1f372a83ec748ac824bdc5b573039c18b82f.tar.gz";
   emacsPkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
+  mypolybar = unstable.polybar.override {
+    alsaSupport = true;
+    githubSupport = true;
+    mpdSupport = true;
+    pulseSupport = true;
+  };
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -59,6 +66,7 @@ in {
     pkgs.xmobar
     pkgs.xdotool
     pkgs.lxrandr
+    pkgs.lxrandr
     pkgs.texlive.combined.scheme-small
 
     pkgs.networkmanagerapplet
@@ -69,6 +77,9 @@ in {
     pkgs.vivaldi
     pkgs.synergy
     pkgs.tdesktop
+    pkgs.slack
+    pkgs.flameshot
+    pkgs.nitrogen
     pkgs.lxqt.qlipper
 
     emacsPkgs.emacsGcc
@@ -294,6 +305,11 @@ in {
     blur = false;
     shadow = true;
     shadowOpacity = "0.65";
+    extraOptions = ''
+      mark-ovredir-focused = false;
+      use-ewmh-active-win = true;
+      round-borders = 1;
+    '';
   };
 
   gtk = {
@@ -303,6 +319,15 @@ in {
 
   # Autoload nix shells
   # services.lorri.enable = true;
+
+  services.polybar = {
+    enable = true;
+    package = mypolybar;
+    config = ./programs/polybar/config.ini;
+    script = ''
+      polybar mybar &
+    '';
+  };
 
   programs.direnv.enable = true;
   programs.direnv.enableNixDirenvIntegration = true;
