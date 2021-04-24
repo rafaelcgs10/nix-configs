@@ -94,13 +94,13 @@ myEditor :: String
 myEditor = "emacsclient -c -a emacs "  -- Sets emacs as editor for tree select
 
 myBorderWidth :: Dimension
-myBorderWidth = 1          -- Sets border width for windows
+myBorderWidth = 3          -- Sets border width for windows
 
 myNormColor :: String
 myNormColor   = "#222222"  -- Border color of normal windows
 
 myFocusColor :: String
-myFocusColor  = "#FFFFFF"  -- Border color of focused windows
+myFocusColor  = "#aaaaaa"  -- Border color of focused windows
 
 altMask :: KeyMask
 altMask = mod1Mask         -- Setting this for use in xprompts

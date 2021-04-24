@@ -1,6 +1,14 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
+  picom-fork = pkgs.picom.overrideAttrs (old: {
+    src = pkgs.fetchFromGitHub {
+      owner = "ibhagwan";
+      repo = "picom";
+      rev    = "6a3d1354bed9d4c33227944a2331b0e5713668d3";
+      sha256 = "0iff4bwpc00xbjad0m000midslgx12aihs33mdvfckr75r114ylh";
+    };
+  });
   unstable = import <nixpkgs-unstable> { };
   emacs-overlay = builtins.fetchTarball "https://github.com/nix-community/emacs-overlay/archive/15ed1f372a83ec748ac824bdc5b573039c18b82f.tar.gz";
   emacsPkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
@@ -304,13 +312,20 @@ in {
 
   services.picom = {
     enable = true;
+    # experimentalBackends = true;
+    backend = "glx";
+    package = picom-fork;
     blur = false;
     shadow = true;
     shadowOpacity = "0.65";
     extraOptions = ''
-      mark-ovredir-focused = false;
+      corner-radius = 10;
       use-ewmh-active-win = true;
-      round-borders = 1;
+      rounded-corners-exclude = [
+        #"window_type = 'normal'",
+        "class_g = 'Polybar'",
+        #"class_g = 'TelegramDesktop'",
+      ];
     '';
   };
 
