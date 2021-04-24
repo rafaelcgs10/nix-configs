@@ -343,6 +343,11 @@ in {
     '';
   };
 
+  services.udiskie = {
+    enable = true;
+    tray = "always";
+  };
+
   programs.direnv.enable = true;
   programs.direnv.enableNixDirenvIntegration = true;
 }
