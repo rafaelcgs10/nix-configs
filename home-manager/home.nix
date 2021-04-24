@@ -39,6 +39,7 @@ in {
       DOOMLOCALDIR=/home/rafael/.doom_local
       mkdir -p "$DOOMLOCALDIR"
       if [ ! -f "$DOOMBIN" ]; then
+        emacs
         echo "-------------> Installing DOOM EMACS"
         echo "$DOOMBIN"
         ls "$DOOMBIN"
@@ -82,7 +83,8 @@ in {
     pkgs.nitrogen
     pkgs.copyq
 
-    emacsPkgs.emacsGcc
+    # emacsPkgs.emacsGcc
+    pkgs.emacs
   ];
 
   programs.git = {
