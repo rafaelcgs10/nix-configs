@@ -111,6 +111,9 @@
     shell = pkgs.zsh;
   };
 
+  # Automount ecrypts
+  security.pam.enableEcryptfs = true;
+
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
