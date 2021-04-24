@@ -110,17 +110,17 @@ windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace
 
 myStartupHook :: X ()
 myStartupHook = do
-          spawnOnce "nitrogen --restore &"
-          spawnOnce "volumeicon &"
+          spawnOnce "bash /home/rafael/nix-configs/wallpapers/update.sh"
+          -- spawnOnce "volumeicon &"
           -- spawnOnce "trayer --edge bottom --align right --widthtype request --padding 6 --SetDockType true --SetPartialStrut true --expand true --monitor 0 --transparent true --alpha 0 --tint 0x0c0c0c  --height 16 &"
           -- spawnOnce "/usr/sbin/emacs --daemon &"
           -- spawnOnce "setxkbmap -layout us -variant altgr-intl -option caps:swapescape &"
-          setWMName "LG3D"
+          -- setWMName "LG3D"
           spawnOnOnce "emacs" "emacs"
           spawnOnOnce "web" "vivaldi"
           spawnOnce "flameshot"
           spawnOnce "copyq"
-          spawnOnce "autorandr -c"
+          spawn "autorandr -c"
 
 myColorizer :: Window -> Bool -> X (String, String)
 myColorizer = colorRangeFromClassName

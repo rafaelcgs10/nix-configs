@@ -65,6 +65,9 @@ in {
     pkgs.xmobar
     pkgs.xdotool
     pkgs.lxrandr
+    pkgs.pscircle
+    pkgs.gpicview
+    pkgs.feh
     pkgs.lxappearance
     pkgs.texlive.combined.scheme-small
 
@@ -78,7 +81,6 @@ in {
     pkgs.tdesktop
     pkgs.slack
     pkgs.flameshot
-    pkgs.nitrogen
     pkgs.copyq
 
     # emacsPkgs.emacsGcc
