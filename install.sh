@@ -1,12 +1,17 @@
 sudo mkdir -p /mnt/etc/nixos
 sudo nix-channel --add https://github.com/nix-community/home-manager/archive/release-20.09.tar.gz home-manager
 sudo nix-channel --update
-sudo ln -s /mnt/home/rafael/nix-configs/nixos/configuration.nix /mnt/etc/nixos/
-sudo ln -s /mnt/home/rafael/nix-configs/nixos/hardware-configuration.nix /mnt/etc/nixos/
-sudo ln -s /mnt/home/rafael/nix-configs/nixos/cachix.nix /mnt/etc/nixos/
-sudo nixos-rebuild switch
+sudo rm /etc/nixos/configuration.nix
+sudo rm /etc/nixos/hardware-configuration.nix
+sudo ln -s /home/rafael/nix-configs/nixos/configuration.nix /etc/nixos/
+sudo ln -s /home/rafael/nix-configs/nixos/hardware-configuration.nix /etc/nixos/
+sudo ln -s /home/rafael/nix-configs/nixos/cachix.nix /etc/nixos/
+sudo nixos-install
 
-sudo mkdir -p /mnt/home/rafael/.config/nixpkgs
-sudo ln -s /mnt/home/rafael/nix-configs/home-manager/home.nix /mnt/home/rafael/nix-configs/.config/nixpkgs
-sudo ln -s /mnt/home/rafael/nix-configs/home-manager/config.nix /mnt/home/rafael/nix-configs/.config/nixpkgs
-sudo ln -s /mnt/home/rafael/nix-configs/home-manager/programs /mnt/home/rafael/nix-configs/.config/nixpkgs
+mkdir -p /home/rafael/.config/nixpkgs
+sudo nix-channel --add https://channels.nixos.org/nixpkgs-unstable/ nixpkgs-unstable
+sudo nix-channel --update
+ln -s /home/rafael/nix-configs/home-manager/home.nix /home/rafael/.config/nixpkgs
+ln -s /home/rafael/nix-configs/home-manager/config.nix /home/rafael/.config/nixpkgs
+ln -s /home/rafael/nix-configs/home-manager/programs /home/rafael/.config/nixpkgs
+home-manager switch
