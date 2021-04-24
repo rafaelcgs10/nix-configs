@@ -40,6 +40,7 @@ in {
       mkdir -p "$DOOMLOCALDIR"
       if [ ! -f "$DOOMBIN" ]; then
         emacs
+        sleep 3
         echo "-------------> Installing DOOM EMACS"
         echo "$DOOMBIN"
         ls "$DOOMBIN"
