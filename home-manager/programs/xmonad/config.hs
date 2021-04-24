@@ -244,13 +244,13 @@ myManageHook = composeAll
 myLayoutHook = avoidStruts $ mouseResize $ windowArrange $ T.toggleLayouts floats $
                mkToggle (NBFULL ?? NOBORDERS ?? EOT) myDefaultLayout
              where
-               myDefaultLayout =     grid
-                                 ||| tall
+               myDefaultLayout =     smartBorders grid
+                                 ||| smartBorders tall
                                  ||| magnify
                                  ||| noBorders monocle
-                                 ||| floats
+                                 ||| smartBorders floats
                                  ||| noBorders tabs
-                                 ||| spirals
+                                 ||| smartBorders spirals
                                  ||| threeCol
                                  ||| threeRow
 
