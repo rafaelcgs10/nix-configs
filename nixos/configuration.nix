@@ -129,6 +129,7 @@
     firefox
     terminator
     zsh
+    home-manager
 
     utillinux
     hicolor-icon-theme
