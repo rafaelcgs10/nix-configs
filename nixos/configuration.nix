@@ -70,6 +70,7 @@
   services.xserver = {
     enable = true;
     layout = "br";
+    resolutions = [ { x = 1920; y = 1080; } { x = 1440; y = 900; } { x = 1336; y = 768; } { x = 1024; y = 768; }];
 
     desktopManager = {
       xfce.enable = true;
@@ -80,8 +81,6 @@
         lightdm.enable = true;
         defaultSession = "xfce";
     };
-
-    resolutions = [ { x = 1920; y = 1080; } { x = 1440; y = 900; } { x = 1336; y = 768; } { x = 1024; y = 768; }];
   };
 
   # Bluetooth service
