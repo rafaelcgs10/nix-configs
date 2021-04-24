@@ -111,11 +111,6 @@
     shell = pkgs.zsh;
   };
 
-  # home-manager.users.rafael = { pkgs, ... }: {
-  #   home.packages = [ pkgs.atool pkgs.httpie ];
-  #   programs.bash.enable = true;
-  # };
-
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -130,6 +125,8 @@
     zsh
     home-manager
 
+    ecryptfs
+    ecryptfs-helper
     utillinux
     hicolor-icon-theme
     ripgrep
