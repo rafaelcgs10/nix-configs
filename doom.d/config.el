@@ -35,6 +35,12 @@
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
 
+;; Scroll line by line with the whell
+(setq scroll-step 1
+      scroll-conservatively 10000)
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+(setq mouse-wheel-progressive-speed nil)
+
 
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
