@@ -39,11 +39,8 @@ in {
       DOOMLOCALDIR=/home/rafael/.doom_local
       mkdir -p "$DOOMLOCALDIR"
       if [ ! -f "$DOOMBIN" ]; then
-        emacs
-        sleep 3
         echo "-------------> Installing DOOM EMACS"
-        echo "$DOOMBIN"
-        ls "$DOOMBIN"
+        mv "$EMACSDIR" "$EMACSDIR".bk
         git clone --depth 1 https://github.com/hlissner/doom-emacs.git "$EMACSDIR"
         "$DOOMBIN" -y install
       else
