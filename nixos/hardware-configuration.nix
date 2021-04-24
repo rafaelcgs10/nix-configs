@@ -12,11 +12,13 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/d1dfffdb-95b4-4375-88ec-4f28c3c18fd2";
+    { device = "/dev/disk/by-label/nixos";
       fsType = "ext4";
     };
 
-  swapDevices = [ ];
+  swapDevices =
+    [ { device = "/dev/disk/by-label/swap"; }
+    ];
 
   virtualisation.virtualbox.guest.enable = true;
 }
