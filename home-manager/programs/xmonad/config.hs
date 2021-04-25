@@ -70,11 +70,12 @@ import Control.Arrow (first)
 import Control.Monad
 
    -- Utilities
-import XMonad.Util.EZConfig (additionalKeysP, additionalKeys)
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.Run (runProcessWithInput, safeSpawn, spawnPipe)
 import XMonad.Util.SpawnOnce
 import XMonad.Actions.Navigation2D
+import XMonad.Actions.FloatKeys (keysResizeWindow)
+import XMonad.Util.EZConfig (additionalKeysP)
 
 myFont :: String
 myFont = "xft:Roboto Mono:bold:size=9:antialias=true:hinting=true"
@@ -184,8 +185,6 @@ magnify  = renamed [Replace "magnify"]
            $ ResizableTall 1 (3/100) (1/2) []
 monocle  = renamed [Replace "monocle"]
            $ limitWindows 20 Full
-floats   = renamed [Replace "floats"]
-           $ limitWindows 20 simplestFloat
 grid     = renamed [Replace "grid"]
            $ limitWindows 12
            $ mySpacing 8
@@ -241,14 +240,13 @@ myManageHook = composeAll
      -- , className =? "vlc"     --> doShift ( myWorkspaces !! 7 )
      ] <+> namedScratchpadManageHook myScratchPads
 
-myLayoutHook = avoidStruts $ mouseResize $ windowArrange $ T.toggleLayouts floats $
+myLayoutHook = avoidStruts $ mouseResize $ windowArrange $
                mkToggle (NBFULL ?? NOBORDERS ?? EOT) myDefaultLayout
              where
                myDefaultLayout =     smartBorders grid
                                  ||| smartBorders tall
                                  ||| magnify
                                  ||| noBorders monocle
-                                 ||| smartBorders floats
                                  ||| noBorders tabs
                                  ||| smartBorders spirals
                                  ||| threeCol
@@ -287,10 +285,13 @@ myKeysP =
 
     -- Floating windows
         -- , ("M-f", sendMessage (T.Toggle "monocle"))       -- Toggles my 'monocle' layout
-        , ("M-<Space>", sendMessage (T.Toggle "floats"))       -- Toggles my 'floats' layout
-        , ("M-G", sendMessage (T.Toggle "grid"))       -- Toggles my 'floats' layout
+        , ("M-G", sendMessage (T.Toggle "grid"))       -- Toggles my 'grid' layout
         , ("M-<Delete>", withFocused $ windows . W.sink) -- Push floating window back to tile
         , ("M-S-<Delete>", sinkAll)                      -- Push ALL floating windows to tile
+        , ("C-l", withFocused (keysResizeWindow (-10,0) (1,1)))
+        , ("C-h", withFocused (keysResizeWindow (10,0) (1,1)))
+        , ("C-j", withFocused (keysResizeWindow (0,-10) (1,1)))
+        , ("C-k", withFocused (keysResizeWindow (0,10) (1,1)))
 
     -- Windows navigation
         , ("M-m", windows W.focusMaster)     -- Move focus to the master window
