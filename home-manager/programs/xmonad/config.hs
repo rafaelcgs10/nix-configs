@@ -288,10 +288,10 @@ myKeysP =
         , ("M-G", sendMessage (T.Toggle "grid"))       -- Toggles my 'grid' layout
         , ("M-<Delete>", withFocused $ windows . W.sink) -- Push floating window back to tile
         , ("M-S-<Delete>", sinkAll)                      -- Push ALL floating windows to tile
-        , ("C-l", withFocused (keysResizeWindow (-10,0) (1,1)))
-        , ("C-h", withFocused (keysResizeWindow (10,0) (1,1)))
-        , ("C-j", withFocused (keysResizeWindow (0,-10) (1,1)))
-        , ("C-k", withFocused (keysResizeWindow (0,10) (1,1)))
+        , ("M-S-C-l", withFocused (keysResizeWindow (-10,0) (1,1)))
+        , ("M-S-C-h", withFocused (keysResizeWindow (10,0) (1,1)))
+        , ("M-S-C-j", withFocused (keysResizeWindow (0,-10) (1,1)))
+        , ("M-S-C-k", withFocused (keysResizeWindow (0,10) (1,1)))
 
     -- Windows navigation
         , ("M-m", windows W.focusMaster)     -- Move focus to the master window
