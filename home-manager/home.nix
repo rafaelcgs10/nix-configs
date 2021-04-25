@@ -1,12 +1,12 @@
 { config, pkgs, lib, ... }:
 
 let
-  picom-fork = pkgs.picom.overrideAttrs (old: {
+  picom-jonaburg = pkgs.picom.overrideAttrs (old: {
     src = pkgs.fetchFromGitHub {
-      owner = "ibhagwan";
+      owner = "jonaburg";
       repo = "picom";
       rev    = "6a3d1354bed9d4c33227944a2331b0e5713668d3";
-      sha256 = "0iff4bwpc00xbjad0m000midslgx12aihs33mdvfckr75r114ylh";
+      sha256 = "14psl966zhxcwr82c6dsyfncb53nqzv7r49l89f3j7k4svqczmi4";
     };
   });
   unstable = import <nixpkgs-unstable> { };
@@ -315,7 +315,7 @@ in {
     enable = true;
     # experimentalBackends = true;
     backend = "glx";
-    package = picom-fork;
+    package = picom-jonaburg;
     blur = false;
     shadow = true;
     shadowOpacity = "0.65";
