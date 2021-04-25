@@ -8,7 +8,7 @@ do
     h2=$(expr 2 \* $h)
 
     l=$(expr 3 \* $w2 / 7)
-    r=$(expr 2 \* $l / 3)
+    r=$(expr 2 \* $l / 3 \- 50)
 
     angle=$(awk -v n=1 -v seed="$RANDOM" 'BEGIN { srand(seed); for (i=0; i<n; ++i) printf("%.4f\n", rand() + 1) }')
 
