@@ -76,6 +76,7 @@ in {
     pkgs.pscircle
     pkgs.gpicview
     pkgs.feh
+    pkgs.neofetch
     pkgs.lxappearance
     pkgs.texlive.combined.scheme-small
 
