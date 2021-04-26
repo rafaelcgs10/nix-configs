@@ -5,8 +5,8 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "jonaburg";
       repo = "picom";
-      rev    = "6a3d1354bed9d4c33227944a2331b0e5713668d3";
-      sha256 = "14psl966zhxcwr82c6dsyfncb53nqzv7r49l89f3j7k4svqczmi4";
+      rev    = "e553e00f48de67d52fe75de9e0e940d85aa14a24";
+      sha256 = "04svbv7v73q8yn9la69451rda6l2pgxcphv2zlkdqaxxdbp69195";
     };
   });
   unstable = import <nixpkgs-unstable> { };
@@ -314,19 +314,21 @@ in {
   services.picom = {
     enable = true;
     # experimentalBackends = true;
-    backend = "glx";
+    # backend = "glx";
     package = picom-jonaburg;
     blur = false;
     shadow = true;
     shadowOpacity = "0.65";
     extraOptions = ''
-      corner-radius = 10;
-      use-ewmh-active-win = true;
       rounded-corners-exclude = [
         #"window_type = 'normal'",
         "class_g = 'Polybar'",
         #"class_g = 'TelegramDesktop'",
       ];
+      corner-radius = 10;
+      # spawn-center = true;
+      # transition-length = 300;
+      use-ewmh-active-win = true;
     '';
   };
 
