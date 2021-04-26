@@ -120,6 +120,7 @@ myStartupHook = do
           spawnOnOnce "emacs" "emacs"
           spawnOnOnce "web" "vivaldi"
           spawnOnce "flameshot"
+          spawnOnce "nm-applet"
           spawnOnce "copyq"
           spawn "autorandr -c"
 
