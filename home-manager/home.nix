@@ -1,12 +1,12 @@
 { config, pkgs, lib, ... }:
 
 let
-  picom-jonaburg = pkgs.picom.overrideAttrs (old: {
+  picom-fork = pkgs.picom.overrideAttrs (old: {
     src = pkgs.fetchFromGitHub {
-      owner = "jonaburg";
+      owner = "ibhagwan";
       repo = "picom";
-      rev    = "e553e00f48de67d52fe75de9e0e940d85aa14a24";
-      sha256 = "04svbv7v73q8yn9la69451rda6l2pgxcphv2zlkdqaxxdbp69195";
+      rev    = "44b4970f70d6b23759a61a2b94d9bfb4351b41b1";
+      sha256 = "0iff4bwpc00xbjad0m000midslgx12aihs33mdvfckr75r114ylh";
     };
   });
   unstable = import <nixpkgs-unstable> { };
@@ -315,20 +315,18 @@ in {
     enable = true;
     # experimentalBackends = true;
     # backend = "glx";
-    package = picom-jonaburg;
+    package = picom-fork;
     blur = false;
     shadow = true;
     shadowOpacity = "0.65";
     extraOptions = ''
+      corner-radius = 10;
+      use-ewmh-active-win = true;
       rounded-corners-exclude = [
         #"window_type = 'normal'",
         "class_g = 'Polybar'",
         #"class_g = 'TelegramDesktop'",
       ];
-      corner-radius = 10;
-      # spawn-center = true;
-      # transition-length = 300;
-      use-ewmh-active-win = true;
     '';
   };
 
