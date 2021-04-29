@@ -208,7 +208,7 @@ in {
       # es.next.syntax.vim # ES7 syntax
 
       # UI #################################################
-      # gruvbox # colorscheme
+      nord-vim # colorscheme
       vim-gitgutter # status in gutter
       # vim-devicons
       vim-airline
