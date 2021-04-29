@@ -370,7 +370,6 @@ in {
     package = mypolybar;
     config = ./programs/polybar/config.ini;
     script = ''
-      polybar mybar &
     '';
   };
 

@@ -122,6 +122,7 @@ myStartupHook = do
           spawnOnce "flameshot"
           spawnOnce "nm-applet"
           spawnOnce "copyq"
+          spawnOnce "polybar mybar"
           spawn "autorandr -c"
 
 myColorizer :: Window -> Bool -> X (String, String)
