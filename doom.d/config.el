@@ -85,6 +85,11 @@
 (global-prettify-symbols-mode -1)
 (prettify-symbols-mode -1)
 
+;; Languagetool for working with nix
+;; (setq langtool-java-bin "java")
+(setq langtool-bin "languagetool-commandline")
+(setq langtool-default-language "en-US")
+
 ;; Flycheck configs
 (use-package! flycheck-golangci-lint
   :ensure t
