@@ -34,5 +34,5 @@ do
     --output=$HOME/nix-configs/wallpapers/process.jpeg
 
     feh $HOME/nix-configs/wallpapers/process.jpeg --bg-scal
-	sleep 1
+	sleep 10
 done
