@@ -296,12 +296,12 @@ in {
         };
 
         cursor = {
-          background = "0x000000";
-          foreground = "0xbbc2cf";
+          background = "0xFFFFFF";
+          foreground = "0x222222";
         };
 
         vi_mode_cursor = {
-          background = "0x000000";
+          background = "0xFFFFFF";
           foreground = "0xbbc2cf";
         };
 
