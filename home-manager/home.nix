@@ -9,7 +9,7 @@ let
       sha256 = "0iff4bwpc00xbjad0m000midslgx12aihs33mdvfckr75r114ylh";
     };
   });
-  unstable = import <nixpkgs-unstable> { };
+  unstable = import <nixpkgs-unstable> { config.allowUnfree = true; overlays = [(self: super: { discord = super.discord.overrideAttrs (_: { src = builtins.fetchTarball "https://discord.com/api/download?platform=linux&format=tar.gz"; });})];};
   emacs-overlay = builtins.fetchTarball "https://github.com/nix-community/emacs-overlay/archive/15ed1f372a83ec748ac824bdc5b573039c18b82f.tar.gz";
   emacsPkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   mypolybar = (pkgs.polybar.overrideAttrs (old: {
