@@ -41,7 +41,6 @@
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
   networking.useDHCP = false;
-  networking.interfaces.enp0s3.useDHCP = true;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -107,7 +106,7 @@
   users.users.rafael = {
     isNormalUser = true;
     home = "/home/rafael";
-    extraGroups = [ "wheel" "networkmanager" "docker" ];
+    extraGroups = [ "wheel" "networkmanager" "docker" "video" ];
   };
   nix.trustedUsers = [ "root" "rafael" ];
 
@@ -123,13 +122,13 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     wget
-    vim
     git
     htop
     gparted
     firefox
     terminator
     zsh
+    vim
     home-manager
 
     ecryptfs
@@ -139,6 +138,7 @@
     ripgrep
     coreutils
     fd
+    docker-compose
     rnix-lsp
     cachix
     gnutar gzip gnumake
@@ -199,7 +199,7 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "20.09"; # Did you read the comment?
+  system.stateVersion = "21.05"; # Did you read the comment?
 
   # Docker config
   virtualisation.docker.enable = true;
