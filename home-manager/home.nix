@@ -106,16 +106,22 @@ in {
     pkgs.feh
     pkgs.neofetch
     pkgs.lxappearance
-    pkgs.texlive.combined.scheme-small
+    pkgs.evince
+    pkgs.gimp
+    pkgs.inxi
+    pkgs.pciutils
+    pkgs.glxinfo
+    pkgs.lm_sensors
 
     pkgs.networkmanagerapplet
 
     pkgs.qbittorrent
     pkgs.spotify
     pkgs.pcmanfm
-    pkgs.vivaldi
+    unstable.vivaldi
     pkgs.synergy
     pkgs.tdesktop
+    unstable.discord
     pkgs.slack
     pkgs.flameshot
     pkgs.copyq
