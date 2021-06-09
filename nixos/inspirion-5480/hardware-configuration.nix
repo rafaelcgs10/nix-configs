@@ -45,12 +45,22 @@
       ];
     };
 
+  services.xserver.libinput.enable = true;
+  
   services.xserver.config = ''
     Section "Device"
       Identifier "Intel Graphics"
       Driver "intel"
       Option "TearFree" "true"
       Option "TripleBuffer" "true"
+    EndSection
+    
+    Section "InputClass"
+      Identifier "mouse accel"
+      Driver "libinput"
+      MatchIsPointer "on"
+      Option "AccelProfile" "flat"
+      Option "AccelSpeed" "0"
     EndSection
   '';
 
