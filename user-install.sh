@@ -1,6 +1,4 @@
 sudo mkdir -p /mnt/etc/nixos
-sudo nix-channel --add https://github.com/nix-community/home-manager/archive/release-20.09.tar.gz home-manager
-sudo nix-channel --update
 sudo rm /etc/nixos/configuration.nix
 sudo rm /etc/nixos/cachix.nix
 sudo rm /etc/nixos/hardware-configuration.nix
