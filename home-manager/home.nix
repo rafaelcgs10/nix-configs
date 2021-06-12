@@ -104,6 +104,7 @@ in {
     pkgs.pciutils
     pkgs.glxinfo
     pkgs.lm_sensors
+    (pkgs.aspellWithDicts (d: [d.en]))
 
     pkgs.networkmanagerapplet
 
