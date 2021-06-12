@@ -1,14 +1,6 @@
 { config, pkgs, lib, ... }:
 
 let
-  picom-fork = pkgs.picom.overrideAttrs (old: {
-    src = pkgs.fetchFromGitHub {
-      owner = "ibhagwan";
-      repo = "picom";
-      rev    = "44b4970f70d6b23759a61a2b94d9bfb4351b41b1";
-      sha256 = "0iff4bwpc00xbjad0m000midslgx12aihs33mdvfckr75r114ylh";
-    };
-  });
   unstable = import <nixpkgs-unstable> { config.allowUnfree = true; overlays = [(self: super: { discord = super.discord.overrideAttrs (_: { src = builtins.fetchTarball "https://discord.com/api/download?platform=linux&format=tar.gz"; });})];};
   emacs-overlay = builtins.fetchTarball "https://github.com/nix-community/emacs-overlay/archive/15ed1f372a83ec748ac824bdc5b573039c18b82f.tar.gz";
   emacsPkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
@@ -343,25 +335,6 @@ in {
     terminal = "${pkgs.alacritty}/bin/alacritty";
     theme = ./programs/rofi/theme.slate;
     cycle = true;
-  };
-
-  services.picom = {
-    enable = true;
-    # experimentalBackends = true;
-    # backend = "glx";
-    package = picom-fork;
-    blur = false;
-    shadow = true;
-    shadowOpacity = "0.65";
-    extraOptions = ''
-      corner-radius = 10;
-      use-ewmh-active-win = true;
-      rounded-corners-exclude = [
-        #"window_type = 'normal'",
-        "class_g = 'Polybar'",
-        #"class_g = 'TelegramDesktop'",
-      ];
-    '';
   };
 
   gtk = {
