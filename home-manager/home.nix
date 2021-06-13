@@ -279,7 +279,7 @@ in {
         italic.style = "Regular";
         blod_italic.family = "Mononoki Nerd Font";
         blod_italic.style = "Regular";
-        size = 12.0;
+        size = 10.0;
       };
 
       colors = {
