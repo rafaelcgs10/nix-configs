@@ -216,8 +216,6 @@ myManageHook = composeAll
      [ className =? "TelegramDesktop"     --> doFloat
      , className =? "copyq"     --> doFloat
      , className =? "spotify"     --> doFloat
-     , className =? "Vivaldi-stable"     --> doShift ( myWorkspaces !! 0 )
-     , className =? "Emacs"     --> doShift ( myWorkspaces !! 1 )
      -- , className =? "vlc"     --> doShift ( myWorkspaces !! 7 )
      ] <+> namedScratchpadManageHook myScratchPads
 
@@ -227,19 +225,6 @@ myLayoutHook = avoidStruts $ mouseResize $ windowArrange $
                myDefaultLayout =     smartBorders tall
                                  ||| magnify
                                  ||| noBorders tabs
-
-xmobarEscape :: String -> String
-xmobarEscape = concatMap doubleLts
-  where
-        doubleLts '<' = "<<"
-        doubleLts x   = [x]
-
-myWorkspaces = clickable . (map xmobarEscape)
-               $ (["web", "emacs", "3", "4", "5", "6", "7", "8", "9", "10"])
-  where
-        clickable l = [ ws |
-                      (i,ws) <- zip ([1..9])  l,
-                      let n = i ]
 
 myKeysP :: [(String, X ())]
 myKeysP =
@@ -376,7 +361,6 @@ main = do
         , terminal           = myTerminal
         , startupHook        = myStartupHook
         , layoutHook         = myLayoutHook
-        , workspaces         = myWorkspaces
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
