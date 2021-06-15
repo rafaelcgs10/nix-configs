@@ -1,5 +1,5 @@
 -- Base
-import XMonad
+import XMonad hiding ( (|||) )
 import System.IO (hPutStrLn)
 import System.Exit (exitSuccess)
 
@@ -42,6 +42,7 @@ import XMonad.Layout.Tabbed
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.IndependentScreens
 import XMonad.Layout.Fullscreen
+import XMonad.Layout.LayoutCombinators
 
     -- Layouts modifiers
 import XMonad.Layout.LayoutModifier
@@ -123,7 +124,6 @@ myStartupHook = do
           spawnOnce "nm-applet"
           spawnOnce "copyq"
           spawnOnce "polybar mybar"
-          spawn "autorandr -c"
 
 myColorizer :: Window -> Bool -> X (String, String)
 myColorizer = colorRangeFromClassName
@@ -185,27 +185,6 @@ magnify  = renamed [Replace "magnify"]
            $ limitWindows 12
            $ mySpacing 8
            $ ResizableTall 1 (3/100) (1/2) []
-monocle  = renamed [Replace "monocle"]
-           $ limitWindows 20 Full
-grid     = renamed [Replace "grid"]
-           $ limitWindows 12
-           $ mySpacing 8
-           $ mkToggle (single MIRROR)
-           $ Grid (16/10)
-spirals  = renamed [Replace "spirals"]
-           $ mySpacing' 8
-           $ spiral (6/7)
-threeCol = renamed [Replace "threeCol"]
-           $ limitWindows 7
-           $ mySpacing' 4
-           $ ThreeCol 1 (3/100) (1/2)
-threeRow = renamed [Replace "threeRow"]
-           $ limitWindows 7
-           $ mySpacing' 4
-           -- Mirror takes a layout and rotates it by 90 degrees.
-           -- So we are applying Mirror to the ThreeCol layout.
-           $ Mirror
-           $ ThreeCol 1 (3/100) (1/2)
 tabs     = renamed [Replace "tabs"]
            -- I cannot add spacing to this layout because it will
            -- add spacing between window and tabs which looks bad.
@@ -245,14 +224,9 @@ myManageHook = composeAll
 myLayoutHook = avoidStruts $ mouseResize $ windowArrange $
                mkToggle (NBFULL ?? NOBORDERS ?? EOT) myDefaultLayout
              where
-               myDefaultLayout =     smartBorders grid
-                                 ||| smartBorders tall
+               myDefaultLayout =     smartBorders tall
                                  ||| magnify
-                                 ||| noBorders monocle
                                  ||| noBorders tabs
-                                 ||| smartBorders spirals
-                                 ||| threeCol
-                                 ||| threeRow
 
 xmobarEscape :: String -> String
 xmobarEscape = concatMap doubleLts
@@ -287,7 +261,8 @@ myKeysP =
 
     -- Floating windows
         -- , ("M-f", sendMessage (T.Toggle "monocle"))       -- Toggles my 'monocle' layout
-        , ("M-G", sendMessage (T.Toggle "grid"))       -- Toggles my 'grid' layout
+        , ("M-e", sendMessage (JumpToLayout "tall"))       -- Toggles my 'tall' layout
+        , ("M-w", sendMessage (JumpToLayout "tabs"))       -- Toggles my 'tabs' layout
         , ("M-<Delete>", withFocused $ windows . W.sink) -- Push floating window back to tile
         , ("M-S-<Delete>", sinkAll)                      -- Push ALL floating windows to tile
         , ("M-S-C-l", withFocused (keysResizeWindow (-10,0) (1,1)))
