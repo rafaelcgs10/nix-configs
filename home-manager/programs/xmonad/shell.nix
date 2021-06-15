@@ -18,6 +18,8 @@ let
     nixpkgs.haskellPackages.haskell-language-server
     nixpkgs.haskellPackages.hlint
     nixpkgs.haskellPackages.hoogle
+    nixpkgs.haskellPackages.happy
+    nixpkgs.haskellPackages.haskell-src-exts
   ];
 in
 pkgs.stdenv.mkDerivation {
