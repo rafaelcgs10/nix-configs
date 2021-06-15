@@ -335,9 +335,7 @@ myKeysP =
     -- Apps
         , ("M-u", spawn "pavucontrol")
         , ("<XF86Tools>", spawn "pavucontrol")
-        , ("Print", spawn "flameshot full")
-        , ("C-Print", spawn "scrot -e 'mv $f /tmp/ && gimp /tmp/$f")
-        , ("M-S-s", spawn "flameshot gui")
+        , ("M-p", spawn "flameshot gui")
 
     -- Emacs (CTRL-e followed by a key)
         , ("C-S-e e", spawn "emacsclient -c -a 'emacs'")                            -- start emacs
