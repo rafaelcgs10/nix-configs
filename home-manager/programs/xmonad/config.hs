@@ -248,18 +248,9 @@ myManageHook = composeAll
      -- , className =? "vlc"     --> doShift ( myWorkspaces !! 7 )
      ] <+> namedScratchpadManageHook myScratchPads
 
-xmobarEscape :: String -> String
-xmobarEscape = concatMap doubleLts
+myWorkspaces = clickable (["web", "emacs", "3", "4", "5", "6", "7", "8", "9", "10"])
   where
-        doubleLts '<' = "<<"
-        doubleLts x   = [x]
-
-myWorkspaces = clickable . (map xmobarEscape)
-               $ (["web", "emacs", "3", "4", "5", "6", "7", "8", "9", "10"])
-  where
-        clickable l = [ ws |
-                      (i,ws) <- zip ([1..9])  l,
-                      let n = i ]
+    clickable l = [ ws | (i, ws) <- zip ([1 .. 9]) l, let n = i ]
 
 myKeysP :: [(String, X ())]
 myKeysP =
