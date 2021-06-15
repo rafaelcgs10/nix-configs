@@ -139,6 +139,7 @@ myScratchPads :: [NamedScratchpad]
 myScratchPads =
   [ NS "terminal" spawnTerm findTerm manageScratch,
     NS "spotify" spawnSpotify findSpotify manageScratch,
+    NS "slack" spawnSlack findSlack manageScratch,
     NS "telegram" spawnTelegram findTelegram manageScratch,
     NS "discord" spawnDiscord findDiscord manageScratch
   ]
@@ -153,6 +154,8 @@ myScratchPads =
     findTerm = title =? "scratch"
     spawnSpotify = "spotify"
     findSpotify = className =? "Spotify"
+    spawnSlack = "slack"
+    findSlack = className =? "Slack"
     spawnTelegram = "telegram-desktop"
     findTelegram = className =? "TelegramDesktop"
     spawnDiscord = "discord"
@@ -329,10 +332,10 @@ myKeysP =
     -- , ("M-C-<Return>", namedScratchpadAction myScratchPads "terminal")
     ("M-C-c", namedScratchpadAction myScratchPads "spotify"),
     ("M-C-t", namedScratchpadAction myScratchPads "telegram"),
+    ("M-C-s", namedScratchpadAction myScratchPads "slack"),
     ("M-C-d", namedScratchpadAction myScratchPads "discord"),
     -- Apps
     ("M-u", spawn "pavucontrol"),
-    ("<XF86Tools>", spawn "pavucontrol"),
     ("M-p", spawn "flameshot gui"),
     -- Emacs (CTRL-e followed by a key)
     ("C-S-e e", spawn "emacsclient -c -a 'emacs'"), -- start emacs
