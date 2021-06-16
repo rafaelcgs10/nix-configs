@@ -7,8 +7,8 @@ do
     h=$(xrandr | grep '*' | awk -F ' ' '{print $1}' | awk -F 'x' '{print $2}')
     h2=$(expr 2 \* $h)
 
-    l=$(expr 3 \* $w2 / 7)
-    r=$(expr 2 \* $l / 3 \- 50)
+    l=$(expr 3 \* $w2 / 7 \- 50)
+    r=$(expr 2 \* $l / 3 \- 90)
 
     angle=$(awk -v n=1 -v seed="$RANDOM" 'BEGIN { srand(seed); for (i=0; i<n; ++i) printf("%.4f\n", rand() + 1) }')
 
