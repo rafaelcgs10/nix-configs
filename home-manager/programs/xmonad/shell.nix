@@ -20,6 +20,7 @@ let
     nixpkgs.haskellPackages.hoogle
     nixpkgs.haskellPackages.happy
     nixpkgs.haskellPackages.haskell-src-exts
+    nixpkgs.haskellPackages.apply-refact
   ];
 in
 pkgs.stdenv.mkDerivation {
