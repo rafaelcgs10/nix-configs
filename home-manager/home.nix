@@ -23,7 +23,7 @@ let
     githubSupport = true;
     mpdSupport = true;
     nlSupport = true;
-    pulseSupport = false;
+    pulseSupport = true;
   };
 in {
   # Let Home Manager install and manage itself.
@@ -107,6 +107,7 @@ in {
     (pkgs.aspellWithDicts (d: [d.en]))
 
     pkgs.networkmanagerapplet
+    pkgs.pa_applet
 
     pkgs.qbittorrent
     pkgs.spotify
@@ -114,6 +115,7 @@ in {
     unstable.vivaldi
     pkgs.synergy
     pkgs.tdesktop
+    pkgs.whatsapp-for-linux
     unstable.discord
     pkgs.slack
     pkgs.flameshot

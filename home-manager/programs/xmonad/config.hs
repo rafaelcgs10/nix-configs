@@ -122,6 +122,7 @@ myStartupHook = do
   spawnOnOnce "web" "vivaldi"
   spawnOnce "flameshot"
   spawnOnce "nm-applet"
+  spawnOnce "pa-applet"
   spawnOnce "copyq"
   spawnOnce "polybar mybar"
 
@@ -140,6 +141,7 @@ myScratchPads =
   [ NS "terminal" spawnTerm findTerm manageScratch,
     NS "spotify" spawnSpotify findSpotify manageScratch,
     NS "slack" spawnSlack findSlack manageScratch,
+    NS "whatsapp-for-linux" spawnWhats findWhats manageScratch,
     NS "telegram" spawnTelegram findTelegram manageScratch,
     NS "discord" spawnDiscord findDiscord manageScratch
   ]
@@ -156,6 +158,8 @@ myScratchPads =
     findSpotify = className =? "Spotify"
     spawnSlack = "slack"
     findSlack = className =? "Slack"
+    spawnWhats = "whatsapp-for-linux"
+    findWhats = className =? "Whatsapp-for-linux"
     spawnTelegram = "telegram-desktop"
     findTelegram = className =? "TelegramDesktop"
     spawnDiscord = "discord"
@@ -337,6 +341,7 @@ myKeysP =
     ("M-C-c", namedScratchpadAction myScratchPads "spotify"),
     ("M-C-t", namedScratchpadAction myScratchPads "telegram"),
     ("M-C-s", namedScratchpadAction myScratchPads "slack"),
+    ("M-C-w", namedScratchpadAction myScratchPads "whatsapp-for-linux"),
     ("M-C-d", namedScratchpadAction myScratchPads "discord"),
     -- Apps
     ("M-u", spawn "pavucontrol"),
