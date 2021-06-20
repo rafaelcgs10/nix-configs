@@ -9,9 +9,7 @@
     ];
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "sd_mod" ];
-  boot.initrd.kernelModules = [ "i915" ];
-  boot.kernelPackages = pkgs.linuxPackages_5_11;
-  # boot.kernelParams = [ "i915.force_probe=4c8a" ];
+  boot.initrd.kernelModules = [ "i915"  ];
   boot.kernelModules = [ "kvm-intel" "acpi_call" ];
   boot.extraModulePackages = with config.boot.kernelPackages; [ acpi_call ];
 
@@ -29,13 +27,12 @@
     [ { device = "/dev/disk/by-label/swap"; }
     ];
 
-  # services.xserver.videoDrivers = [ "intel" ];
-  services.xserver.videoDrivers = [ "modesetting" ];
+  services.xserver.videoDrivers = [ "intel" ];
 
   hardware.cpu.intel.updateMicrocode =
     lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-    hardware.opengl = { 
+    hardware.opengl = {
       enable = true;
       extraPackages = with pkgs; [
        vaapiIntel         # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
@@ -45,8 +42,6 @@
       ];
     };
 
-  services.xserver.libinput.enable = true;
-  
   services.xserver.config = ''
     Section "Device"
       Identifier "Intel Graphics"
@@ -54,7 +49,7 @@
       Option "TearFree" "true"
       Option "TripleBuffer" "true"
     EndSection
-    
+
     Section "InputClass"
       Identifier "mouse accel"
       Driver "libinput"
