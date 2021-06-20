@@ -38,43 +38,41 @@ in {
   home.packages = [
     pkgs.ripgrep
     pkgs.jq
-    pkgs.autorandr
     pkgs.tree
     pkgs.zsh
     pkgs.rnix-lsp
     pkgs.lazydocker
     pkgs.libgccjit
-    pkgs.xorg.xwininfo
-    pkgs.xmobar
-    pkgs.xdotool
-    pkgs.lxrandr
-    pkgs.pscircle
-    pkgs.gpicview
-    pkgs.feh
     pkgs.neofetch
-    pkgs.lxappearance
-    pkgs.evince
-    pkgs.gimp
     pkgs.inxi
     pkgs.pciutils
-    pkgs.glxinfo
     pkgs.lm_sensors
     (pkgs.aspellWithDicts (d: [d.en]))
 
-    pkgs.networkmanagerapplet
-    pkgs.pa_applet
-
+    unstable.vivaldi
+    pkgs.evince
+    pkgs.gimp
+    pkgs.lxappearance
+    pkgs.feh
+    pkgs.gpicview
+    pkgs.pscircle
     pkgs.qbittorrent
     pkgs.spotify
     pkgs.pcmanfm
-    unstable.vivaldi
-    pkgs.synergy
-    pkgs.tdesktop
+
     pkgs.whatsapp-for-linux
-    unstable.discord
+    pkgs.tdesktop
     pkgs.slack
+    unstable.discord
+
     pkgs.flameshot
     pkgs.copyq
+    pkgs.networkmanagerapplet
+    pkgs.pa_applet
+    pkgs.xorg.xwininfo
+    pkgs.xdotool
+    pkgs.lxrandr
+    pkgs.glxinfo
 
     # emacsPkgs.emacsGcc
     pkgs.emacs
@@ -85,8 +83,6 @@ in {
     userName = "rafaelcgs10";
     userEmail = "rafaelcgs10@gmail.com";
   };
-
-  programs.autorandr.enable = true;
 
   services.udiskie = {
     enable = true;
