@@ -59,13 +59,12 @@
   # services.xserver.desktopManager.plasma5.enable = true;
 
   services = {
-    gnome3.gnome-keyring.enable = true;
+    gnome.gnome-keyring.enable = true;
     upower.enable = true;
 
     dbus = {
       enable = true;
-      socketActivated = true;
-      packages = [ pkgs.gnome3.dconf ];
+      packages = [ pkgs.gnome.dconf ];
     };
   };
 
