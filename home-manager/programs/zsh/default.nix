@@ -68,5 +68,8 @@
                    DOOMDIR = "$HOME/nix-configs/doom.d";
                    DIRENV_ALLOW_NIX = 1;
                  };
+    shellAliases = rec {
+      rd-docker = "$HOME/.rd-docker/rd-docker-cli";
+    };
   };
 }
