@@ -70,11 +70,11 @@
   services.acpid.enable = true;
   services.acpid.handlers = {
     brightness-up = {
-      action = "/run/current-system/sw/bin/light -A 30";
+      action = "/run/current-system/sw/bin/light -A 15";
       event = "video/brightnessup.*";
     };
     brightness-down = {
-      action = "/run/current-system/sw/bin/light -U 30";
+      action = "/run/current-system/sw/bin/light -U 15";
       event = "video/brightnessdown.*";
     };
   };
