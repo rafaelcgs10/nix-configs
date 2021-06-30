@@ -227,3 +227,5 @@
 (defun my-prog-nuke-trailing-whitespace ()
   (when (derived-mode-p 'prog-mode)
     (delete-trailing-whitespace)))
+
+(setq haskell-process-type 'cabal-new-repl)
