@@ -40,6 +40,7 @@ in {
     pkgs.ripgrep
     pkgs.jq
     pkgs.tree
+    pkgs.nmap
     pkgs.zsh
     pkgs.rnix-lsp
     pkgs.lazydocker
