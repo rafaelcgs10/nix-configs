@@ -31,6 +31,6 @@ in
 
     # emacsPkgs.emacsGcc
     pkgs.emacs
-    unstable.vivaldi
+    pkgs.vivaldi
   ];
 }
