@@ -4,7 +4,9 @@
 
 { config, pkgs, ... }:
 
-{
+let
+  homemanager = import <home-manager> {};
+in {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
@@ -128,7 +130,7 @@
     terminator
     zsh
     vim
-    home-manager
+    homemanager.home-manager
 
     ecryptfs
     ecryptfs-helper
