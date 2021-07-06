@@ -191,5 +191,8 @@ in {
   system.stateVersion = "21.05"; # Did you read the comment?
 
   # Docker config
-  virtualisation.docker.enable = true;
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
+  };
 }
