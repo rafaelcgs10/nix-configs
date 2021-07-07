@@ -146,8 +146,6 @@ in {
     fira-code-symbols
     dina-font
     proggyfonts
-    mononoki
-    font-awesome_4
     font-awesome_5
     papirus-icon-theme
     iosevka
