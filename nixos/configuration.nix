@@ -142,12 +142,10 @@ in {
     noto-fonts-cjk
     noto-fonts-emoji
     liberation_ttf
-    fira-code
-    fira-code-symbols
     dina-font
     proggyfonts
     mononoki
-    font-awesome_5
+    font-awesome_4
     papirus-icon-theme
     iosevka
     emacs-all-the-icons-fonts
