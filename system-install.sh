@@ -1,6 +1,11 @@
 sudo nix-channel --add https://github.com/nix-community/home-manager/archive/release-21.05.tar.gz home-manager
 sudo nix-channel --update
-sudo mount /dev/disk/by-label/nixos /mnt
-mkdir -p /mnt/etc
-sudo cp -r ~/nix-configs/nixos/ /mnt/etc/
+
+sudo mkdir -p /mnt/etc/nixos
+
+sudo cp ./nixos/configuration.nix /mnt/etc/nixos
+sudo cp ./nixos/cachix.nix /mnt/etc/nixos
+sudo cp ./nixos/virtual-box/hardware-configuration.nix /mnt/etc/nixos
+sudo cp ./nixos/virtual-box/boot-loader.nix /mnt/etc/nixos
+
 sudo nixos-install
