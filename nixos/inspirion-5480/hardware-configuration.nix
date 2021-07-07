@@ -47,7 +47,6 @@
       Identifier "Intel Graphics"
       Driver "intel"
       Option "TearFree" "true"
-      Option "TripleBuffer" "true"
     EndSection
 
     Section "InputClass"
@@ -79,4 +78,8 @@
     };
   };
   powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
+
+
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
 }
