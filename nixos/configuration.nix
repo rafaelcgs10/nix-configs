@@ -6,8 +6,6 @@
 
 let
   homemanager = import <home-manager> {};
-  unstable = import
-    (builtins.fetchTarball https://github.com/NixOS/nixpkgs/archive/93184413f2180ce79d53df91df4d43c2e8f931aa.tar.gz) { };
 in {
   imports =
     [ # Include the results of the hardware scan.
@@ -139,7 +137,7 @@ in {
   ];
 
   # Fonts
-  fonts.fonts = with unstable; [
+  fonts.fonts = with pkgs; [
     noto-fonts
     noto-fonts-cjk
     noto-fonts-emoji
