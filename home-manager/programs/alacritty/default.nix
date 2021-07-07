@@ -17,13 +17,13 @@
 
       draw_bold_text_with_bright_colors = true;
       font = {
-        normal.family = "Mononoki Nerd Font";
+        normal.family = "mononoki";
         normal.style = "Regular";
-        bold.family = "Mononoki Nerd Font";
+        bold.family = "mononoki";
         bold.style = "Regular";
-        italic.family = "Mononoki Nerd Font";
+        italic.family = "mononoki";
         italic.style = "Regular";
-        blod_italic.family = "Mononoki Nerd Font";
+        blod_italic.family = "mononoki";
         blod_italic.style = "Regular";
         size = 10.0;
       };

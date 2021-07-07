@@ -209,7 +209,7 @@ tabs =
   where
     myTabConfig =
       def
-        { fontName = "xft:Mononoki Nerd Font:regular:pixelsize=11",
+        { fontName = "xft:mononoki:regular:pixelsize=11",
           activeColor = "#ffffff",
           inactiveColor = "#3e445e",
           activeBorderColor = "#000000",
