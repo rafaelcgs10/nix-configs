@@ -51,7 +51,23 @@ in {
     pkgs.lm_sensors
     (pkgs.aspellWithDicts (d: [d.en]))
 
+  # Fonts
+    pkgs.noto-fonts
+    pkgs.noto-fonts-cjk
+    pkgs.noto-fonts-emoji
+    pkgs.liberation_ttf
+    pkgs.dina-font
+    pkgs.mononoki
+    pkgs.font-awesome_5
+    pkgs.papirus-icon-theme
+    pkgs.iosevka
+    pkgs.emacs-all-the-icons-fonts
+    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+
   ];
+
+
+  fonts.fontconfig.enable = true;
 
   programs.git = {
     enable = true;
