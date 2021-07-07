@@ -5,7 +5,6 @@ sudo nix-channel --update
 sudo mkdir -p /mnt/etc/nixos
 
 sudo cp ./nixos/configuration.nix /mnt/etc/nixos
-sudo cp ./nixos/cachix.nix /mnt/etc/nixos
 sudo cp ./nixos/virtual-box/hardware-configuration.nix /mnt/etc/nixos
 sudo cp ./nixos/virtual-box/boot-loader.nix /mnt/etc/nixos
 
