@@ -1,3 +1,4 @@
+sudo nix-channel --add https://channels.nixos.org/nixpkgs-unstable/ nixpkgs-unstable
 sudo nix-channel --add https://github.com/nix-community/home-manager/archive/release-21.05.tar.gz home-manager
 sudo nix-channel --update
 
