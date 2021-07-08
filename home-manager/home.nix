@@ -28,9 +28,6 @@ in {
   home.sessionVariables = {
     PAGER = "less";
     EDITOR = "vim";
-    DOOMDIR = "$HOME/nix-configs/doom.d";
-    EMACSDIR = "$HOME/.emacs.d";
-    DOOMLOCALDIR = "$HOME/.doom_local";
     DIRENV_ALLOW_NIX = 1;
   };
 

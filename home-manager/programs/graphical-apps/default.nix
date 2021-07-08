@@ -30,7 +30,6 @@ in
     pkgs.glxinfo
 
     # emacsPkgs.emacsGcc
-    pkgs.emacs
     pkgs.vivaldi
   ];
 }
