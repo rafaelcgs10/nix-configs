@@ -12,4 +12,8 @@
     ../../programs/rd-docker/default.nix
     ../../programs/graphical-apps/default.nix
   ];
+
+  home.sessionVariables = {
+    LIBGL_ALWAYS_SOFTWARE = 1;
+  };
 }
