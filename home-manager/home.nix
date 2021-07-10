@@ -35,6 +35,7 @@ in {
     pkgs.libgccjit
     pkgs.neofetch
     pkgs.inxi
+    pkgs.tmux
     pkgs.pciutils
     unstable.x2goclient
     unstable.x2goserver
