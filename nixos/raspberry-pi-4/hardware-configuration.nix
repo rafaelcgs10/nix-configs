@@ -19,4 +19,10 @@
   hardware.raspberry-pi."4".fkms-3d.enable = true;
 
   powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
+
+  zramSwap = {
+    enable = true;
+    memoryPercent = 40;
+    algorithm = "zstd";
+  };
 }
