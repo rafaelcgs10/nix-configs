@@ -36,8 +36,8 @@ in {
     pkgs.neofetch
     pkgs.inxi
     pkgs.pciutils
-    pkgs.x2goclient
-    pkgs.x2goserver
+    unstable.x2goclient
+    unstable.x2goserver
     pkgs.lm_sensors
     (pkgs.aspellWithDicts (d: [d.en]))
 
