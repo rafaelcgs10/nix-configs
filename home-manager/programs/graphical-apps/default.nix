@@ -4,6 +4,7 @@
   home.packages = [
     pkgs.evince
     pkgs.gimp
+    pkgs.vlc
     pkgs.lxappearance
     pkgs.feh
     pkgs.gpicview
