@@ -2,9 +2,9 @@ set -e
 
 while :
 do
-    w=$(xrandr | grep '*' | awk -F ' ' '{print $1}' | awk -F 'x' '{print $1}')
+    w=$(xrandr | grep '*' | awk -F ' ' '{print $1}' | awk -F 'x' '{print $1}' | tail -n 1)
     w2=$(expr 2 \* $w)
-    h=$(xrandr | grep '*' | awk -F ' ' '{print $1}' | awk -F 'x' '{print $2}')
+    h=$(xrandr | grep '*' | awk -F ' ' '{print $1}' | awk -F 'x' '{print $2}' | tail -n 1)
     h2=$(expr 2 \* $h)
 
     l=$(expr 3 \* $w2 / 7 \- 50)
