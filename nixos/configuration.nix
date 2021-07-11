@@ -32,10 +32,6 @@ in {
   # replicates the default behaviour.
   networking.useDHCP = false;
 
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
   # Select internationalisation properties.
   i18n.defaultLocale = "pt_BR.UTF-8";
   # console = {
@@ -43,10 +39,6 @@ in {
   #   keyMap = "us";
   # };
 
-
-  # Enable the Plasma 5 Desktop Environment.
-  # services.xserver.displayManager.lightdm.enable = true;
-  # services.xserver.desktopManager.plasma5.enable = true;
 
   services = {
     gnome.gnome-keyring.enable = true;
@@ -131,18 +123,11 @@ in {
     rnix-lsp
     cachix
     gnutar gzip gnumake
+    lxqt.lxqt-policykit
 
     # libnotify
     # libdbusmenu
   ];
-
-  # nixpkgs.overlays = [
-  #   (import (builtins.fetchTarball https://github.com/nix-community/emacs-overlay/archive/master.tar.gz))
-  # ];
-
-  # To Flatpak
-  # services.flatpak.enable = true;
-  # xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -173,8 +158,4 @@ in {
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "21.05"; # Did you read the comment?
-
-  services.xrdp.enable = true;
-  services.xrdp.defaultWindowManager = "xmonad";
-
 }
