@@ -9,11 +9,8 @@
     ../../programs/rofi/default.nix
     ../../programs/X-themes/default.nix
     ../../programs/polybar/default.nix
+    ../../programs/nvim/default.nix
     ../../programs/rd-docker/default.nix
     ../../programs/graphical-apps/default.nix
   ];
-
-  home.sessionVariables = {
-    LIBGL_ALWAYS_SOFTWARE = 1;
-  };
 }
