@@ -34,6 +34,13 @@
 
     videoDrivers = [ "nvidia" ];
 
+    serverLayoutSection = ''
+      Option "BlankTime" "0"
+      Option "StandbyTime" "0"
+      Option "SuspendTime" "0"
+      Option "OffTime" "0"
+    '';
+
     deviceSection = ''
       Driver         "nvidia"
       VendorName     "NVIDIA Corporation"

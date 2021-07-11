@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   homemanager = import <home-manager> {};
@@ -65,6 +65,11 @@ in {
         lightdm.enable = true;
         defaultSession = "xfce";
     };
+  };
+
+  services.gvfs = {
+    enable = true;
+    package = lib.mkForce pkgs.gnome3.gvfs;
   };
 
   # Bluetooth service
