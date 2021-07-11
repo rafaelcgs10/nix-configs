@@ -65,4 +65,12 @@
     '';
 
   };
+
+  # Docker config
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
+  };
+
+  powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
 }
