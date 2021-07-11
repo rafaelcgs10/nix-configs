@@ -54,7 +54,7 @@ in {
   services.xserver = {
     enable = true;
     layout = "br";
-    resolutions = [ { x = 1920; y = 1080; } { x = 1440; y = 900; } { x = 1336; y = 768; } { x = 1024; y = 768; }];
+    resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
 
     desktopManager = {
       xfce.enable = true;
@@ -151,7 +151,10 @@ in {
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
+  networking.firewall.enable = true;
+  networking.firewall.allowPing = true;
+  networking.firewall.allowedTCPPorts = [ 445 139 3389 ];
+  networking.firewall.allowedUDPPorts = [ 137 138 ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

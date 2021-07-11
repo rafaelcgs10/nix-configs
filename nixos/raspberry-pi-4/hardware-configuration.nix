@@ -15,6 +15,13 @@
     [ { device = "/dev/disk/by-label/swap"; }
     ];
 
+  zramSwap = {
+    enable = true;
+    priority = 6;
+    memoryPercent = 50;
+    algorithm = "zstd";
+  };
+
   # Enable GPU acceleration
   hardware.raspberry-pi."4".fkms-3d.enable = true;
 
@@ -29,14 +36,12 @@
     securityType = "user";
     extraConfig = ''
     workgroup = WORKGROUP
-    server string = raspberry-server
+    server string = smbnix
     netbios name = smbnix
     security = user
     #use sendfile = yes
     #max protocol = smb2
-    hosts allow = 192.168.15  localhost
-    hosts deny = 0.0.0.0/0
-    guest account = nobody
+    hosts allow = 192.168.15.1/24 192.168.15.118
     map to guest = bad user
   '';
     shares = {
@@ -44,11 +49,17 @@
         path = "/home/rafael/share";
         browseable = "yes";
         "read only" = "no";
-        "guest ok" = "no";
+        "guest ok" = "yes";
         "create mask" = "0644";
         "directory mask" = "0755";
         "force user" = "rafael";
+        "force group" = "wheel";
       };
     };
+  };
+
+  services.plex = {
+    enable = true;
+    openFirewall = true;
   };
 }
