@@ -175,9 +175,4 @@ in {
   networking.firewall.allowedTCPPorts = [ 3389 ];
   services.xrdp.defaultWindowManager = "xmonad";
 
-  # Docker config
-  # virtualisation.docker = {
-  #   enable = true;
-  #   enableOnBoot = false;
-  # };
 }
