@@ -79,8 +79,20 @@
     };
   };
 
-  services.plex = {
+  services.transmission = {
     enable = true;
-    openFirewall = true;
+    settings = {
+      watch-dir =  "/home/rafael/share/.p00";
+      watch-dir-enabled = true;
+      download-dir = "/home/rafael/share/.p00";
+      incomplete-dir = "/home/rafael/share/.p00/incomplete";
+      incomplete-dir-enabled = true;
+      rpc-whitelist = "127.0.0.1,192.168.15.*";
+    };
+    port = 8080;
+    home = "/home/rafael/.transmission";
+    user = "rafael";
+    group = "wheel";
+    downloadDirPermissions = "777";
   };
 }
