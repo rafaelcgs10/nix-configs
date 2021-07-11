@@ -9,6 +9,7 @@
     pkgs.gpicview
     pkgs.pscircle
     pkgs.qbittorrent
+    pkgs.remmina
     pkgs.pcmanfm
 
     pkgs.flameshot
