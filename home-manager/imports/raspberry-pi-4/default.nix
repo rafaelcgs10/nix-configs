@@ -5,6 +5,7 @@
     ../../programs/xmonad/default.nix
     ../../programs/doom/default.nix
     ../../programs/zsh/default.nix
+    ../../programs/minidlna/default.nix
     ../../programs/alacritty/default.nix
     ../../programs/rofi/default.nix
     ../../programs/X-themes/default.nix
