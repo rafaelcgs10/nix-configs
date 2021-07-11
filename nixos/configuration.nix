@@ -171,6 +171,10 @@ in {
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "21.05"; # Did you read the comment?
 
+  services.xrdp.enable = true;
+  networking.firewall.allowedTCPPorts = [ 3389 ];
+  services.xrdp.defaultWindowManager = "xmonad";
+
   # Docker config
   # virtualisation.docker = {
   #   enable = true;
