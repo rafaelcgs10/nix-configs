@@ -37,8 +37,6 @@ in {
     pkgs.inxi
     pkgs.tmux
     pkgs.pciutils
-    unstable.x2goclient
-    unstable.x2goserver
     pkgs.lm_sensors
     (pkgs.aspellWithDicts (d: [d.en]))
 
