@@ -333,8 +333,8 @@ myKeysP =
     -- Workspaces
     ("M-.", nextScreen), -- Switch focus to next monitor
     ("M-,", prevScreen), -- Switch focus to prev monitor
-    ("M-S-<KP_Add>", shiftTo Next nonNSP >> moveTo Next nonNSP), -- Shifts focused window to next ws
-    ("M-S-<KP_Subtract>", shiftTo Prev nonNSP >> moveTo Prev nonNSP), -- Shifts focused window to prev ws
+    ("M-S-.", shiftTo Next nonNSP >> moveTo Next nonNSP), -- Shifts focused window to next ws
+    ("M-S-,", shiftTo Prev nonNSP >> moveTo Prev nonNSP), -- Shifts focused window to prev ws
 
     -- Scratchpads
     -- , ("M-C-<Return>", namedScratchpadAction myScratchPads "terminal")
