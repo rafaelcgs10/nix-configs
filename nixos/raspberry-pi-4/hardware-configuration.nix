@@ -79,6 +79,11 @@
     };
   };
 
+  services.xserver = {
+    resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
+  };
+
+
   services.transmission = {
     enable = true;
     settings = {

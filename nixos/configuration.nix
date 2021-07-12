@@ -54,7 +54,6 @@ in {
   services.xserver = {
     enable = true;
     layout = "br";
-    resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
 
     desktopManager = {
       xfce.enable = true;
