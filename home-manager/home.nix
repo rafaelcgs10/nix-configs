@@ -39,6 +39,8 @@ in {
     pkgs.pciutils
     pkgs.openfortivpn
     pkgs.lm_sensors
+    pkgs.kubectl
+    pkgs.google-cloud-sdk
     (pkgs.aspellWithDicts (d: [d.en]))
 
   # Fonts
