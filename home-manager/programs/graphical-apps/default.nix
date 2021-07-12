@@ -14,6 +14,7 @@
     pkgs.pcmanfm
 
     pkgs.flameshot
+    pkgs.noisetorch
     pkgs.copyq
     pkgs.networkmanagerapplet
     pkgs.pa_applet
