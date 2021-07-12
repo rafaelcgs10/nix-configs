@@ -12,6 +12,11 @@
     pkgs.qbittorrent
     pkgs.remmina
     pkgs.pcmanfm
+    pkgs.libappindicator
+    pkgs.gdk-pixbuf
+    pkgs.gparted
+    pkgs.gnomeExtensions.topicons-plus
+    pkgs.gnomeExtensions.appindicator
 
     pkgs.flameshot
     pkgs.noisetorch

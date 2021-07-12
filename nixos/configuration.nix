@@ -110,7 +110,8 @@ in {
     wget
     git
     htop
-    gparted
+    parted
+    ntfs3g
     firefox
     terminator
     zsh

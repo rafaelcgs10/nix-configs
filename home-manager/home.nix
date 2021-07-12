@@ -42,8 +42,6 @@ in {
     pkgs.kubectl
     pkgs.google-cloud-sdk
     pkgs.xclip
-    pkgs.libappindicator
-    pkgs.gdk-pixbuf
     (pkgs.aspellWithDicts (d: [d.en]))
 
   # Fonts
@@ -73,7 +71,7 @@ in {
 
   services.udiskie = {
     enable = true;
-    tray = "always";
+    tray = "auto";
   };
 
   programs.direnv.enable = true;
