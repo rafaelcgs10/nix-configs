@@ -4,8 +4,9 @@
   imports = ["${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"];
 
   boot.loader.raspberryPi.firmwareConfig = ''
-    dtparam=audio=on
-    gpu_mem=512
+    arm_freq=1750
+    over_voltage=1
+    dtparam=sd_poll_once=on
   '';
 
   boot.kernelParams = [ "mitigations=off" ];
@@ -27,19 +28,9 @@
 
   hardware = {
     # Enable GPU acceleration
-    raspberry-pi."4".fkms-3d.enable = true;
-    enableRedistributableFirmware = true;
-    pulseaudio = {
+    raspberry-pi."4".fkms-3d = {
       enable = true;
-      systemWide = true;
-      support32Bit = true;
-      extraModules = [ pkgs.pulseaudio-modules-bt ];
-      package = pkgs.pulseaudioFull;
-      extraConfig = ''
-        unload-module module-native-protocol-unix
-        load-module module-native-protocol-unix auth-anonymous=1
-        load-module module-switch-on-connect
-      '';
+      cma = 512;
     };
     bluetooth = {
       enable = true;
