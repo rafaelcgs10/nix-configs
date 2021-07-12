@@ -37,6 +37,7 @@ in {
     pkgs.inxi
     pkgs.tmux
     pkgs.pciutils
+    pkgs.openfortivpn
     pkgs.lm_sensors
     (pkgs.aspellWithDicts (d: [d.en]))
 
@@ -47,6 +48,7 @@ in {
     pkgs.liberation_ttf
     pkgs.dina-font
     pkgs.mononoki
+    pkgs.font-awesome_4
     pkgs.font-awesome_5
     pkgs.papirus-icon-theme
     pkgs.iosevka
