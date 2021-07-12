@@ -41,6 +41,9 @@ in {
     pkgs.lm_sensors
     pkgs.kubectl
     pkgs.google-cloud-sdk
+    pkgs.xclip
+    pkgs.libappindicator
+    pkgs.gdk-pixbuf
     (pkgs.aspellWithDicts (d: [d.en]))
 
   # Fonts
@@ -55,7 +58,7 @@ in {
     pkgs.papirus-icon-theme
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
-    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
   ];
 
