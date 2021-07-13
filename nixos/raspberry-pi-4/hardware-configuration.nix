@@ -94,4 +94,11 @@
     group = "wheel";
     downloadDirPermissions = "770";
   };
+
+  services = {
+    udev.extraRules = ''
+      ACTION=="add|change", KERNEL=="sd[ab][!0-9]", ATTR{queue/scheduler}="kyber"
+    '';
+    irqbalance.enable = true;
+  };
 }
