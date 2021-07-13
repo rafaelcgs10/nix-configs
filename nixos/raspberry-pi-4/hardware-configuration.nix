@@ -83,6 +83,7 @@
     resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
   };
 
+  services.xserver.autorun = false;
 
   services.transmission = {
     enable = true;
