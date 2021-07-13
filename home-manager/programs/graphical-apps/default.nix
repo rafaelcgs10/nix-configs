@@ -15,6 +15,7 @@
     pkgs.pcmanfm
     pkgs.libappindicator
     pkgs.gdk-pixbuf
+    pkgs.tlaplusToolbox
     pkgs.gparted
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
