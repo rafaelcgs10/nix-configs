@@ -37,7 +37,11 @@ in {
     pkgs.inxi
     pkgs.tmux
     pkgs.pciutils
+    pkgs.openfortivpn
     pkgs.lm_sensors
+    pkgs.kubectl
+    pkgs.google-cloud-sdk
+    pkgs.xclip
     (pkgs.aspellWithDicts (d: [d.en]))
 
   # Fonts
@@ -47,11 +51,12 @@ in {
     pkgs.liberation_ttf
     pkgs.dina-font
     pkgs.mononoki
+    pkgs.font-awesome_4
     pkgs.font-awesome_5
     pkgs.papirus-icon-theme
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
-    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
   ];
 
@@ -66,9 +71,9 @@ in {
 
   services.udiskie = {
     enable = true;
-    tray = "always";
+    tray = "auto";
   };
 
   programs.direnv.enable = true;
-  programs.direnv.enableNixDirenvIntegration = true;
+  programs.direnv.nix-direnv.enable = true;
 }

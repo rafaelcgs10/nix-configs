@@ -54,7 +54,6 @@ in {
   services.xserver = {
     enable = true;
     layout = "br";
-    resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
 
     desktopManager = {
       xfce.enable = true;
@@ -110,7 +109,8 @@ in {
     wget
     git
     htop
-    gparted
+    parted
+    ntfs3g
     firefox
     terminator
     zsh
