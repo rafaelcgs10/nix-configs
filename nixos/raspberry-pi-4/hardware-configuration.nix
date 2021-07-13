@@ -4,8 +4,9 @@
   imports = ["${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"];
 
   boot.loader.raspberryPi.firmwareConfig = ''
-    dtparam=audio=on
-    gpu_mem=512
+    arm_freq=1750
+    over_voltage=1
+    dtparam=sd_poll_once=on
   '';
 
   boot.kernelParams = [ "mitigations=off" ];
@@ -27,19 +28,9 @@
 
   hardware = {
     # Enable GPU acceleration
-    raspberry-pi."4".fkms-3d.enable = true;
-    enableRedistributableFirmware = true;
-    pulseaudio = {
+    raspberry-pi."4".fkms-3d = {
       enable = true;
-      systemWide = true;
-      support32Bit = true;
-      extraModules = [ pkgs.pulseaudio-modules-bt ];
-      package = pkgs.pulseaudioFull;
-      extraConfig = ''
-        unload-module module-native-protocol-unix
-        load-module module-native-protocol-unix auth-anonymous=1
-        load-module module-switch-on-connect
-      '';
+      cma = 512;
     };
     bluetooth = {
       enable = true;
@@ -88,17 +79,32 @@
   services.transmission = {
     enable = true;
     settings = {
+      message-level = 1;
+      rpc-port = 9091;
+      rpc-enabled = true;
+      rpc-authentication-required = false;
+      utp-enabled = true;
+      port-forwarding-enabled = true;
+      rpc-bind-address = "0.0.0.0";
       watch-dir =  "/home/rafael/share/.p00";
       watch-dir-enabled = true;
       download-dir = "/home/rafael/share/.p00";
       incomplete-dir = "/home/rafael/share/.p00/incomplete";
       incomplete-dir-enabled = true;
-      rpc-whitelist = "127.0.0.1,192.168.15.*";
+      rpc-whitelist-enabled = true;
+      rpc-whitelist = "192.168.15.118,192.168.15.200,192.168.*.*,127.0.0.1";
     };
-    port = 8080;
+    openFirewall = true;
     home = "/home/rafael/.transmission";
     user = "rafael";
     group = "wheel";
-    downloadDirPermissions = "777";
+    downloadDirPermissions = "770";
+  };
+
+  services = {
+    udev.extraRules = ''
+      ACTION=="add|change", KERNEL=="sd[ab][!0-9]", ATTR{queue/scheduler}="kyber"
+    '';
+    irqbalance.enable = true;
   };
 }

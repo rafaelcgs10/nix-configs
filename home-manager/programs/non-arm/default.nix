@@ -11,6 +11,7 @@ in
     pkgs.slack
     unstable.discord
 
+    pkgs.google-cloud-sdk
     pkgs.vivaldi
   ];
 }
