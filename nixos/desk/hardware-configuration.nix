@@ -73,6 +73,9 @@
 
   };
 
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
+
   # Docker config
   virtualisation.docker = {
     enable = true;
