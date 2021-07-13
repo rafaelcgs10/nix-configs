@@ -69,6 +69,9 @@
 (setq gc-cons-threshold 500000000)
 (setq read-process-output-max (* 2048 2048))
 (setq lsp-idle-delay 0.800)
+(setq gc-cons-threshold 400000000)
+(setq read-process-output-max (* 2048 4096))
+(setq lsp-idle-delay 0.200)
 ;; (setq lsp-completion-provider :comapany-capf)
 ;; (setq lsp-enable-completion-at-point t)
 (setq prettify-symbols-mode t)
@@ -77,9 +80,9 @@
 (setq scroll-conservatively 101)
 (setq lsp-solargraph-use-bundler nil)
 ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
-;; (setq lsp-solargraph-multi-root t)
+(setq lsp-solargraph-multi-root t)
 (setq company-minimum-prefix-length 1
-      company-idle-delay 0.4)
+      company-idle-delay 0.1)
 ;; (setq mode-require-final-newline nil)
 
 (global-prettify-symbols-mode -1)
@@ -89,6 +92,9 @@
 ;; (setq langtool-java-bin "java")
 (setq langtool-bin "languagetool-commandline")
 (setq langtool-default-language "en-US")
+;; Long line perfomance tweak
+(setq bidi-inhibit-bpa t)
+;; (setq global-so-long-mode t)
 
 ;; Flycheck configs
 (use-package! flycheck-golangci-lint
@@ -200,6 +206,11 @@
 (use-package! treemacs-projectile
   :after treemacs projectile
   :ensure t)
+
+(use-package! treemacs-icons-dired
+  :after treemacs dired
+  :ensure t
+  :config (treemacs-icons-dired-mode))
 
 (use-package! treemacs-magit
   :after treemacs magit
