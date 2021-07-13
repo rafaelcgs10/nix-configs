@@ -235,3 +235,9 @@
     (delete-trailing-whitespace)))
 
 (setq haskell-process-type 'cabal-new-repl)
+
+(custom-set-faces '(flycheck-duplicate ((t (:underline '(:style line)))))
+                  '(flycheck-incorrect ((t (:underline '(:style line)))))
+                  '(flycheck-error ((t (:underline '(:style line)))))
+                  '(flycheck-warning ((t (:underline '(:style line)))))
+                  '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
