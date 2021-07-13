@@ -11,6 +11,7 @@
     pkgs.pscircle
     pkgs.qbittorrent
     pkgs.remmina
+    pkgs.obs-studio
     pkgs.pcmanfm
     pkgs.libappindicator
     pkgs.gdk-pixbuf
