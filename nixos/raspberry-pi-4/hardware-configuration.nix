@@ -107,4 +107,8 @@
     '';
     irqbalance.enable = true;
   };
+
+  environment.systemPackages = with pkgs; [
+    libraspberrypi
+  ];
 }
