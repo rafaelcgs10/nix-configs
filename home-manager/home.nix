@@ -41,6 +41,7 @@ in {
     pkgs.lm_sensors
     pkgs.kubectl
     pkgs.xclip
+    pkgs.fzf
     (pkgs.aspellWithDicts (d: [d.en]))
 
   # Fonts
