@@ -22,7 +22,7 @@ let
     };
   };
 in {
-  home.packages = [ doom-emacs ];
+  home.packages = [ doom-emacs pkgs.python3 ];
   home.file.".emacs.d/init.el".text = ''
       (load "default.el")
   '';
