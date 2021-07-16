@@ -9,6 +9,7 @@ in
     pkgs.whatsapp-for-linux
     pkgs.tdesktop
     pkgs.slack
+    pkgs.obs-studio
     unstable.discord
 
     pkgs.google-cloud-sdk
