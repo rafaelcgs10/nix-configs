@@ -41,7 +41,6 @@ in {
     pkgs.lm_sensors
     pkgs.kubectl
     pkgs.xclip
-    pkgs.fzf
     (pkgs.aspellWithDicts (d: [d.en]))
 
   # Fonts
@@ -59,6 +58,10 @@ in {
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
   ];
+
+  programs.fzf = {
+    enable = true;
+  };
 
 
   fonts.fontconfig.enable = true;
