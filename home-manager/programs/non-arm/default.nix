@@ -10,6 +10,7 @@ in
     pkgs.tdesktop
     pkgs.slack
     pkgs.obs-studio
+    pkgs.tlaplusToolbox
     unstable.discord
 
     pkgs.google-cloud-sdk
