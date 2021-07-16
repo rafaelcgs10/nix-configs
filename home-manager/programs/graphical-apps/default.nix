@@ -1,5 +1,7 @@
 { pkgs, ...}:
-
+let
+  unstable = import <nixpkgs-unstable> {};
+in
 {
   home.packages = [
     pkgs.evince
@@ -19,6 +21,7 @@
     pkgs.gparted
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
+    unstable.qmplay2
 
     pkgs.flameshot
     pkgs.noisetorch
