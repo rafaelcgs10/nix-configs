@@ -91,7 +91,7 @@ in {
   users.users.rafael = {
     isNormalUser = true;
     home = "/home/rafael";
-    extraGroups = [ "wheel" "networkmanager" "docker" "video" ];
+    extraGroups = [ "wheel" "networkmanager" "docker" "video" "users" ];
   };
   nix.trustedUsers = [ "root" "rafael" ];
 
@@ -153,8 +153,8 @@ in {
   # Or disable the firewall altogether.
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
-  networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 8200 ];
-  networking.firewall.allowedUDPPorts = [ 137 138 9091 ];
+  networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 49152 ];
+  networking.firewall.allowedUDPPorts = [ 137 138 9091 49152 ];
 
   services.avahi = {
     enable = true;

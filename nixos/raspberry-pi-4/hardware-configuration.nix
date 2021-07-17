@@ -65,7 +65,7 @@
         "create mask" = "0644";
         "directory mask" = "0755";
         "force user" = "rafael";
-        "force group" = "wheel";
+        "force group" = "users";
       };
     };
   };
@@ -97,7 +97,7 @@
     openFirewall = true;
     home = "/home/rafael/.transmission";
     user = "rafael";
-    group = "wheel";
+    group = "users";
     downloadDirPermissions = "770";
   };
 
@@ -111,4 +111,20 @@
   environment.systemPackages = with pkgs; [
     libraspberrypi
   ];
+
+  services.mediatomb = {
+    enable = true;
+    pcDirectoryHide = false;
+    # customCfg = true;
+    # dataDir = "/home/rafael/.gerbera";
+    group = "users";
+    interface = "eth0";
+    mediaDirectories = [
+      {
+        hidden-files = true;
+        path = "/media";
+        recursive = true;
+      }
+    ];
+  };
 }
