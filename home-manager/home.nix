@@ -79,4 +79,9 @@ in {
 
   programs.direnv.enable = true;
   programs.direnv.nix-direnv.enable = true;
+
+  services.syncthing = {
+    enable = true;
+    tray.enable = true;
+  };
 }
