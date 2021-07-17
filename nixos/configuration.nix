@@ -156,6 +156,10 @@ in {
   networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 ];
   networking.firewall.allowedUDPPorts = [ 137 138 9091 ];
 
+  services.avahi = {
+    enable = true;
+  };
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
