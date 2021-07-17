@@ -112,19 +112,12 @@
     libraspberrypi
   ];
 
-  services.mediatomb = {
+  services.jellyfin = {
     enable = true;
-    pcDirectoryHide = false;
-    # customCfg = true;
-    # dataDir = "/home/rafael/.gerbera";
+    openFirewall = true;
+    user = "rafael";
     group = "users";
-    interface = "eth0";
-    mediaDirectories = [
-      {
-        hidden-files = true;
-        path = "/media";
-        recursive = true;
-      }
-    ];
   };
+
+  # users.users.jellyfin.extraGroups = [ "wheel" "users" ];
 }
