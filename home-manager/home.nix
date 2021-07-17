@@ -43,7 +43,7 @@ in {
     pkgs.xclip
     (pkgs.aspellWithDicts (d: [d.en]))
 
-  # Fonts
+    # Fonts
     pkgs.noto-fonts
     pkgs.noto-fonts-cjk
     pkgs.noto-fonts-emoji

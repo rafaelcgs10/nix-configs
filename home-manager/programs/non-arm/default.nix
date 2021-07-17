@@ -16,4 +16,9 @@ in
     pkgs.google-cloud-sdk
     pkgs.vivaldi
   ];
+
+  services.syncthing = {
+    enable = true;
+    tray.enable = true;
+  };
 }
