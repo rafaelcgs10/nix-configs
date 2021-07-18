@@ -5,6 +5,13 @@
     enable = true;
     enableCompletion = true;
     enableAutosuggestions = true;
+    history = {
+      save = 1000000;
+      size = 1000000;
+      expireDuplicatesFirst = true;
+      share = true;
+      ignoreDups = true;
+    };
 
     oh-my-zsh = {
       enable = true;
