@@ -11,6 +11,12 @@
 
   boot.kernelParams = [ "mitigations=off" ];
 
+  fileSystems."/bighd" =
+    { device = "/dev/disk/by-label/bighd";
+      fsType = "ext4";
+    };
+
+
   fileSystems = {
     "/" = {
       device = "/dev/disk/by-label/NIXOS_SD";
@@ -58,13 +64,13 @@
   '';
     shares = {
       private = {
-        path = "/home/rafael/share";
+        path = "/bighd/downloader";
         browseable = "yes";
         "read only" = "no";
         "guest ok" = "yes";
         "create mask" = "0644";
         "directory mask" = "0755";
-        "force user" = "rafael";
+        "force user" = "downloader";
         "force group" = "users";
       };
     };
@@ -76,6 +82,12 @@
 
   services.xserver.autorun = false;
 
+  users.users.downloader = {
+    isNormalUser = true;
+    home = "/bighd/downloader";
+    extraGroups = [ "wheel" "networkmanager" "users" ];
+  };
+
   services.transmission = {
     enable = true;
     settings = {
@@ -86,19 +98,19 @@
       utp-enabled = true;
       port-forwarding-enabled = true;
       rpc-bind-address = "0.0.0.0";
-      watch-dir =  "/home/rafael/share/.p00";
+      watch-dir =  "/bighd/downloader/Downloads";
       watch-dir-enabled = true;
-      download-dir = "/home/rafael/share/.p00";
-      incomplete-dir = "/home/rafael/share/.p00/incomplete";
+      download-dir = "/bighd/downloader/Downloads/";
+      incomplete-dir = "/bighd/downloader/Downloads/incomplete";
       incomplete-dir-enabled = true;
       rpc-whitelist-enabled = true;
       rpc-whitelist = "192.168.15.118,192.168.15.200,192.168.*.*,127.0.0.1";
     };
     openFirewall = true;
-    home = "/home/rafael/.transmission";
-    user = "rafael";
+    home = "/bighd/downloader/.transmission";
+    user = "downloader";
     group = "users";
-    downloadDirPermissions = "770";
+    downloadDirPermissions = "700";
   };
 
   services = {
@@ -115,7 +127,7 @@
   services.jellyfin = {
     enable = true;
     openFirewall = true;
-    user = "rafael";
+    user = "downloader";
     group = "users";
   };
 

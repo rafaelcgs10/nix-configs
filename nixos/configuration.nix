@@ -90,6 +90,7 @@ in {
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.rafael = {
     isNormalUser = true;
+    password = "rafael";
     home = "/home/rafael";
     extraGroups = [ "wheel" "networkmanager" "docker" "video" "users" ];
   };
@@ -164,7 +165,7 @@ in {
   services.syncthing = {
     user = "rafael";
     group = "users";
-    dataDir = "/home/rafael/";
+    dataDir = "/bighd/Syncthing";
     enable = true;
     relay.enable = true;
   };
