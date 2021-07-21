@@ -112,7 +112,7 @@ windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace
 
 myStartupHook :: X ()
 myStartupHook = do
-  spawnOnce "bash /home/rafael/nix-configs/wallpapers/update.sh"
+  spawnOnce "bash ~/nix-configs/wallpapers/update.sh"
   -- spawnOnce "volumeicon &"
   -- spawnOnce "trayer --edge bottom --align right --widthtype request --padding 6 --SetDockType true --SetPartialStrut true --expand true --monitor 0 --transparent true --alpha 0 --tint 0x0c0c0c  --height 16 &"
   -- spawnOnce "/usr/sbin/emacs --daemon &"

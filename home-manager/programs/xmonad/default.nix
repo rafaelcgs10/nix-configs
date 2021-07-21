@@ -12,7 +12,7 @@
         haskellPackages.xmonad-contrib
         haskellPackages.xmonad-extras
       ];
-      config = /home/rafael/nix-configs/home-manager/programs/xmonad/config.hs;
+      config = ~/nix-configs/home-manager/programs/xmonad/config.hs;
     };
 
   };
