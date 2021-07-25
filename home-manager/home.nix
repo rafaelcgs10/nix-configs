@@ -29,6 +29,8 @@ in {
     pkgs.jq
     pkgs.tree
     pkgs.nmap
+    pkgs.unzip
+    pkgs.unrar
     pkgs.zsh
     pkgs.rnix-lsp
     pkgs.lazydocker
