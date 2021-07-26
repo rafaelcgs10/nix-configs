@@ -31,6 +31,7 @@ in {
     pkgs.nmap
     pkgs.unzip
     pkgs.unrar
+    pkgs.p7zip
     pkgs.zsh
     pkgs.rnix-lsp
     pkgs.lazydocker
