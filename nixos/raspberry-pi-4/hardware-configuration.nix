@@ -1,7 +1,10 @@
 { config, pkgs, lib, ... }:
 
 {
-  imports = ["${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"];
+  imports = [
+    "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"
+      ../modules/qbittorrent.nix
+  ];
 
   boot.loader.raspberryPi.firmwareConfig = ''
     arm_freq=1750
@@ -88,31 +91,6 @@
     extraGroups = [ "wheel" "networkmanager" "users" ];
   };
 
-  services.transmission = {
-    enable = true;
-    settings = {
-      message-level = 1;
-      rpc-port = 9091;
-      rpc-enabled = true;
-      rpc-authentication-required = false;
-      utp-enabled = true;
-      port-forwarding-enabled = true;
-      rpc-bind-address = "0.0.0.0";
-      watch-dir =  "/bighd/downloader/Downloads";
-      watch-dir-enabled = true;
-      download-dir = "/bighd/downloader/Downloads/";
-      incomplete-dir = "/bighd/downloader/Downloads/incomplete";
-      incomplete-dir-enabled = true;
-      rpc-whitelist-enabled = true;
-      rpc-whitelist = "192.168.15.118,192.168.15.200,192.168.*.*,127.0.0.1";
-    };
-    openFirewall = true;
-    home = "/bighd/downloader/.transmission";
-    user = "downloader";
-    group = "users";
-    downloadDirPermissions = "700";
-  };
-
   services = {
     udev.extraRules = ''
       ACTION=="add|change", KERNEL=="sd[ab][!0-9]", ATTR{queue/scheduler}="kyber"
@@ -143,6 +121,9 @@
       port_enable=YES
     '';
   };
+
+  services.qbittorrent.enable = true;
+  users.users.qbittorrent.isSystemUser = true;
 
   # users.users.jellyfin.extraGroups = [ "wheel" "users" ];
 }
