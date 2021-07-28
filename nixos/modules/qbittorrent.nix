@@ -3,7 +3,7 @@ with lib;
 let
   cfg = config.services.qbittorrent;
   configDir = "${cfg.dataDir}/.config";
-  openFilesLimit = 5096;
+  openFilesLimit = 4096;
 in
 {
   options.services.qbittorrent = {
@@ -17,7 +17,7 @@ in
 
     dataDir = mkOption {
       type = types.path;
-      default = "/var/lib/qbittorrent";
+      default = "/bighd/downloader/.qbittorrent";
       description = ''
         The directory where qBittorrent will create files.
       '';
