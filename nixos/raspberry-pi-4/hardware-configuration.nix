@@ -131,5 +131,18 @@
     group = "users";
   };
 
+  services.vsftpd = {
+    enable = true;
+    localUsers = true;
+    writeEnable = true;
+    anonymousUser = true;
+    extraConfig = ''
+      pasv_enable=YES
+      pasv_min_port=64000
+      pasv_max_port=64000 
+      port_enable=YES
+    '';
+  };
+
   # users.users.jellyfin.extraGroups = [ "wheel" "users" ];
 }

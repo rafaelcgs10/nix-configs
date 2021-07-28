@@ -154,7 +154,7 @@ in {
   # Or disable the firewall altogether.
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
-  networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 49152 8384 ];
+  networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 49152 8384 21 20 64000 ];
   networking.firewall.allowedUDPPorts = [ 137 138 9091 49152 ];
 
   services.avahi = {
