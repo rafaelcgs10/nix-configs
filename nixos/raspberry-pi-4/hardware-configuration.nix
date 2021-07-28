@@ -1,7 +1,10 @@
 { config, pkgs, lib, ... }:
 
 {
-  imports = ["${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"];
+  imports = [
+    "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"
+      ../modules/qbittorrent.nix
+  ];
 
   boot.loader.raspberryPi.firmwareConfig = ''
     arm_freq=1750
@@ -130,6 +133,9 @@
     user = "downloader";
     group = "users";
   };
+
+  services.qbittorrent.enable = true;
+  users.users.qbittorrent.isSystemUser = true;
 
   # users.users.jellyfin.extraGroups = [ "wheel" "users" ];
 }
