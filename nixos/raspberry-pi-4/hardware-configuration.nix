@@ -4,7 +4,12 @@
   imports = [
     "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"
       ../modules/qbittorrent.nix
+      ./fan-control/default.nix
   ];
+
+  my.raspberry-pi = {
+    fan-control.enable = true;
+  };
 
   boot.loader.raspberryPi.firmwareConfig = ''
     arm_freq=1750
