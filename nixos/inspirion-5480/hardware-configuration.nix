@@ -92,4 +92,13 @@
     enable = true;
     enableOnBoot = false;
   };
+
+  services.syncthing = {
+    user = "rafael";
+    group = "users";
+    dataDir = "/home/rafael";
+    enable = true;
+    relay.enable = true;
+  };
+
 }

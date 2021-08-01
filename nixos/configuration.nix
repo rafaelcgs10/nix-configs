@@ -162,14 +162,6 @@ in {
   };
 
 
-  services.syncthing = {
-    user = "rafael";
-    group = "users";
-    dataDir = "/bighd/Syncthing";
-    enable = true;
-    relay.enable = true;
-  };
-
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave

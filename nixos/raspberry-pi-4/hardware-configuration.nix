@@ -122,7 +122,7 @@
     extraConfig = ''
       pasv_enable=YES
       pasv_min_port=64000
-      pasv_max_port=64000 
+      pasv_max_port=64000
       port_enable=YES
     '';
   };
@@ -149,5 +149,13 @@
     daemonIONiceLevel = 10;
     daemonNiceLevel = 5;
     buildCores = 2;
+  };
+
+  services.syncthing = {
+    user = "rafael";
+    group = "users";
+    dataDir = "/bighd/Syncthing";
+    enable = true;
+    relay.enable = true;
   };
 }
