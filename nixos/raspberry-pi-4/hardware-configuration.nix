@@ -130,5 +130,24 @@
   services.qbittorrent.enable = true;
   users.users.qbittorrent.isSystemUser = true;
 
-  # users.users.jellyfin.extraGroups = [ "wheel" "users" ];
+  # Enable cron service
+  services.cron = {
+    enable = true;
+    systemCronJobs = [
+      "1 0 */1 * *      downloader    find /bighd/dowloader/Downloads -mtime +2 -type f -delete"
+      "1 5 */1 * *      root          reboot"
+    ];
+  };
+
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "daily";
+      options = "--delete-older-than 1d";
+    };
+
+    daemonIONiceLevel = 10;
+    daemonNiceLevel = 5;
+    buildCores = 2;
+  };
 }
