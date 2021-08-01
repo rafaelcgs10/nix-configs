@@ -158,4 +158,10 @@
     enable = true;
     relay.enable = true;
   };
+
+  systemd.services.syncthing.serviceConfig = {
+    Nice = 10;
+    IOSchedulingClass = "idle";
+    IOSchedulingPriority = 6;
+  };
 }
