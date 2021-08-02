@@ -134,7 +134,7 @@
   services.cron = {
     enable = true;
     systemCronJobs = [
-      "1 0 */1 * *      downloader    find /bighd/dowloader/Downloads -mtime +2 -type f -delete"
+      "40 0 */1 * *      downloader    find /bighd/downloader/Downloads -mtime +2 -type f -delete"
       "1 5 */1 * *      root          reboot"
     ];
   };
