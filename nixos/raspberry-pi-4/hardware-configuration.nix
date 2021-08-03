@@ -106,7 +106,7 @@
   services.earlyoom = {
     enable = true;
     useKernelOOMKiller = true;
-    freeMemThreshold = 20;
+    freeMemThreshold = 15;
   };
 
   environment.systemPackages = with pkgs; [
