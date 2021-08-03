@@ -166,7 +166,7 @@
   };
 
   systemd.services.syncthing.serviceConfig = {
-    Nice = 10;
+    Nice = 20;
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
   };
