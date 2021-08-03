@@ -165,6 +165,11 @@
     relay.enable = true;
   };
 
+  systemd.services.jellyfin.serviceConfig = {
+    Nice = -10;
+    IOSchedulingPriority = 0;
+  };
+
   systemd.services.syncthing.serviceConfig = {
     Nice = 20;
     IOSchedulingClass = "idle";
