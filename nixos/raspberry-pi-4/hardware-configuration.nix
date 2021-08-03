@@ -103,7 +103,7 @@
   #   irqbalance.enable = true;
   # };
 
-  services.earlyoom {
+  services.earlyoom = {
     enable = true;
     useKernelOOMKiller = true;
     freeMemThreshold = 20;
