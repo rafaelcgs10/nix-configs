@@ -33,12 +33,12 @@
     };
   };
 
-  zramSwap = {
-    enable = true;
-    priority = 6;
-    memoryPercent = 50;
-    algorithm = "zstd";
-  };
+  # zramSwap = {
+  #   enable = true;
+  #   priority = 6;
+  #   memoryPercent = 50;
+  #   algorithm = "zstd";
+  # };
 
   hardware = {
     # Enable GPU acceleration
@@ -96,12 +96,12 @@
     extraGroups = [ "wheel" "networkmanager" "users" ];
   };
 
-  services = {
-    udev.extraRules = ''
-      ACTION=="add|change", KERNEL=="sd[ab][!0-9]", ATTR{queue/scheduler}="kyber"
-    '';
-    irqbalance.enable = true;
-  };
+  # services = {
+  #   udev.extraRules = ''
+  #     ACTION=="add|change", KERNEL=="sd[ab][!0-9]", ATTR{queue/scheduler}="kyber"
+  #   '';
+  #   irqbalance.enable = true;
+  # };
 
   environment.systemPackages = with pkgs; [
     libraspberrypi
