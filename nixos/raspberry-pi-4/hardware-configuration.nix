@@ -103,6 +103,12 @@
   #   irqbalance.enable = true;
   # };
 
+  services.earlyoom {
+    enable = true;
+    useKernelOOMKiller = true;
+    freeMemThreshold = 20;
+  };
+
   environment.systemPackages = with pkgs; [
     libraspberrypi
   ];
