@@ -64,6 +64,8 @@
 
   hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ vaapiIntel ];
 
+  programs.steam.enable = true;
+
   # networking.interfaces.enp0s3.useDHCP = true;
 
   services.thermald.enable = lib.mkDefault true;
