@@ -43,6 +43,7 @@ in {
     pkgs.openfortivpn
     pkgs.lm_sensors
     pkgs.kubectl
+    pkgs.k9s
     pkgs.xclip
     (pkgs.aspellWithDicts (d: [d.en]))
 
