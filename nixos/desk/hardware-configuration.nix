@@ -28,6 +28,8 @@
     [ { device = "/dev/disk/by-uuid/63d991d0-8b79-4821-9cc3-0d28993d4d7d"; }
     ];
 
+  programs.steam.enable = true;
+
   # Xserver basic
   services.xserver = {
     exportConfiguration = true;
