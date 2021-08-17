@@ -87,6 +87,8 @@
     enable = true;
     enableOnBoot = false;
   };
+  #To support circleci-cli
+  systemd.enableUnifiedCgroupHierarchy = false;
 
   services.syncthing = {
     user = "rafael";
