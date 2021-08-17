@@ -23,6 +23,10 @@
       fsType = "ext4";
     };
 
+  fileSystems."/bighd2" =
+    { device = "/dev/disk/by-label/bighd2";
+      fsType = "ntfs";
+    };
 
   swapDevices =
     [ { device = "/dev/disk/by-uuid/63d991d0-8b79-4821-9cc3-0d28993d4d7d"; }
