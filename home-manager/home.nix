@@ -44,6 +44,7 @@ in {
     pkgs.lm_sensors
     pkgs.kubectl
     pkgs.k9s
+    pkgs.circleci-cli
     pkgs.xclip
     (pkgs.aspellWithDicts (d: [d.en]))
 
