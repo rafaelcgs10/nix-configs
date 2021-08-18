@@ -13,7 +13,6 @@ in
     pkgs.tlaplusToolbox
     unstable.discord
 
-    pkgs.google-cloud-sdk
     pkgs.vivaldi
   ];
 }
