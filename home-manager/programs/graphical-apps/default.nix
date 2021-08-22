@@ -11,7 +11,7 @@ in
     pkgs.feh
     pkgs.gpicview
     pkgs.pscircle
-    pkgs.calibre
+    (pkgs.calibre.override { unrarSupport = true; })
     pkgs.qbittorrent
     pkgs.remmina
     pkgs.pcmanfm
