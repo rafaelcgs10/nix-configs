@@ -11,6 +11,7 @@ in
     pkgs.feh
     pkgs.gpicview
     pkgs.pscircle
+    pkgs.calibre
     pkgs.qbittorrent
     pkgs.remmina
     pkgs.pcmanfm
