@@ -24,6 +24,9 @@
       fsType = "ntfs";
     };
 
+  swapDevices =
+    [ { device = "/dev/disk/by-label/swap"; }
+    ];
 
   fileSystems = {
     "/" = {
@@ -31,6 +34,12 @@
       fsType = "ext4";
       options = [ "noatime" ];
     };
+  };
+
+  services.earlyoom = {
+    enable = true;
+    useKernelOOMKiller = true;
+    freeMemThreshold = 15;
   };
 
   # zramSwap = {
@@ -102,12 +111,6 @@
   #   '';
   #   irqbalance.enable = true;
   # };
-
-  services.earlyoom = {
-    enable = true;
-    useKernelOOMKiller = true;
-    freeMemThreshold = 15;
-  };
 
   environment.systemPackages = with pkgs; [
     libraspberrypi
