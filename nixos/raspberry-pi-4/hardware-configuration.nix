@@ -21,7 +21,7 @@
 
   fileSystems."/bighd" =
     { device = "/dev/disk/by-label/bighd";
-      fsType = "ext4";
+      fsType = "ntfs";
     };
 
 
