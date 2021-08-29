@@ -77,10 +77,6 @@ in {
   # Configure keymap in X11
   # services.xserver.xkbOptions = "eurosign:e";
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
-  services.printing.drivers = [ pkgs.hplipWithPlugin ];
-
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;

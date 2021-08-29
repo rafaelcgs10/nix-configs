@@ -61,6 +61,11 @@
   services.xserver = {
     resolutions = [ { x = 1920; y = 1080; } { x = 1280; y = 720; } { x = 1024; y = 768; }];
   };
+  #
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+  services.printing.drivers = [ pkgs.hplipWithPlugin ];
+
 
   hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ vaapiIntel ];
 
