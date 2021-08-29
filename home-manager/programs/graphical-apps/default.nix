@@ -18,7 +18,6 @@ in
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.gparted
-    pkgs.insomnia
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2

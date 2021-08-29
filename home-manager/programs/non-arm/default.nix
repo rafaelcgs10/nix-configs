@@ -7,6 +7,7 @@ in
   home.packages = [
     pkgs.spotify
     pkgs.whatsapp-for-linux
+    pkgs.insomnia
     pkgs.tdesktop
     pkgs.slack
     pkgs.obs-studio
