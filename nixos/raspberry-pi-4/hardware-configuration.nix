@@ -7,6 +7,24 @@
       ./fan-control/default.nix
   ];
 
+  boot.kernelParams = [
+   "usb-storage.quirks=152d:0578:u"
+   "usbcore.quirks=152d:0578:u"
+   "console=ttySO,115200n8"
+   "console=tty1MA0n115200n8"
+   "console=tty0"
+   "mitigations=off"
+  ];
+
+  networking.wireless.enable = false;
+
+  services.journald.extraConfig = ''
+    Storage = volatile
+    Compress = yes
+    RuntimeMaxUse = 256M
+    RuntimeMaxFileSize = 16M
+  '';
+
   my.raspberry-pi = {
     fan-control.enable = true;
   };
@@ -17,7 +35,7 @@
     dtparam=sd_poll_once=on
   '';
 
-  boot.kernelParams = [ "mitigations=off" ];
+  boot.kernelPackages = pkgs.linuxPackages_rpi4;
 
   fileSystems."/bighd" =
     { device = "/dev/disk/by-label/bighd";
@@ -39,15 +57,8 @@
   services.earlyoom = {
     enable = true;
     useKernelOOMKiller = true;
-    freeMemThreshold = 15;
+    freeMemThreshold = 5;
   };
-
-  # zramSwap = {
-  #   enable = true;
-  #   priority = 6;
-  #   memoryPercent = 50;
-  #   algorithm = "zstd";
-  # };
 
   hardware = {
     # Enable GPU acceleration
@@ -170,7 +181,7 @@
   };
 
   systemd.services.jellyfin.serviceConfig = {
-    Nice = -10;
+    Nice = 10;
     IOSchedulingPriority = 0;
   };
 

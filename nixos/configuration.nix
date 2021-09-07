@@ -16,7 +16,7 @@ in {
 
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
-  hardware.bluetooth.enable = true;
+  # hardware.bluetooth.enable = true;
 
   nix.autoOptimiseStore = true;
 
@@ -154,11 +154,6 @@ in {
   networking.firewall.allowPing = true;
   networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 49152 8384 21 20 64000 8080];
   networking.firewall.allowedUDPPorts = [ 137 138 9091 49152 ];
-
-  services.avahi = {
-    enable = true;
-  };
-
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
