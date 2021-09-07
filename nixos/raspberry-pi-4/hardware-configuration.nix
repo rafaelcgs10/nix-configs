@@ -16,6 +16,12 @@
    "mitigations=off"
   ];
 
+  boot.kernelModules = [ "bfq" ];
+  boot.postBootCommands = ''
+   echo bfq > /sys/block/sda/queue/scheduler 
+   echo bfq > /sys/block/sdb/queue/scheduler
+  '';
+
   networking.wireless.enable = false;
 
   services.journald.extraConfig = ''
