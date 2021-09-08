@@ -47,6 +47,7 @@ in {
     unstable.circleci-cli
     pkgs.xclip
     (pkgs.aspellWithDicts (d: [d.en]))
+    pkgs.languagetool
 
     # Fonts
     pkgs.noto-fonts
