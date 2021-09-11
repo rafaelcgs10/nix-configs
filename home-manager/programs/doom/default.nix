@@ -1,5 +1,5 @@
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/539db709fdedeb4d9e470cd62e590c970ff7d627.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   spinner-lzip = builtins.fetchurl {
     url = "https://elpa.gnu.org/packages/spinner-1.7.3.el.lz";

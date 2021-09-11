@@ -9,9 +9,15 @@
     ];
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ehci_pci" "ahci" "usb_storage" "usbhid" "sd_mod" ];
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" ];
+  boot.kernelModules = [ "kvm-intel" "bfq" ];
   boot.extraModulePackages = [ ];
+
+  boot.postBootCommands = ''
+   echo bfq > /sys/block/sda/queue/scheduler
+   echo bfq > /sys/block/sdb/queue/scheduler
+  '';
+
+  boot.kernelPackages = pkgs.linuxPackages_zen;
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/96082114-504a-43e6-8a32-7c0b49097e8a";

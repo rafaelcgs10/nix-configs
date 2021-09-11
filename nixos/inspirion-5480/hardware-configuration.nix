@@ -29,6 +29,8 @@
 
   services.xserver.videoDrivers = [ "intel" ];
 
+  boot.kernelPackages = pkgs.linuxPackages_zen;
+
   hardware.cpu.intel.updateMicrocode =
     lib.mkDefault config.hardware.enableRedistributableFirmware;
 
