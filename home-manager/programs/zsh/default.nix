@@ -6,6 +6,7 @@
     enableCompletion = true;
     enableAutosuggestions = true;
     history = {
+      path = "$HOME/zsh_history/zsh_history";
       save = 1000000;
       size = 1000000;
       expireDuplicatesFirst = true;
