@@ -152,8 +152,8 @@ in {
   # Or disable the firewall altogether.
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
-  networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 49152 8384 21 20 64000 8080];
-  networking.firewall.allowedUDPPorts = [ 137 138 9091 49152 ];
+  networking.firewall.allowedTCPPorts = [ 445 139 3389 9091 49152 8384 21 20 64000 8080 53 443 3080 80 ];
+  networking.firewall.allowedUDPPorts = [ 137 138 9091 49152 53 443 3080 ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

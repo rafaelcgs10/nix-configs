@@ -196,4 +196,30 @@
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
   };
+  
+  # Docker config
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = true;
+  };
+
+  virtualisation.oci-containers.containers.pi-hole = {
+    autoStart = true;
+    image = "pihole/pihole:latest";
+    ports = [
+      "53:53/tcp"
+      "53:53/udp"
+      "80:80/tcp"
+    ];
+    volumes = [
+      "/etc/pihole/:/etc/pihole/"
+      "/etc/dnsmasq.d/:/etc/dnsmasq.d/"
+    ];
+    environment = {
+      TZ = "America/Sao_Paulo";
+      WEBTHEME = "default-darker";
+      WEBPASSWORD = "pihole";
+    };
+    extraOptions = [ "--network=host" ];
+  };
 }
