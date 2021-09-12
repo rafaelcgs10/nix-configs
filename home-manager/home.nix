@@ -42,10 +42,12 @@ in {
     pkgs.pciutils
     pkgs.openfortivpn
     pkgs.lm_sensors
+    pkgs.bc
     pkgs.kubectl
     pkgs.k9s
     unstable.circleci-cli
     pkgs.xclip
+    pkgs.direnv
     (pkgs.aspellWithDicts (d: [d.en]))
     pkgs.languagetool
 
