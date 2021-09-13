@@ -16,7 +16,7 @@ in {
 
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
-  # hardware.bluetooth.enable = true;
+  hardware.bluetooth.enable = true;
 
   nix.autoOptimiseStore = true;
 
