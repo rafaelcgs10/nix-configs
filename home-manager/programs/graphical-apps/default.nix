@@ -18,6 +18,7 @@ in
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.gparted
+    pkgs.bitwarden
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
