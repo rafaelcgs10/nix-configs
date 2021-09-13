@@ -51,7 +51,7 @@
 
         normal = {
           black   = "0x000000";
-          red     = "0xff6c6b";
+          red     = "0xfff403";
           green   = "0x98be65";
           yellow  = "0xecbe7b";
           blue    = "0x596889";
@@ -62,7 +62,7 @@
 
         bright = {
           black   = "0x3f444a";
-          red     = "0xff6c6b";
+          red     = "0xfff403";
           green   = "0x98be65";
           yellow  = "0xecbe7b";
           blue    = "0x51afef";
