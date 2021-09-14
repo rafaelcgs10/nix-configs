@@ -18,7 +18,7 @@
 
   boot.kernelModules = [ "bfq" ];
   boot.postBootCommands = ''
-   echo bfq > /sys/block/sda/queue/scheduler 
+   echo bfq > /sys/block/sda/queue/scheduler
    echo bfq > /sys/block/sdb/queue/scheduler
   '';
 
@@ -197,7 +197,7 @@
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
   };
-  
+
   # Docker config
   virtualisation.docker = {
     enable = true;
