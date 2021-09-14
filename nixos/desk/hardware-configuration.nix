@@ -46,42 +46,52 @@
 
     videoDrivers = [ "nvidia" ];
 
+    config = ''
+    Section "InputClass"
+        Identifier "Logitech MX Ergo"
+        MatchIsPointer "yes"
+        Option "AccelerationThreshold"   "0"
+        Option "AccelerationNumerator"   "4"
+        Option "AccelerationDenominator" "2"
+    EndSection
+  '';
+
     serverLayoutSection = ''
-      Option "BlankTime" "0"
-      Option "StandbyTime" "0"
-      Option "SuspendTime" "0"
-      Option "OffTime" "0"
-    '';
+    Option "BlankTime" "0"
+    Option "StandbyTime" "0"
+    Option "SuspendTime" "0"
+    Option "OffTime" "0"
+  '';
 
     deviceSection = ''
-      Driver         "nvidia"
-      VendorName     "NVIDIA Corporation"
-      BoardName      "GeForce GTX 1060 6GB"
-    '';
+    Driver         "nvidia"
+    VendorName     "NVIDIA Corporation"
+    BoardName      "GeForce GTX 1060 6GB"
+  '';
 
     monitorSection = ''
-      VendorName     "Unknown"
-      ModelName      "LG Electronics LG TV SSCR"
-      HorizSync       30.0 - 135.0
-      VertRefresh     24.0 - 120.0
-      Option         "DPMS"
-    '';
+    VendorName     "Unknown"
+    ModelName      "LG Electronics LG TV SSCR"
+    HorizSync       30.0 - 135.0
+    VertRefresh     24.0 - 120.0
+    Option         "DPMS"
+  '';
 
     screenSection = ''
-      Device         "Device0"
-      Monitor        "Monitor0"
-      DefaultDepth    24
-      Option         "Stereo" "0"
-      Option         "DPI" "96 x 96"
-      Option         "nvidiaXineramaInfoOrder" "DFP-2"
-      Option         "metamodes" "HDMI-0: 4096x2160_60 +0+0 {ForceCompositionPipeline=On, ForceFullCompositionPipeline=On}, DP-0: 1920x1080_144 +4096+1080 {ForceCompositionPipeline=On, ForceFullCompositionPipeline=On}"
-      Option         "SLI" "Off"
-      Option         "MultiGPU" "Off"
-      Option         "BaseMosaic" "off"
-      SubSection     "Display"
-          Depth       24
-      EndSubSection
-    '';
+    Device         "Device0"
+    Monitor        "Monitor0"
+    DefaultDepth    24
+    Option         "Stereo" "0"
+    Option         "DPI" "96 x 96"
+    Option         "nvidiaXineramaInfoOrder" "DFP-2"
+    Option         "metamodes" "HDMI-0: 4096x2160_60 +0+0 {ForceCompositionPipeline=On, ForceFullCompositionPipeline=On}, DP-0: 1920x1080_144 +4096+1080 {ForceCompositionPipeline=On, ForceFullCompositionPipeline=On}"
+    Option         "SLI" "Off"
+    Option         "MultiGPU" "Off"
+    Option         "BaseMosaic" "off"
+    SubSection     "Display"
+        Depth       24
+    EndSubSection
+  '';
 
   };
 

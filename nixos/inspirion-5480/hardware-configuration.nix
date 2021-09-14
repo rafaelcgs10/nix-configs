@@ -52,11 +52,11 @@
     EndSection
 
     Section "InputClass"
-      Identifier "mouse accel"
-      Driver "libinput"
-      MatchIsPointer "on"
-      Option "AccelProfile" "flat"
-      Option "AccelSpeed" "0"
+        Identifier "Logitech MX Ergo"
+        MatchIsPointer "yes"
+        Option "AccelerationThreshold"   "0"
+        Option "AccelerationNumerator"   "4"
+        Option "AccelerationDenominator" "2"
     EndSection
   '';
 
