@@ -13,6 +13,7 @@ in
     pkgs.obs-studio
     pkgs.tlaplusToolbox
     unstable.discord
+    pkgs.bitwarden
 
     pkgs.google-cloud-sdk
     pkgs.vivaldi
