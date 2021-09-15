@@ -12,7 +12,6 @@ in
     pkgs.gpicview
     pkgs.pscircle
     (pkgs.calibre.override { unrarSupport = true; })
-    pkgs.qbittorrent
     pkgs.remmina
     pkgs.pcmanfm
     pkgs.libappindicator
