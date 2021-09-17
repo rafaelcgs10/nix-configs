@@ -42,6 +42,7 @@
 (setq mouse-wheel-progressive-speed nil)
 
 
+(setq +workspaces-on-switch-project-behavior nil)
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
 ;; - `load!' for loading external *.el files relative to this one
