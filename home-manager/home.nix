@@ -85,6 +85,7 @@ in {
     tray = "auto";
   };
 
-  programs.direnv.enable = true;
-  programs.direnv.nix-direnv.enable = true;
+  services.lorri.enable = true;
+  # programs.direnv.enable = true;
+  # programs.direnv.nix-direnv.enable = true;
 }
