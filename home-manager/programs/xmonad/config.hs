@@ -247,12 +247,12 @@ myManageHook = composeAll
      [ className =? "TelegramDesktop"     --> doFloat
      , className =? "copyq"     --> doFloat
      , className =? "spotify"     --> doFloat
-     , className =? "Vivaldi-stable"     --> doShift ( myWorkspaces !! 0 )
+     , className =? "Vivaldi-stable"     --> doShift ( head myWorkspaces )
      , className =? "Emacs"     --> doShift ( myWorkspaces !! 1 )
      -- , className =? "vlc"     --> doShift ( myWorkspaces !! 7 )
      ] <+> namedScratchpadManageHook myScratchPads
 
-myWorkspaces = clickable (["web", "emacs", "3", "4", "5", "6", "7", "8", "9", "10"])
+myWorkspaces = clickable ["web", "emacs", "3", "4", "5", "6", "7", "8", "9", "10"]
   where
     clickable l = [ ws | (i, ws) <- zip ([1 .. 9]) l, let n = i ]
 
@@ -345,9 +345,9 @@ myKeysP =
     ("M-C-d", namedScratchpadAction myScratchPads "discord"),
     -- Apps
     ("M-u", spawn "pavucontrol"),
+    ("M-S-u", spawn "setxkbmap -layout us -variant intl"),
+    ("M-S-b", spawn "setxkbmap -layout br -variant abnt2"),
     ("M-p", spawn "flameshot gui"),
-    -- Emacs (CTRL-e followed by a key)
-    ("C-S-e e", spawn "emacsclient -c -a 'emacs'"), -- start emacs
 
     -- Multimedia Keys
     ("<XF86AudioPlay>", spawn "cmus toggle"),
