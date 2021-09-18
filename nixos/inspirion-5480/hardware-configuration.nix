@@ -61,6 +61,8 @@
   '';
 
   services.xserver = {
+    layout = "br";
+
     resolutions = [ { x = 1920; y = 1080; } { x = 1280; y = 720; } { x = 1024; y = 768; }];
   };
   #
@@ -72,6 +74,9 @@
   hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ vaapiIntel ];
 
   programs.steam.enable = true;
+
+  hardware.bluetooth.enable = true;
+  services.blueman.enable = true;
 
   # networking.interfaces.enp0s3.useDHCP = true;
 

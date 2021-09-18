@@ -16,8 +16,6 @@ in {
 
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
-  hardware.bluetooth.enable = true;
-
   nix.autoOptimiseStore = true;
 
   networking.hostName = "rafael-nixos"; # Define your hostname.
@@ -53,7 +51,6 @@ in {
   # Xserver basic
   services.xserver = {
     enable = true;
-    layout = "br";
 
     desktopManager = {
       xfce.enable = true;
@@ -70,9 +67,6 @@ in {
     enable = true;
     package = lib.mkForce pkgs.gnome3.gvfs;
   };
-
-  # Bluetooth service
-  services.blueman.enable = true;
 
   # Configure keymap in X11
   # services.xserver.xkbOptions = "eurosign:e";
