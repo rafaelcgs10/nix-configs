@@ -44,17 +44,18 @@
   services.xserver = {
     exportConfiguration = true;
 
-    videoDrivers = [ "nvidia" ];
+    libinput = {
+      enable = true;
 
-    config = ''
-    Section "InputClass"
-        Identifier "Logitech MX Ergo"
-        MatchIsPointer "yes"
-        Option "AccelerationThreshold"   "0"
-        Option "AccelerationNumerator"   "4"
-        Option "AccelerationDenominator" "2"
-    EndSection
-  '';
+      mouse = {
+        disableWhileTyping = true;
+        accelProfile = "adaptive";
+        accelSpeed = "0.1";
+        calibrationMatrix = ".5 0 0 0 .5 0 0 0 1";
+      };
+    };
+
+    videoDrivers = [ "nvidia" ];
 
     serverLayoutSection = ''
     Option "BlankTime" "0"

@@ -12,13 +12,11 @@ in
     pkgs.gpicview
     pkgs.pscircle
     (pkgs.calibre.override { unrarSupport = true; })
-    pkgs.qbittorrent
     pkgs.remmina
     pkgs.pcmanfm
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.gparted
-    pkgs.bitwarden
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
