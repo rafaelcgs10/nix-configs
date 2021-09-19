@@ -48,7 +48,9 @@ in {
     unstable.circleci-cli
     pkgs.xclip
     pkgs.direnv
-    (pkgs.aspellWithDicts (d: [d.en]))
+    (pkgs.aspellWithDicts (d: [d.en d.pt_BR]))
+    pkgs.hunspell
+    pkgs.hunspellDicts.en_US-large
     pkgs.languagetool
 
     # Fonts
