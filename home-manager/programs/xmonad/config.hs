@@ -265,6 +265,7 @@ myKeysP =
     ("M-<Return>", spawn myTerminal),
     -- Run Prompt
     ("M-d", spawn "rofi -show drun -font \"Iosevka Fixed SS12 12\""),
+    ("M-b", spawn "bwmenu"),
     -- , ("M-d", spawn "dmenu_run -i -nf '#BBBBBB' -nb '#0c0c0c' -sb '#2f1e2e' -sf '#EEEEEE' -fn 'monospace-10' -p 'run:'")
 
     -- Windows
