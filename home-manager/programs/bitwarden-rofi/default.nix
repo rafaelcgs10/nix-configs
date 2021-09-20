@@ -22,7 +22,7 @@ stdenv.mkDerivation {
     owner = "mattydebie";
     repo = "bitwarden-rofi";
     rev = "62c95afd5634234bac75855dc705d4da5f4fab69";
-    sha256 = "0cwpc3am9kqn9pxqq8kaqg8150y3bln8a6gzm5nfh61357m55xba";
+    sha256 = "1shdfzwscic179n10pkkbjpkisji64vjva4afzx399knw8gprzc2";
   };
 
   buildInputs = [
