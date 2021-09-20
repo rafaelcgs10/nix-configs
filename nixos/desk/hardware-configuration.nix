@@ -42,7 +42,8 @@
 
   # Xserver basic
   services.xserver = {
-    exportConfiguration = true;
+    layout = "us";
+    xkbVariant = "intl";
 
     libinput = {
       enable = true;
