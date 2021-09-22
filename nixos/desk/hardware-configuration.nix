@@ -116,6 +116,8 @@
     relay.enable = true;
   };
 
+  hardware.bluetooth.enable = true;
+  services.blueman.enable = true;
 
   powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
 }
