@@ -96,7 +96,7 @@ myEditor :: String
 myEditor = "emacsclient -c -a emacs " -- Sets emacs as editor for tree select
 
 myBorderWidth :: Dimension
-myBorderWidth = 3 -- Sets border width for windows
+myBorderWidth = 2 -- Sets border width for windows
 
 myNormColor :: String
 myNormColor = "#222222" -- Border color of normal windows
@@ -190,9 +190,16 @@ myNavigation2DConfig =
 tall =
   renamed [Replace "tall"] $
     limitWindows 12 $
+      lessBorders Screen $
+        mySpacing 8 $
+          ResizableTall 1 (3 / 100) (1 / 2) []
+grid =
+  renamed [Replace "grid"] $
+    limitWindows 12 $
       mySpacing 8 $
-        ResizableTall 1 (3 / 100) (1 / 2) []
-
+      lessBorders Screen $
+        mkToggle (single MIRROR) $
+          Grid (16 / 10)
 magnify =
   renamed [Replace "magnify"] $
     magnifier $
@@ -201,8 +208,11 @@ magnify =
           ResizableTall 1 (3 / 100) (1 / 2) []
 
 tabs =
-  renamed [Replace "tabs"]
-  -- I cannot add spacing to this layout because it will
+  renamed [Replace "tabs"] $
+    limitWindows 12 $
+      mySpacing 8
+
+-- I cannot add spacing to this layout because it will
   -- add spacing between window and tabs which looks bad.
   $
     tabbed shrinkText myTabConfig
@@ -236,7 +246,8 @@ myLayoutHook =
   where
     myDefaultLayout =
       smartBorders tall
-        ||| magnify
+        ||| smartBorders magnify
+        ||| smartBorders grid
         ||| noBorders tabs
 
 myManageHook :: XMonad.Query (Data.Monoid.Endo WindowSet)
@@ -254,7 +265,7 @@ myManageHook = composeAll
 
 myWorkspaces = clickable ["web", "emacs", "3", "4", "5", "6", "7", "8", "9", "10"]
   where
-    clickable l = [ ws | (i, ws) <- zip ([1 .. 9]) l, let n = i ]
+    clickable l = [ ws | (i, ws) <- zip [1 .. 9] l, let n = i ]
 
 myKeysP :: [(String, X ())]
 myKeysP =
@@ -274,7 +285,7 @@ myKeysP =
 
     -- Floating windows
     -- , ("M-f", sendMessage (T.Toggle "monocle"))       -- Toggles my 'monocle' layout
-    ("M-e", sendMessage (JumpToLayout "tall")), -- Toggles my 'tall' layout
+    ("M-e", sendMessage (JumpToLayout "grid")), -- Toggles my 'grid' layout
     ("M-w", sendMessage (JumpToLayout "tabs")), -- Toggles my 'tabs' layout
     ("M-<Delete>", withFocused $ windows . W.sink), -- Push floating window back to tile
     ("M-S-<Delete>", sinkAll), -- Push ALL floating windows to tile
