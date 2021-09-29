@@ -13,6 +13,7 @@ in
     pkgs.tdesktop
     pkgs.slack
     pkgs.obs-studio
+    pkgs.lutris
     pkgs.tlaplusToolbox
     unstable.discord
     pkgs.bitwarden
