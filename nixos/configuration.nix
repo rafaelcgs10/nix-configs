@@ -121,6 +121,8 @@ in {
     cachix
     gnutar gzip gnumake
     lxqt.lxqt-policykit
+    libv4l
+    v4l-utils
 
     # libnotify
     # libdbusmenu

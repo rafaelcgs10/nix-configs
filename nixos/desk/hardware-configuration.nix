@@ -9,8 +9,10 @@
     ];
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ehci_pci" "ahci" "usb_storage" "usbhid" "sd_mod" ];
-  boot.kernelModules = [ "kvm-intel" "bfq" ];
-  boot.extraModulePackages = [ ];
+  boot.kernelModules = [ "kvm-intel" "bfq" "v4l2loopback" ];
+  boot.extraModulePackages = with config.boot.kernelPackages; [
+    v4l2loopback
+  ];
 
   boot.postBootCommands = ''
    echo bfq > /sys/block/sda/queue/scheduler
