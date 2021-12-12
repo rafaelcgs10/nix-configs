@@ -22,6 +22,10 @@
    echo bfq > /sys/block/sdb/queue/scheduler
   '';
 
+  # https://lwn.net/Articles/572911/
+  boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
+  boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
+
   networking.wireless.enable = false;
 
   services.journald.extraConfig = ''
