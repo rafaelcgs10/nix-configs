@@ -10,7 +10,7 @@
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "i915"  ];
-  boot.kernelModules = [ "kvm-intel" "acpi_call" ];
+  boot.kernelModules = [ "bfq" "kvm-intel" "acpi_call" ];
   boot.extraModulePackages = with config.boot.kernelPackages; [ acpi_call ];
 
   fileSystems."/" =
@@ -30,6 +30,11 @@
   services.xserver.videoDrivers = [ "intel" ];
 
   boot.kernelPackages = pkgs.linuxPackages_zen;
+
+  boot.postBootCommands = ''
+   echo bfq > /sys/block/sda/queue/scheduler
+   echo bfq > /sys/block/sdb/queue/scheduler
+  '';
 
   hardware.cpu.intel.updateMicrocode =
     lib.mkDefault config.hardware.enableRedistributableFirmware;
@@ -65,7 +70,9 @@
 
     resolutions = [ { x = 1920; y = 1080; } { x = 1280; y = 720; } { x = 1024; y = 768; }];
   };
-  #
+
+  nixpkgs.config.allowUnfree = true;
+
   # Enable CUPS to print documents.
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplipWithPlugin ];
