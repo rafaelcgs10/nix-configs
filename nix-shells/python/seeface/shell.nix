@@ -16,5 +16,6 @@ mkShell {
     LD_LIBRARY_PATH=${stdenv.cc.cc.lib}/lib/:/run/opengl-driver/lib/
     virtualenv -p python3 env
     source env/bin/activate
+    pip3 install onnxruntime==1.2.0
   '';
 }
