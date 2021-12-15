@@ -16,7 +16,14 @@
   fileSystems."/" =
     { device = "/dev/disk/by-label/nixos";
       fsType = "ext4";
+      options = [ "noatime" ];
     };
+
+  fileSystems."/tmp" = {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "mode=1777" "lazytime" "nosuid" "nodev" ];
+  };
 
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/F528-7931";
