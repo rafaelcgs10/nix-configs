@@ -18,8 +18,9 @@
 
   boot.kernelModules = [ "bfq" ];
   boot.postBootCommands = ''
-   echo bfq > /sys/block/sda/queue/scheduler
-   echo bfq > /sys/block/sdb/queue/scheduler
+   echo mq-deadline > /sys/block/sda/queue/scheduler
+   echo mq-deadline > /sys/block/sdb/queue/scheduler
+   echo 1 > /sys/block/sda/queue/iosched/fifo_batch
   '';
 
   networking.wireless.enable = false;
@@ -59,6 +60,13 @@
       options = [ "noatime" ];
     };
   };
+
+  fileSystems."/tmp" = {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "mode=1777" "lazytime" "nosuid" "nodev" ];
+  };
+
 
   services.earlyoom = {
     enable = true;
@@ -160,10 +168,11 @@
   services.cron = {
     enable = true;
     systemCronJobs = [
-      "1 0 */1 * *      rafael    cd /home/rafael/nix-configs ; git pull origin master ; home-manager switch"
-      "40 0 */1 * *      downloader    find /bighd/downloader/Downloads -mtime +4 -type f -delete"
-      "50 0 */1 * *      downloader    find /bighd/downloader/Downloads -type d -empty -delete"
-      "1 5 */1 * *      root          reboot"
+      "1 0 */1 * *      rafael        cd /home/rafael/nix-configs ; git pull origin master ; home-manager switch"
+      "40 0 */1 * *     downloader    find /bighd/downloader/Downloads -mtime +4 -type f -delete"
+      "50 0 */1 * *     downloader    find /bighd/downloader/Downloads -type d -empty -delete"
+      "1 9 */1 * *      root          systemctl stop qbittorrent.service"
+      "1 1 */1 * *      root          reboot"
     ];
   };
 
