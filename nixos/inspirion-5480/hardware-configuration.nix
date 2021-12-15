@@ -32,8 +32,9 @@
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
   boot.postBootCommands = ''
-   echo bfq > /sys/block/sda/queue/scheduler
-   echo bfq > /sys/block/sdb/queue/scheduler
+   echo mq-deadline > /sys/block/sda/queue/scheduler
+   echo mq-deadline > /sys/block/sdb/queue/scheduler
+   echo 1 > /sys/block/sda/queue/iosched/fifo_batch
   '';
 
   hardware.cpu.intel.updateMicrocode =
