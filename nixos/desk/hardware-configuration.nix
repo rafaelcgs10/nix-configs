@@ -15,8 +15,10 @@
   ];
 
   boot.postBootCommands = ''
-   echo bfq > /sys/block/sda/queue/scheduler
-   echo bfq > /sys/block/sdb/queue/scheduler
+   echo mq-deadline > /sys/block/sda/queue/scheduler
+   echo mq-deadline > /sys/block/sdb/queue/scheduler
+   echo 1 > /sys/block/sda/queue/iosched/fifo_batch
+   echo 1 > /sys/block/sdb/queue/iosched/fifo_batch
   '';
 
   boot.kernelPackages = pkgs.linuxPackages_zen;
@@ -24,6 +26,7 @@
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/96082114-504a-43e6-8a32-7c0b49097e8a";
       fsType = "ext4";
+      options = [ "noatime" ];
     };
 
   fileSystems."/bighd" =
@@ -35,6 +38,12 @@
     { device = "/dev/disk/by-label/bighd2";
       fsType = "ntfs";
     };
+
+  fileSystems."/tmp" = {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "mode=1777" "lazytime" "nosuid" "nodev" ];
+  };
 
   swapDevices =
     [ { device = "/dev/disk/by-uuid/63d991d0-8b79-4821-9cc3-0d28993d4d7d"; }
