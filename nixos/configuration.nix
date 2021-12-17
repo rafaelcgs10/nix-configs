@@ -149,7 +149,7 @@ in {
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
   networking.firewall.allowedTCPPorts = [ 8080 53 3080 80 ];
-  networking.firewall.allowedUDPPorts = [ 9091 49152 3080 ];
+  networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
