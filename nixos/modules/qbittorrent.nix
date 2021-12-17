@@ -106,7 +106,7 @@ in
         UMask = "0002";
         MemoryMax = "1G";
         CPUQuota = "20%";
-        BlockIOWeight = 10;
+        BlockIOWeight = 200;
         LimitNOFILE = cfg.openFilesLimit;
       };
     };
