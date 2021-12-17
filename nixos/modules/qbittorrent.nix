@@ -85,7 +85,6 @@ in
 
     systemd.services.qbittorrent = {
       after = [ "network.target" ];
-      requisite = [ "openvpn-client.service" ];
       description = "qBittorrent Daemon";
       wantedBy = [ "multi-user.target" ];
       path = [ pkgs.qbittorrent ];
@@ -105,11 +104,12 @@ in
         Group = cfg.group;
         UMask = "0002";
         MemoryMax = "1G";
-        CPUQuota = "20%";
-        BlockIOWeight = 200;
+        CPUQuota = "50%";
         LimitNOFILE = cfg.openFilesLimit;
+        BlockIOWeight = 100;
       };
     };
+
 
     users.users = mkIf (cfg.user == "qbittorrent") {
       qbittorrent = {
