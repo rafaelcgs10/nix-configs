@@ -69,6 +69,7 @@
       }
     ];
     sessionVariables = rec {
+      NIXPKGS_ALLOW_UNFREE = 1;
       EDITOR = "vim";
       VISUAL = EDITOR;
       GIT_EDITOR = EDITOR;

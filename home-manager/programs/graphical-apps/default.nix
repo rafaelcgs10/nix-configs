@@ -20,6 +20,7 @@ in
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
+    pkgs.sc-controller
 
     pkgs.flameshot
     pkgs.noisetorch

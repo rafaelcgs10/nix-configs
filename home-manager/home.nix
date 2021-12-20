@@ -52,6 +52,7 @@ in {
     pkgs.hunspell
     pkgs.hunspellDicts.en_US-large
     pkgs.languagetool
+    pkgs.progress
 
     # Fonts
     pkgs.noto-fonts
