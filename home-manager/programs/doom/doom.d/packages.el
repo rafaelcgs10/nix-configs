@@ -1,0 +1,5 @@
+(package! isar-mode)
+(package! isar-goal-mode)
+(package! lsp-isar)
+(package! lsp-isar-parse-args)
+(package! session-async)

@@ -242,3 +242,72 @@
                   '(flycheck-error ((t (:underline '(:style line)))))
                   '(flycheck-warning ((t (:underline '(:style line)))))
                   '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
+
+
+;; Isabelle setup
+(use-package! isar-mode
+  :mode "\\.thy\\'"
+  :config
+  ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
+  ;; (add-hook 'isar-mode-hook 'flycheck-mode)
+  (add-hook 'isar-mode-hook 'company-mode)
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'company-backends)
+                   '((company-dabbrev-code company-yasnippet)))))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'indent-tabs-mode) nil)))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (yas-minor-mode)))
+  )
+
+;; (use-package! lsp-isar-parse-args
+;;   :custom
+;;   (lsp-isar-parse-args-nollvm nil))
+
+;; Isabelle setup
+(use-package! isar-mode
+  :mode "\\.thy\\'"
+  :config
+  ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
+  ;; (add-hook 'isar-mode-hook 'flycheck-mode)
+  (add-hook 'isar-mode-hook 'company-mode)
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'company-backends)
+                   '((company-dabbrev-code company-yasnippet)))))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'indent-tabs-mode) nil)))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (yas-minor-mode)))
+  )
+
+(use-package! lsp-isar-parse-args
+  :custom
+  (lsp-isar-parse-args-nollvm nil))
+
+
+(setenv "JAVA_HOME" "/nix/store/79zj5bh8dlg7mxjd4v6mkzr4q0576abf-adoptopenjdk-hotspot-bin-15.0.2")
+(setenv "ISABELLE_JDK_HOME" "/nix/store/79zj5bh8dlg7mxjd4v6mkzr4q0576abf-adoptopenjdk-hotspot-bin-15.0.2")
+(setenv "SCALA_HOME" "/nix/store/6h65mpgbkqfqyjjid4qhc3diy4mwqgh3-scala-2.13.5")
+
+(use-package! lsp-isar
+  :commands lsp-isar-define-client-and-start
+  :custom
+  (lsp-isar-output-use-async t)
+  (lsp-isar-output-time-before-printing-goal nil)
+  (lsp-isar-experimental t)
+  (lsp-isar-split-pattern 'lsp-isar-split-pattern-three-columns)
+  (lsp-isar-decorations-delayed-printing t)
+  :init
+  (add-hook 'lsp-isar-init-hook 'lsp-isar-open-output-and-progress-right-spacemacs)
+  (add-hook 'isar-mode-hook #'lsp-isar-define-client-and-start)
+
+  ;; (push (concat ".../isabelle-emacs/src/Tools/emacs-lsp/yasnippet")
+  ;;  yas-snippet-dirs)
+  (setq lsp-isar-path-to-isabelle "/nix/store/190z5zs7c9ksnfsd3jxvs3viiws4i1x0-isabelle-2021/Isabelle2021")
+  )  ; looks for ~/.doom.d/my/package/my-package.el
