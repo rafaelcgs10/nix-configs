@@ -125,6 +125,7 @@ myStartupHook = do
   spawnOnce "pa-applet"
   spawnOnce "copyq"
   spawnOnce "polybar mybar"
+  setWMName "LG3D"
 
 myColorizer :: Window -> Bool -> X (String, String)
 myColorizer =
