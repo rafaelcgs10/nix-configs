@@ -205,6 +205,9 @@
     Nice = 20;
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
+    MemoryMax = "1G";
+    CPUQuota = "20%";
+    BlockIOWeight = 100;
   };
 
   # Docker config
