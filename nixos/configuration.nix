@@ -18,9 +18,11 @@ in {
 
   nix.autoOptimiseStore = true;
 
-  networking.hostName = "rafael-nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  networking.networkmanager.enable = true;
+  networking.networkmanager = {
+   enable = true;
+   wifi.powersave = false;
+  };
 
   # Set your time zone.
   time.timeZone = "America/Sao_Paulo";

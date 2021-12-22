@@ -49,9 +49,11 @@
       fsType = "ntfs";
     };
 
-  swapDevices =
-    [ { device = "/dev/disk/by-label/swap"; }
-    ];
+  networking.hostName = "raspberry-pi-4";
+
+  # swapDevices =
+  #   [ { device = "/dev/disk/by-label/swap"; }
+  #   ];
 
   fileSystems = {
     "/" = {
@@ -168,11 +170,10 @@
   services.cron = {
     enable = true;
     systemCronJobs = [
-      "1 0 */1 * *      rafael        cd /home/rafael/nix-configs ; git pull origin master ; home-manager switch"
       "40 0 */1 * *     downloader    find /bighd/downloader/Downloads -mtime +4 -type f -delete"
       "50 0 */1 * *     downloader    find /bighd/downloader/Downloads -type d -empty -delete"
       "1 9 */1 * *      root          systemctl stop qbittorrent.service"
-      "1 1 */1 * *      root          reboot"
+      "1 0 */1 * *      root          reboot"
     ];
   };
 
@@ -205,6 +206,9 @@
     Nice = 20;
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
+    MemoryMax = "1G";
+    CPUQuota = "20%";
+    BlockIOWeight = 100;
   };
 
   # Docker config

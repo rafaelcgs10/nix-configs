@@ -1,9 +1,6 @@
 { config, pkgs, lib, ... }:
 
 let
-  unstable = import <nixpkgs-unstable> { config.allowUnfree = true; overlays = [(self: super: { discord = super.discord.overrideAttrs (_: { src = builtins.fetchTarball "https://discord.com/api/download?platform=linux&format=tar.gz"; });})];};
-  emacs-overlay = builtins.fetchTarball "https://github.com/nix-community/emacs-overlay/archive/15ed1f372a83ec748ac824bdc5b573039c18b82f.tar.gz";
-  emacsPkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -45,7 +42,6 @@ in {
     pkgs.bc
     pkgs.kubectl
     pkgs.k9s
-    unstable.circleci-cli
     pkgs.xclip
     pkgs.direnv
     (pkgs.aspellWithDicts (d: [d.en d.pt_BR]))
@@ -88,7 +84,7 @@ in {
     tray = "auto";
   };
 
-  services.lorri.enable = true;
-  # programs.direnv.enable = true;
-  # programs.direnv.nix-direnv.enable = true;
+  # services.lorri.enable = true;
+  programs.direnv.enable = true;
+  programs.direnv.nix-direnv.enable = true;
 }
