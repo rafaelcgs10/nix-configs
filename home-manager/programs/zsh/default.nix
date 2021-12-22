@@ -78,9 +78,6 @@
       DIRENV_ALLOW_NIX = 1;
     };
     shellAliases = rec {
-      rd-docker = "$HOME/.rd-docker/rd-docker-cli";
-      gcloud = "$HOME/google-cloud-sdk/bin/gcloud";
-      cbt = "$HOME/google-cloud-sdk/bin/cbt";
     };
   };
 }

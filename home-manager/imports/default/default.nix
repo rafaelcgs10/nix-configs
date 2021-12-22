@@ -10,7 +10,6 @@
     ../../programs/rofi/default.nix
     ../../programs/X-themes/default.nix
     ../../programs/polybar/default.nix
-    ../../programs/rd-docker/default.nix
     ../../programs/gcloud/default.nix
     ../../programs/graphical-apps/default.nix
     ../../programs/non-arm/default.nix
