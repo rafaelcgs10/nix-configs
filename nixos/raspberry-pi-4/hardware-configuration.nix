@@ -49,6 +49,8 @@
       fsType = "ntfs";
     };
 
+  networking.hostName = "raspberry-pi-4";
+
   # swapDevices =
   #   [ { device = "/dev/disk/by-label/swap"; }
   #   ];
