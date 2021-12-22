@@ -17,6 +17,11 @@
   ];
 
   boot.kernelModules = [ "bfq" ];
+
+  boot.extraModprobeConfig = ''
+      options iwlwifi power_save=0
+  '';
+
   boot.postBootCommands = ''
    echo mq-deadline > /sys/block/sda/queue/scheduler
    echo mq-deadline > /sys/block/sdb/queue/scheduler
