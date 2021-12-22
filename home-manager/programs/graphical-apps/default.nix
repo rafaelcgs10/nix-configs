@@ -5,6 +5,7 @@ in
 {
   home.packages = [
     pkgs.evince
+    pkgs.okular
     pkgs.gimp
     pkgs.vlc
     pkgs.lxappearance
