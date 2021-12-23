@@ -310,4 +310,5 @@
   ;; (push (concat ".../isabelle-emacs/src/Tools/emacs-lsp/yasnippet")
   ;;  yas-snippet-dirs)
   (setq lsp-isar-path-to-isabelle "~/nix-configs/home-manager/programs/isabelle/docker_link")
+  (setq lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
 )
