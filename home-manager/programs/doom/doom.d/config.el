@@ -309,5 +309,5 @@
 
   ;; (push (concat ".../isabelle-emacs/src/Tools/emacs-lsp/yasnippet")
   ;;  yas-snippet-dirs)
-  (setq lsp-isar-path-to-isabelle "/nix/store/190z5zs7c9ksnfsd3jxvs3viiws4i1x0-isabelle-2021/Isabelle2021")
-  )  ; looks for ~/.doom.d/my/package/my-package.el
+  (setq lsp-isar-path-to-isabelle "~/nix-configs/home-manager/programs/isabelle/docker_link")
+)
