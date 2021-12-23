@@ -11,7 +11,6 @@ in
     pkgs.whatsapp-for-linux
     pkgs.insomnia
     pkgs.tdesktop
-    pkgs.slack
     pkgs.obs-studio
     pkgs.lutris
     pkgs.tlaplusToolbox
