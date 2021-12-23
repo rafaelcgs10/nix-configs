@@ -7,6 +7,7 @@ in
     pkgs.evince
     pkgs.okular
     unstable.isabelle
+    unstable.coq
     pkgs.gimp
     pkgs.vlc
     pkgs.lxappearance
