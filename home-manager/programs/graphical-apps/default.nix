@@ -24,6 +24,7 @@ in
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
     pkgs.sc-controller
+    unstable.zulip
 
     pkgs.flameshot
     pkgs.noisetorch
