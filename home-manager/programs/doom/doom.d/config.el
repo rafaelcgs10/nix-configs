@@ -33,7 +33,7 @@
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
-(setq display-line-numbers-type t)
+(setq-default display-line-numbers-width 0)
 
 ;; Scroll line by line with the whell
 (setq scroll-step 1
@@ -42,7 +42,7 @@
 (setq mouse-wheel-progressive-speed nil)
 
 
-(setq +workspaces-on-switch-project-behavior nil)
+;; (setq +workspaces-on-switch-project-behavior nil)
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
 ;; - `load!' for loading external *.el files relative to this one
@@ -77,6 +77,7 @@
 ;; (setq lsp-enable-completion-at-point t)
 (setq prettify-symbols-mode t)
 (setq lsp-completion-show-detail t)
+(setq lsp-enable-on-type-formatting t)
 (setq doom-modeline-enable-word-count nil)
 (setq scroll-conservatively 101)
 (setq lsp-solargraph-use-bundler nil)
@@ -217,7 +218,7 @@
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
+  (load-theme 'doom-nord t)
 
   ;; Enable flashing mode-line on errors
   (doom-themes-visual-bell-config)
@@ -290,10 +291,7 @@
   :custom
   (lsp-isar-parse-args-nollvm nil))
 
-
-(setenv "JAVA_HOME" "/nix/store/79zj5bh8dlg7mxjd4v6mkzr4q0576abf-adoptopenjdk-hotspot-bin-15.0.2")
-(setenv "ISABELLE_JDK_HOME" "/nix/store/79zj5bh8dlg7mxjd4v6mkzr4q0576abf-adoptopenjdk-hotspot-bin-15.0.2")
-(setenv "SCALA_HOME" "/nix/store/6h65mpgbkqfqyjjid4qhc3diy4mwqgh3-scala-2.13.5")
+(setq display-line-numbers-mode t)
 
 (use-package! lsp-isar
   :commands lsp-isar-define-client-and-start
@@ -301,14 +299,13 @@
   (lsp-isar-output-use-async t)
   (lsp-isar-output-time-before-printing-goal nil)
   (lsp-isar-experimental t)
-  (lsp-isar-split-pattern 'lsp-isar-split-pattern-three-columns)
+  (lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
   (lsp-isar-decorations-delayed-printing t)
   :init
   (add-hook 'lsp-isar-init-hook 'lsp-isar-open-output-and-progress-right-spacemacs)
   (add-hook 'isar-mode-hook #'lsp-isar-define-client-and-start)
 
-  ;; (push (concat ".../isabelle-emacs/src/Tools/emacs-lsp/yasnippet")
-  ;;  yas-snippet-dirs)
+  (push (concat "~/isabelle/Isabelle2021/src/Tools/emacs-lsp/yasnippet")
+   yas-snippet-dirs)
   (setq lsp-isar-path-to-isabelle "~/nix-configs/home-manager/programs/isabelle/docker_link")
-  (setq lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
 )
