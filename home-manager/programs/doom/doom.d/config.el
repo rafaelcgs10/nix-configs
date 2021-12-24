@@ -63,6 +63,8 @@
 ;; Setqs
 (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
 
+(global-unset-key (kbd "C-x C-b"))
+
 (setq projectile-project-search-path '("~/Documents"))
 ;;
 ;; LSP tweaks
