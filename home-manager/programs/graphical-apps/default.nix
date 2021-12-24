@@ -7,6 +7,7 @@ in
     pkgs.evince
     pkgs.okular
     unstable.isabelle
+    unstable.coq
     pkgs.gimp
     pkgs.vlc
     pkgs.lxappearance
@@ -23,6 +24,7 @@ in
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
     pkgs.sc-controller
+    unstable.zulip
 
     pkgs.flameshot
     pkgs.noisetorch

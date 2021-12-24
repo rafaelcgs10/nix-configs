@@ -1,0 +1,2 @@
+#!/nix/store/inlql1c6b11gw84288dw3sj56d73y81j-system-path/bin/bash
+docker run --rm -i rafaelcgs10/isabelle-emacs:1.0 /app/bin/isabelle $1

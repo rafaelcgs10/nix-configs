@@ -49,6 +49,12 @@
 
   boot.kernelPackages = pkgs.linuxPackages_rpi4;
 
+  boot.kernel.sysctl = {
+    "sched_latency_ns" = "1000000";
+    "sched_min_granularity_ns" = "100000";
+    "sched_migration_cost_ns"  = "7000000";
+  };
+
   fileSystems."/bighd" =
     { device = "/dev/disk/by-label/bighd";
       fsType = "ntfs";

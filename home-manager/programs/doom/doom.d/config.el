@@ -33,7 +33,7 @@
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
-(setq display-line-numbers-type t)
+(setq-default display-line-numbers-width 0)
 
 ;; Scroll line by line with the whell
 (setq scroll-step 1
@@ -42,7 +42,7 @@
 (setq mouse-wheel-progressive-speed nil)
 
 
-(setq +workspaces-on-switch-project-behavior nil)
+;; (setq +workspaces-on-switch-project-behavior nil)
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
 ;; - `load!' for loading external *.el files relative to this one
@@ -63,6 +63,8 @@
 ;; Setqs
 (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
 
+(global-unset-key (kbd "C-x C-b"))
+
 (setq projectile-project-search-path '("~/Documents"))
 ;;
 ;; LSP tweaks
@@ -77,6 +79,7 @@
 ;; (setq lsp-enable-completion-at-point t)
 (setq prettify-symbols-mode t)
 (setq lsp-completion-show-detail t)
+(setq lsp-enable-on-type-formatting t)
 (setq doom-modeline-enable-word-count nil)
 (setq scroll-conservatively 101)
 (setq lsp-solargraph-use-bundler nil)
@@ -217,7 +220,7 @@
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
+  (load-theme 'doom-nord t)
 
   ;; Enable flashing mode-line on errors
   (doom-themes-visual-bell-config)
@@ -242,3 +245,69 @@
                   '(flycheck-error ((t (:underline '(:style line)))))
                   '(flycheck-warning ((t (:underline '(:style line)))))
                   '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
+
+
+;; Isabelle setup
+(use-package! isar-mode
+  :mode "\\.thy\\'"
+  :config
+  ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
+  ;; (add-hook 'isar-mode-hook 'flycheck-mode)
+  (add-hook 'isar-mode-hook 'company-mode)
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'company-backends)
+                   '((company-dabbrev-code company-yasnippet)))))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'indent-tabs-mode) nil)))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (yas-minor-mode)))
+  )
+
+;; (use-package! lsp-isar-parse-args
+;;   :custom
+;;   (lsp-isar-parse-args-nollvm nil))
+
+;; Isabelle setup
+(use-package! isar-mode
+  :mode "\\.thy\\'"
+  :config
+  ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
+  ;; (add-hook 'isar-mode-hook 'flycheck-mode)
+  (add-hook 'isar-mode-hook 'company-mode)
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'company-backends)
+                   '((company-dabbrev-code company-yasnippet)))))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (set (make-local-variable 'indent-tabs-mode) nil)))
+  (add-hook 'isar-mode-hook
+            (lambda ()
+              (yas-minor-mode)))
+  )
+
+(use-package! lsp-isar-parse-args
+  :custom
+  (lsp-isar-parse-args-nollvm nil))
+
+(setq display-line-numbers-mode t)
+
+(use-package! lsp-isar
+  :commands lsp-isar-define-client-and-start
+  :custom
+  (lsp-isar-output-use-async t)
+  (lsp-isar-output-time-before-printing-goal nil)
+  (lsp-isar-experimental t)
+  (lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
+  (lsp-isar-decorations-delayed-printing t)
+  :init
+  (add-hook 'lsp-isar-init-hook 'lsp-isar-open-output-and-progress-right-spacemacs)
+  (add-hook 'isar-mode-hook #'lsp-isar-define-client-and-start)
+
+  (push (concat "~/isabelle/Isabelle2021/src/Tools/emacs-lsp/yasnippet")
+   yas-snippet-dirs)
+  (setq lsp-isar-path-to-isabelle "~/nix-configs/home-manager/programs/isabelle/docker_link")
+)

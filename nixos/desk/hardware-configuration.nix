@@ -23,6 +23,12 @@
 
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
+ boot.kernel.sysctl = {
+    "sched_latency_ns" = "1000000";
+    "sched_min_granularity_ns" = "100000";
+    "sched_migration_cost_ns"  = "7000000";
+  };
+
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/96082114-504a-43e6-8a32-7c0b49097e8a";
       fsType = "ext4";
