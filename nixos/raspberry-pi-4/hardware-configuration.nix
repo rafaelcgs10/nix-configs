@@ -270,6 +270,16 @@
     };
   };
 
+  services.ddclient = {
+    enable = true;
+    protocol = "cloudflare";
+    verbose = true;
+    username = "rafaelcgs10@gmail.com";
+    password = builtins.readFile /home/rafael/cf-api-token;
+    zone = "rafaelcgs.com";
+    domains = [ "vpn.rafaelcgs.com" ];
+  };
+
   # Docker config
   virtualisation.docker = {
     enable = true;
