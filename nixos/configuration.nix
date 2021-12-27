@@ -9,6 +9,7 @@ let
 in {
   imports =
     [ # Include the results of the hardware scan.
+      ./cachix.nix
       ./boot-loader.nix
       ./hardware-configuration.nix
       <home-manager/nixos>
