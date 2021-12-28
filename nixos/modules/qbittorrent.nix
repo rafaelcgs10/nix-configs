@@ -104,9 +104,9 @@ in
         Group = cfg.group;
         UMask = "0002";
         MemoryMax = "1G";
-        CPUQuota = "15%";
+        CPUQuota = "25%";
         LimitNOFILE = cfg.openFilesLimit;
-        BlockIOWeight = 10;
+        BlockIOWeight = 200;
       };
     };
 

@@ -151,7 +151,7 @@ in {
   # Or disable the firewall altogether.
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
-  networking.firewall.allowedTCPPorts = [ 8080 53 137 136 139 445 3080 80 ];
+  networking.firewall.allowedTCPPorts = [ 8080 8384 53 137 136 139 445 3080 80 ];
   networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 ];
 
   # This value determines the NixOS release from which the default
