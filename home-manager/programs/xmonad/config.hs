@@ -41,7 +41,6 @@ import XMonad.Layout.ResizableTile
 import XMonad.Layout.Tabbed
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.IndependentScreens
-import XMonad.Layout.Fullscreen
 import XMonad.Layout.LayoutCombinators
 
 -- Layouts modifiers
@@ -387,7 +386,6 @@ main :: IO ()
 main = do
   -- the xmonad, ya know...what the WM is named after!
   xmonad $
-    fullscreenSupport $
       withNavigation2DConfig myNavigation2DConfig $
         ewmh
           def
