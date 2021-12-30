@@ -16,6 +16,5 @@ in
     pkgs.bitwarden
 
     pkgs.google-cloud-sdk
-    pkgs.vivaldi
   ];
 }

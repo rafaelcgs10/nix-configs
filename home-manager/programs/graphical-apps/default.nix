@@ -1,12 +1,14 @@
 { pkgs, ...}:
 let
   unstable = import <nixpkgs-unstable> {};
+  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/628884f74d718438364c3c38c632b31f28faebf8.tar.gz") {
+    inherit pkgs;
+  };
 in
 {
   home.packages = [
     pkgs.evince
     pkgs.okular
-    pkgs.firefox
     unstable.isabelle
     unstable.coq
     pkgs.gimp
@@ -36,7 +38,42 @@ in
     pkgs.xdotool
     pkgs.lxrandr
     pkgs.glxinfo
-
-    # emacsPkgs.emacsGcc
   ];
+
+  programs.firefox = {
+    enable = true;
+    package = pkgs.firefox;
+    extensions = with nur.repos.rycee.firefox-addons; [
+      bitwarden
+      decentraleyes
+      https-everywhere
+      privacy-badger
+      ublock-origin
+      vimium
+      grammarly
+      wayback-machine
+      darkreader
+    ];
+
+    profiles = {
+      default = {
+        isDefault = true;
+        settings = {
+          "browser.quitShortcut.disabled" = true;
+          "browser.ctrlTab.recentlyUsedOrder" = false;
+          "extensions.pocket.enabled" = false;
+          "middlemouse.paste" = false;
+
+          # Hardware acceleration related settings.
+          "gfx.webrender.all" = true;
+          "media.ffmpeg.vaapi.enabled" = true;
+          "media.ffmpeg.vaapi-drm-display.enabled" = true;
+          "media.navigator.mediadatadecoder_vpx_enabled" = true;
+          "media.rdd-vpx.enabled" = false;
+          "media.ffvpx.enabled" = false;
+        };
+      };
+    };
+  };
+
 }
