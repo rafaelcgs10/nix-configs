@@ -361,6 +361,7 @@ myKeysP =
     ("M-S-u", spawn "setxkbmap -layout us -variant intl"),
     ("M-S-b", spawn "setxkbmap -layout br -variant abnt2"),
     ("M-p", spawn "flameshot gui"),
+    ("M-v", spawn "copyq toggle"),
 
     -- Multimedia Keys
     ("<XF86AudioPlay>", spawn "cmus toggle"),
