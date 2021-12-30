@@ -11,9 +11,16 @@
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.kernelModules = [ "kvm-amd" ];
-  services.xserver.videoDrivers = [ "amdgpu" ];
+  services.xserver = {
+    videoDrivers = [ "amdgpu" ];
 
-  hardware.opengl.extraPackages = with pkgs; [
+    deviceSection = ''
+      Option "DRI" "2"
+      Option "TearFree" "True"
+    '';
+  };
+
+    hardware.opengl.extraPackages = with pkgs; [
     rocm-opencl-icd
     rocm-opencl-runtime
     amdvlk
