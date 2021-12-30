@@ -6,6 +6,7 @@ in
   home.packages = [
     pkgs.evince
     pkgs.okular
+    pkgs.firefox
     unstable.isabelle
     unstable.coq
     pkgs.gimp
