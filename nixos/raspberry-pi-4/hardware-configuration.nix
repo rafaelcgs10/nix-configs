@@ -191,6 +191,7 @@
   services.cron = {
     enable = true;
     systemCronJobs = [
+      "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
       "40 0 */1 * *     downloader    find /bighd/downloader/Downloads -mtime +4 -type f -delete"
       "50 0 */1 * *     downloader    find /bighd/downloader/Downloads -type d -empty -delete"
       "1 9 */1 * *      root          systemctl stop qbittorrent.service"

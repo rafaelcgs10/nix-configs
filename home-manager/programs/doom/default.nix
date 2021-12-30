@@ -1,8 +1,7 @@
 { lib, options, config, specialArgs, modulesPath }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/e00f171142307b3c9bb962beeaaf09d0254f9e31.tar.gz;};
-  pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
+  pkgs = import <nixpkgs> { };
   doom-emacs = pkgs.callPackage (builtins.fetchTarball {
     url = https://github.com/vlaci/nix-doom-emacs/archive/33064319607745856f488a998ca3db8ffcede865.tar.gz;
   }) {
@@ -10,6 +9,11 @@ let
     # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGcc;
     # Directory containing your config.el init.el and packages.el files
     doomPrivateDir = ./doom.d;
+    dependencyOverrides = {
+      "emacs-overlay" = (builtins.fetchTarball {
+        url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
+      });
+    };
     emacsPackagesOverlay = self: super:
       let
         mkGitPkg = { host, user, name, rev ? null }:
@@ -22,6 +26,8 @@ let
             };
           };
       in {
+        gitignore-mode = pkgs.emacsPackages.git-modes;
+        gitconfig-mode = pkgs.emacsPackages.git-modes;
         isar-mode = self.trivialBuild {
           pname = "isar-mode";
           ename = "isar-mode";

@@ -106,7 +106,6 @@ in {
     htop
     parted
     ntfs3g
-    firefox
     terminator
     zsh
     vim

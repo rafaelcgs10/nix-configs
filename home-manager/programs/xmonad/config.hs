@@ -89,7 +89,7 @@ myTerminal = "alacritty" -- Sets default terminal
 -- myTerminal = "emacsclient -c -e '(multi-term)'"
 
 myBrowser :: String
-myBrowser = "vivaldi " -- Sets qutebrowser as browser for tree select
+myBrowser = "firefox " -- Sets qutebrowser as browser for tree select
 -- myBrowser = myTerminal ++ " -e lynx " -- Sets lynx as browser for tree select
 
 myEditor :: String
@@ -119,7 +119,7 @@ myStartupHook = do
   -- spawnOnce "setxkbmap -layout us -variant altgr-intl -option caps:swapescape &"
   -- setWMName "LG3D"
   spawnOnOnce "emacs" "emacs"
-  spawnOnOnce "web" "vivaldi"
+  spawnOnOnce "web" "firefox"
   spawnOnce "flameshot"
   spawnOnce "nm-applet"
   spawnOnce "pa-applet"
@@ -259,7 +259,7 @@ myManageHook = composeAll
      [ className =? "TelegramDesktop"     --> doFloat
      , className =? "copyq"     --> doFloat
      , className =? "spotify"     --> doFloat
-     , className =? "Vivaldi-stable"     --> doShift ( head myWorkspaces )
+     , className =? "firefox"     --> doShift ( head myWorkspaces )
      , className =? "Emacs"     --> doShift ( myWorkspaces !! 1 )
      -- , className =? "vlc"     --> doShift ( myWorkspaces !! 7 )
      ] <+> namedScratchpadManageHook myScratchPads
@@ -369,8 +369,8 @@ myKeysP =
     ("<XF86AudioMute>", spawn "amixer set Master toggle"), -- Bug prevents it from toggling correctly in 12.04.
     ("<XF86AudioLowerVolume>", spawn "amixer set Master 5%- unmute"),
     ("<XF86AudioRaiseVolume>", spawn "amixer set Master 5%+ unmute"),
-    ("<XF86HomePage>", spawn "vivaldi"),
-    ("<XF86Search>", safeSpawn "vivaldi" ["https://www.google.com/"]),
+    ("<XF86HomePage>", spawn "firefox"),
+    ("<XF86Search>", safeSpawn "firefox" ["https://www.google.com/"]),
     ("<XF86Mail>", runOrRaise "geary" (resource =? "thunderbird")),
     ("<XF86Calculator>", runOrRaise "gcalctool" (resource =? "gcalctool")),
     ("<XF86Eject>", spawn "toggleeject"),
