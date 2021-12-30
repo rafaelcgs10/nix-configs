@@ -62,9 +62,9 @@
 
   networking.hostName = "raspberry-pi-4";
 
-  # swapDevices =
-  #   [ { device = "/dev/disk/by-label/swap"; }
-  #   ];
+  swapDevices =
+    [ { device = "/dev/disk/by-label/swap"; }
+    ];
 
   fileSystems = {
     "/" = {
@@ -118,6 +118,16 @@
       map to guest = bad user
     '';
     shares = {
+      private2 = {
+        path = "/downloads";
+        browseable = "yes";
+        "read only" = "no";
+        "guest ok" = "yes";
+        "create mask" = "0644";
+        "directory mask" = "0755";
+        "force user" = "downloader";
+        "force group" = "users";
+      };
       private = {
         path = "/bighd/downloader";
         browseable = "yes";
