@@ -57,7 +57,8 @@
 
   fileSystems."/bighd" =
     { device = "/dev/disk/by-label/bighd";
-    fsType = "ntfs";
+    fsType = "btrfs";
+    options = [ "rw" "noatime" "compress=zstd" "space_cache" ];
   };
 
   networking.hostName = "raspberry-pi-4";
@@ -104,9 +105,11 @@
   services.xrdp.enable = true;
   services.xrdp.defaultWindowManager = "xmonad";
 
+  services.samba-wsdd.discovery = true;
   services.samba = {
     enable = true;
     securityType = "user";
+    nsswins = true;
     extraConfig = ''
       workgroup = WORKGROUP
       server string = smbnix
@@ -118,16 +121,6 @@
       map to guest = bad user
     '';
     shares = {
-      private2 = {
-        path = "/downloads";
-        browseable = "yes";
-        "read only" = "no";
-        "guest ok" = "yes";
-        "create mask" = "0644";
-        "directory mask" = "0755";
-        "force user" = "downloader";
-        "force group" = "users";
-      };
       private = {
         path = "/bighd/downloader";
         browseable = "yes";
@@ -223,6 +216,8 @@
   systemd.services.jellyfin.serviceConfig = {
     Nice = 10;
     IOSchedulingPriority = 0;
+    MemoryMax = "1G";
+    CPUQuota = "50%";
   };
 
   systemd.services.syncthing.serviceConfig = {
