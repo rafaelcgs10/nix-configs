@@ -110,6 +110,7 @@ in {
     zsh
     vim
     homemanager.home-manager
+    btrfs-progs
 
     ecryptfs
     ecryptfs-helper
