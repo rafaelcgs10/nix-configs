@@ -13,6 +13,7 @@ in
   home.packages = [
     pkgs.cargo
     pkgs.rustc
+    pkgs.rustfmt
     pkgs.texlab
     (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
     pkgs.rust-analyzer
