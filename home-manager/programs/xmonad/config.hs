@@ -41,7 +41,6 @@ import XMonad.Layout.ResizableTile
 import XMonad.Layout.Tabbed
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.IndependentScreens
-import XMonad.Layout.Fullscreen
 import XMonad.Layout.LayoutCombinators
 
 -- Layouts modifiers
@@ -361,6 +360,8 @@ myKeysP =
     ("M-S-u", spawn "setxkbmap -layout us -variant intl"),
     ("M-S-b", spawn "setxkbmap -layout br -variant abnt2"),
     ("M-p", spawn "flameshot gui"),
+    ("M-S-p", spawn "flameshot screen -c"),
+    ("M-v", spawn "copyq toggle"),
 
     -- Multimedia Keys
     ("<XF86AudioPlay>", spawn "cmus toggle"),
@@ -386,7 +387,6 @@ main :: IO ()
 main = do
   -- the xmonad, ya know...what the WM is named after!
   xmonad $
-    fullscreenSupport $
       withNavigation2DConfig myNavigation2DConfig $
         ewmh
           def

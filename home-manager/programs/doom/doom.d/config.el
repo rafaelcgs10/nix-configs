@@ -311,3 +311,5 @@
    yas-snippet-dirs)
   (setq lsp-isar-path-to-isabelle "~/nix-configs/home-manager/programs/isabelle/docker_link")
 )
+
+(setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")

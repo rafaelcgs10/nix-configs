@@ -9,8 +9,6 @@ in
   home.packages = [
     pkgs.evince
     pkgs.okular
-    unstable.isabelle
-    unstable.coq
     pkgs.gimp
     pkgs.vlc
     pkgs.lxappearance
@@ -20,6 +18,7 @@ in
     (pkgs.calibre.override { unrarSupport = true; })
     pkgs.remmina
     pkgs.pcmanfm
+    pkgs.ffmpegthumbnailer
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.gparted
@@ -31,7 +30,6 @@ in
 
     pkgs.flameshot
     pkgs.noisetorch
-    pkgs.copyq
     pkgs.networkmanagerapplet
     pkgs.pa_applet
     pkgs.xorg.xwininfo
@@ -71,6 +69,7 @@ in
           "media.navigator.mediadatadecoder_vpx_enabled" = true;
           "media.rdd-vpx.enabled" = false;
           "media.ffvpx.enabled" = false;
+          "browser.sessionstore.restore_on_demand" = false;
         };
       };
     };
