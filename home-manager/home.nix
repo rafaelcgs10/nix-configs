@@ -35,7 +35,7 @@ in {
     pkgs.libgccjit
     pkgs.neofetch
     pkgs.inxi
-    pkgs.python3
+    pkgs.e2fsprogs
     pkgs.tmux
     pkgs.pciutils
     pkgs.openfortivpn
