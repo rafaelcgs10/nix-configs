@@ -14,7 +14,12 @@ in
     pkgs.cargo
     pkgs.rustc
     pkgs.rustfmt
+    pkgs.clippy
     pkgs.texlab
+    pkgs.gdb
+    pkgs.lldb
+    pkgs.vscode-extensions.vadimcn.vscode-lldb
+    pkgs.nodejs
     (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
     pkgs.rust-analyzer
     pkgs.go
