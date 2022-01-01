@@ -57,14 +57,15 @@
 
   fileSystems."/bighd" =
     { device = "/dev/disk/by-label/bighd";
-    fsType = "ntfs";
+    fsType = "btrfs";
+    options = [ "rw" "noatime" "compress=zstd" "space_cache" ];
   };
 
   networking.hostName = "raspberry-pi-4";
 
-  # swapDevices =
-  #   [ { device = "/dev/disk/by-label/swap"; }
-  #   ];
+  swapDevices =
+    [ { device = "/dev/disk/by-label/swap"; }
+    ];
 
   fileSystems = {
     "/" = {
@@ -104,9 +105,11 @@
   services.xrdp.enable = true;
   services.xrdp.defaultWindowManager = "xmonad";
 
+  services.samba-wsdd.discovery = true;
   services.samba = {
     enable = true;
     securityType = "user";
+    nsswins = true;
     extraConfig = ''
       workgroup = WORKGROUP
       server string = smbnix
@@ -213,6 +216,8 @@
   systemd.services.jellyfin.serviceConfig = {
     Nice = 10;
     IOSchedulingPriority = 0;
+    MemoryMax = "1G";
+    CPUQuota = "50%";
   };
 
   systemd.services.syncthing.serviceConfig = {

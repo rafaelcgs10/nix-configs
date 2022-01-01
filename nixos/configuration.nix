@@ -111,6 +111,7 @@ in {
     vim
     homemanager.home-manager
     btrfs-progs
+    compsize
 
     ecryptfs
     ecryptfs-helper
