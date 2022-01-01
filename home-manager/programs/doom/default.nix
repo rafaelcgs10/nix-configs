@@ -1,7 +1,7 @@
 { lib, options, config, specialArgs, modulesPath }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/0608505651efc53180fc29254de5ad5100205ea6.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/e5dc491b4294109bbef89bae64be3d2bd7b30549.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   doom-emacs = pkgs.callPackage (builtins.fetchTarball {
     url = https://github.com/vlaci/nix-doom-emacs/archive/33064319607745856f488a998ca3db8ffcede865.tar.gz;
@@ -12,7 +12,7 @@ let
     doomPrivateDir = ./doom.d;
     dependencyOverrides = {
       "emacs-overlay" = (builtins.fetchTarball {
-        url = https://github.com/nix-community/emacs-overlay/archive/0608505651efc53180fc29254de5ad5100205ea6.tar.gz;
+        url = https://github.com/nix-community/emacs-overlay/archive/e5dc491b4294109bbef89bae64be3d2bd7b30549.tar.gz;
       });
     };
     emacsPackagesOverlay = self: super:
