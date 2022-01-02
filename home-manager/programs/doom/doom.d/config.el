@@ -317,27 +317,51 @@
 (after! lsp-mode
   (advice-remove #'lsp #'+lsp-dont-prompt-to-install-servers-maybe-a))
 
-(require 'dap-cpptools)
-(setq gdb-many-windows t)
+;; (require 'dap-cpptools)
+;; (setq gdb-many-windows t)
 
-(require 'dap-gdb-lldb)
-(require 'dap-lldb)
-;; (require 'dap-lldb-debug-program)
-
-(setq lsp-rust-unstable-features t)
-(setq gdb-show-main t
-      gdb-many-windows t)
+;; (setq lsp-rust-unstable-features t)
+;; (setq gdb-show-main t
+;;       gdb-many-windows t)
 
 (after! rustic
   (setq rustic-format-on-save t)
   (after! dap-mode
     (require 'dap-gdb-lldb)
-    (dap-register-debug-template "Rust::GDB Run Configuration"
-                                 (list :type "gdb"
-                                       :request "launch"
-                                       :name "GDB::Run"
-                                       :gdbpath "rust-gdb"
-                                       :target nil
-                                       :cwd nil))
+    (dap-register-debug-template
+     "Timely Dataflow 2 workers"
+     (list :type "gdb"
+           :arguments "-w2"
+           :request "launch"
+           :name "GDB::Run"
+           :gdbpath "rust-gdb"
+           :target nil
+           :cwd nil))
+    (dap-register-debug-template
+     "Rust::GDB Run Configuration"
+     (list :type "gdb"
+           :request "launch"
+           :name "GDB::Run"
+           :gdbpath "rust-gdb"
+           :target nil
+           :cwd nil))
+    (dap-register-debug-template
+     "Rust::LLDB Run Configuration"
+     (list :type "lldb"
+           :request "launch"
+           :name "LLDB::Run"
+           :gdbpath "rust-lldb"
+           :target nil
+           :cwd nil))
     )
+  )
+
+(use-package dap-mode
+  :ensure t
+  :config
+  (dap-ui-mode)
+  (dap-ui-controls-mode 1)
+  (require 'dap-lldb)
+  (require 'dap-gdb-lldb)
+  (dap-gdb-lldb-setup)
   )
