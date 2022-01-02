@@ -20,6 +20,10 @@
     '';
   };
 
+  services.logind.lidSwitch = "hibernate";
+  services.logind.lidSwitchExternalPower = "suspend";
+  services.logind.killUserProcesses = true;
+
     hardware.opengl.extraPackages = with pkgs; [
     rocm-opencl-icd
     rocm-opencl-runtime
@@ -77,23 +81,18 @@
       fsType = "vfat";
     };
 
-  zramSwap = {
-    enable = true;
-    priority = 5;
-    swapDevices = 1;
-    memoryPercent = 50;
-  };
+  swapDevices =
+    [ { device = "/dev/disk/by-label/swap"; }
+    ];
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-  # boot.postBootCommands = ''
-  #  echo mq-deadline > /sys/block/sda/queue/scheduler
-  #  echo mq-deadline > /sys/block/sdb/queue/scheduler
-  #  echo 1 > /sys/block/sda/queue/iosched/fifo_batch
-  #  echo 1 > /sys/block/sdb/queue/iosched/fifo_batch
-  # '';
+  boot.postBootCommands = ''
+    echo mq-deadline > /sys/block/nvme0n1/queue/scheduler
+    echo 1 > /sys/block/nvme0n1/queue/iosched/fifo_batch
+  '';
 
-  boot.kernelPackages = pkgs.linuxPackages_5_15;
+  boot.kernelPackages = pkgs.linuxPackages_zen;
 
   boot.kernel.sysctl = {
     "sched_latency_ns" = "1000000";
@@ -142,4 +141,24 @@
 
   powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
 
+  systemd.timers.hibernate-on-low-battery = {
+    wantedBy = [ "multi-user.target" ];
+    timerConfig = {
+      OnUnitActiveSec = "120";
+      OnBootSec= "120";
+    };
+  };
+  systemd.services.hibernate-on-low-battery =
+    let
+      battery-level-sufficient = pkgs.writeShellScriptBin
+        "battery-level-sufficient" ''
+        test "$(cat /sys/class/power_supply/BAT0/status)" != Discharging \
+          || test "$(cat /sys/class/power_supply/BAT0/capacity)" -ge 5
+      '';
+    in
+      {
+        serviceConfig = { Type = "oneshot"; };
+        onFailure = [ "hibernate.target" ];
+        script = "${battery-level-sufficient}/bin/battery-level-sufficient";
+      };
 }

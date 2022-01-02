@@ -124,6 +124,7 @@ myStartupHook = do
   spawnOnce "pa-applet"
   spawnOnce "copyq"
   spawnOnce "polybar mybar"
+  spawnOnce "light-locker --lock-on-lid --no-lock-on-suspend"
   setWMName "LG3D"
 
 myColorizer :: Window -> Bool -> X (String, String)
