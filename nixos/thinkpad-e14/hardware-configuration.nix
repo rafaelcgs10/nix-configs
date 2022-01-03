@@ -15,7 +15,7 @@
     videoDrivers = [ "amdgpu" ];
 
     deviceSection = ''
-      Option "DRI" "2"
+      Option "DRI" "3"
       Option "TearFree" "True"
     '';
   };
@@ -24,20 +24,18 @@
   services.logind.lidSwitchExternalPower = "suspend";
   services.logind.killUserProcesses = true;
 
-    hardware.opengl.extraPackages = with pkgs; [
+  hardware.opengl.extraPackages = with pkgs; [
+    amdvlk
     rocm-opencl-icd
     rocm-opencl-runtime
-    amdvlk
   ];
 
   hardware.opengl.extraPackages32 = with pkgs; [
     driversi686Linux.amdvlk
   ];
 
-  hardware.opengl = {
-    driSupport = lib.mkDefault true;
-    driSupport32Bit = lib.mkDefault true;
-  };
+  hardware.opengl.driSupport = true;
+  hardware.opengl.driSupport32Bit = true;
 
   boot.extraModulePackages = with config.boot.kernelPackages; [ rtw89 ];
 
