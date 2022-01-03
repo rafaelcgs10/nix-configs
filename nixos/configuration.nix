@@ -141,6 +141,13 @@ in {
   # };
 
   # List services that you want to enable:
+  environment.etc."isabelle-docker/bin/isabelle" = {
+    mode = "0555";
+    text =  ''
+      #!${pkgs.bash}/bin/bash
+      docker run --rm -i rafaelcgs10/isabelle-emacs:1.0 /app/bin/isabelle $1
+    '';
+  };
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
