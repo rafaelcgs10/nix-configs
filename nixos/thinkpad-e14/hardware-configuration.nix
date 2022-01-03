@@ -139,7 +139,7 @@
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
-  powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
+  powerManagement.cpuFreqGovernor = "ondemand";
 
   systemd.timers.hibernate-on-low-battery = {
     wantedBy = [ "multi-user.target" ];

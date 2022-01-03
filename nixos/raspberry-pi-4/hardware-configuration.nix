@@ -100,7 +100,7 @@
     };
   };
 
-  powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
+  powerManagement.cpuFreqGovernor = "ondemand";
 
   services.xrdp.enable = true;
   services.xrdp.defaultWindowManager = "xmonad";
