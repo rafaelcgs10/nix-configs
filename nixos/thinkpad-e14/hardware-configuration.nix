@@ -20,9 +20,10 @@
     '';
   };
 
-  services.logind.lidSwitch = "hibernate";
-  services.logind.lidSwitchExternalPower = "suspend";
+  services.logind.lidSwitch = "suspend-then-hibernate";
+  services.logind.lidSwitchExternalPower = "suspend-then-hibernate";
   services.logind.killUserProcesses = true;
+  services.tlp.enable = true;
 
   hardware.opengl.extraPackages = with pkgs; [
     amdvlk
