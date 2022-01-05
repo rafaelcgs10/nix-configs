@@ -20,6 +20,10 @@
     '';
   };
 
+  systemd.sleep.extraConfig = ''
+      HibernateDelaySec=1m
+    '';
+
   services.logind.lidSwitch = "suspend-then-hibernate";
   services.logind.lidSwitchExternalPower = "suspend-then-hibernate";
   services.logind.killUserProcesses = true;
