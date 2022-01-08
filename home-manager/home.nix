@@ -51,6 +51,9 @@ in {
     pkgs.hunspellDicts.en_US-large
     pkgs.languagetool
     pkgs.progress
+    pkgs.ffmpeg
+    pkgs.imagemagick
+    pkgs.enhanced-ctorrent
 
     # Fonts
     pkgs.noto-fonts
