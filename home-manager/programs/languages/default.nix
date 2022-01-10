@@ -49,6 +49,9 @@ in
   home.packages = [
     # ruststable
     lldb-mi
+    pkgs.z3
+    pkgs.vampire
+    pkgs.veriT
     pkgs.cargo
     pkgs.rustc
     pkgs.rustfmt
