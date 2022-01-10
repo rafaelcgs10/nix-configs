@@ -73,6 +73,7 @@ in
     ghc
     pkgs.haskellPackages.haskell-language-server
     pkgs.haskellPackages.hlint
+    pkgs.haskellPackages.stack
     pkgs.haskellPackages.apply-refact
     pkgs.haskellPackages.hoogle
     pkgs.isabelle
