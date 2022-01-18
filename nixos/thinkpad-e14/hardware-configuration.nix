@@ -21,11 +21,11 @@
   };
 
   systemd.sleep.extraConfig = ''
-      HibernateDelaySec=1m
+      HibernateDelaySec=3m
     '';
 
+  services.logind.lidSwitchExternalPower = "suspend";
   services.logind.lidSwitch = "suspend-then-hibernate";
-  services.logind.lidSwitchExternalPower = "suspend-then-hibernate";
   services.logind.killUserProcesses = true;
   services.tlp.enable = true;
 
@@ -116,6 +116,13 @@
 
   # virtualisation.virtualbox.host.enable = true;
   # users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
+
+  # Printer and scanner stuff
+  services.printing.enable = true;
+  services.printing.drivers = [ pkgs.hplipWithPlugin ];
+  hardware.sane.enable = true;
+  hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
+  users.users.rafael.extraGroups = [ "scanner" "lp" ];
 
   # Docker config
   virtualisation.docker = {
