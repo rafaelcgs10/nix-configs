@@ -47,6 +47,7 @@ let
 in
 {
   home.packages = [
+    pkgs.rnix-lsp
     # ruststable
     lldb-mi
     pkgs.z3
@@ -59,10 +60,10 @@ in
     pkgs.texlab
     pkgs.llvm_12
     pkgs.lldb
-    # pkgs.libllvm
     pkgs.gdb
+    # pkgs.libllvm
     pkgs.texlab
-    pkgs.nodejs-10_x
+    # pkgs.nodejs-10_x
     (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
     pkgs.rust-analyzer
     pkgs.go
