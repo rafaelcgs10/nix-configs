@@ -30,7 +30,6 @@ in {
     pkgs.unrar
     pkgs.p7zip
     pkgs.zsh
-    pkgs.rnix-lsp
     pkgs.lazydocker
     pkgs.libgccjit
     pkgs.neofetch
