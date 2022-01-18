@@ -73,6 +73,7 @@
 (setq gc-cons-threshold 400000000)
 (setq read-process-output-max (* 2048 4096))
 (setq lsp-idle-delay 0.200)
+(setq lsp-lens-enable nil)
 ;; (setq lsp-completion-provider :comapany-capf)
 ;; (setq lsp-enable-completion-at-point t)
 (setq prettify-symbols-mode t)
@@ -89,6 +90,10 @@
 
 (global-prettify-symbols-mode -1)
 (prettify-symbols-mode -1)
+(setq rustic-flycheck-clippy-params "--message-format=json")
+(setq rustic-compile-directory-method 'rustic-buffer-workspace)
+(add-hook 'haskell-mode-hook #'lsp)
+(add-hook 'haskell-literate-mode-hook #'lsp)
 
 ;; Languagetool for working with nix
 ;; (setq langtool-java-bin "java")
@@ -135,8 +140,8 @@
 ;;   (define-key evil-motion-state-map (kbd "z o") 'origami-open-node))
 ;; (with-eval-after-load 'evil
 ;;   (define-key evil-motion-state-map (kbd "Z o") 'origami-open-node-recursively))
-(defvar leader-states '(normal visual emacs)
-  "Evil states for the leader keybinding")
+;; (defvar leader-states '(normal visual emacs)
+;;   "Evil states for the leader keybinding")
 ;; (evil-define-key leader-states 'global (kbd "C-<down>") 'evil-window-down)
 ;; (evil-define-key leader-states 'global (kbd "C-<up>") 'evil-window-up)
 ;; (evil-define-key leader-states 'global (kbd "C-<left>") 'evil-window-left)
@@ -146,7 +151,7 @@
 (global-set-key (kbd "C-<right>") 'windmove-right)
 (global-set-key (kbd "C-<left>") 'windmove-left)
 (global-unset-key (kbd "C-x C-b"))
-(global-set-key (kbd "C-x b") 'project-switch-to-buffer)
+;; (global-set-key (kbd "C-x b") 'project-switch-to-buffer)
 (global-set-key "\M-d" 'lsp-ui-peek-find-definitions)
 (global-set-key "\M-r" 'lsp-ui-peek-find-references)
 (global-set-key "\M-m" 'rinari-find-model)
