@@ -36,6 +36,9 @@ in
     pkgs.xdotool
     pkgs.lxrandr
     pkgs.glxinfo
+
+    pkgs.mendeley
+    pkgs.chromium
   ];
 
   programs.firefox = {
