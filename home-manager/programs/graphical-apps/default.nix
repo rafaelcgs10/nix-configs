@@ -39,6 +39,7 @@ in
 
     pkgs.mendeley
     pkgs.chromium
+    pkgs.simple-scan
   ];
 
   programs.firefox = {
