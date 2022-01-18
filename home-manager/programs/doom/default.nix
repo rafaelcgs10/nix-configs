@@ -1,10 +1,10 @@
 { lib, options, config, specialArgs, modulesPath }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/e5dc491b4294109bbef89bae64be3d2bd7b30549.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/7673ee506b16d9fa77740b783c779394d722074e.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   doom-emacs = pkgs.callPackage (builtins.fetchTarball {
-    url = https://github.com/vlaci/nix-doom-emacs/archive/33064319607745856f488a998ca3db8ffcede865.tar.gz;
+    url = https://github.com/vlaci/nix-doom-emacs/archive/fee14d217b7a911aad507679dafbeaa8c1ebf5ff.tar.gz;
   }) {
     # bundledPackages = false;
     # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGcc;
@@ -12,7 +12,7 @@ let
     doomPrivateDir = ./doom.d;
     dependencyOverrides = {
       "emacs-overlay" = (builtins.fetchTarball {
-        url = https://github.com/nix-community/emacs-overlay/archive/e5dc491b4294109bbef89bae64be3d2bd7b30549.tar.gz;
+        url = https://github.com/nix-community/emacs-overlay/archive/7673ee506b16d9fa77740b783c779394d722074e.tar.gz;
       });
     };
     emacsPackagesOverlay = self: super:
@@ -37,6 +37,18 @@ let
             url = "https://github.com/m-fleury/isar-mode/archive/f29e28e5f73c36f2a05b19e8afcff63f5e1ccabf.tar.gz";
           };
         };
+        # twauctex = self.trivialBuild {
+        #   pname = "twauctex";
+        #   ename = "twauctex";
+        #   version = "2021-04-26";
+        #   packageRequires = [ pkgs.emacsPackages.auctex pkgs.emacsPackages.latex-extra ];
+        #   src = pkgs.fetchFromGitHub {
+        #     owner = "jeeger";
+        #     repo = "twauctex";
+        #     rev = "0984f0c8692694c121b2b7ecb221b2a824794876";
+        #     hash = "sha256-lFmdVMXIIXZ9ZohAJw5rhxpTv017qIyzmpuKOWDdeJ4=";
+        #   };
+        # };
         lsp-isar-parse-args = self.trivialBuild {
           pname = "lsp-isar-parse-args";
           ename = "lsp-isar-parse-args";
