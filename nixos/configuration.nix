@@ -121,7 +121,6 @@ in {
     coreutils
     fd
     docker-compose
-    rnix-lsp
     cachix
     gnutar gzip gnumake
     lxqt.lxqt-policykit
