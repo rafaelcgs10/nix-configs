@@ -37,7 +37,7 @@ in
     pkgs.lxrandr
     pkgs.glxinfo
 
-    pkgs.mendeley
+    pkgs.zotero
     pkgs.chromium
     pkgs.simple-scan
   ];
