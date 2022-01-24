@@ -97,16 +97,12 @@ in
         # To prevent "Quit & shutdown daemon" from working; we want systemd to
         # manage it!
         Restart = "on-success";
-        Nice = 10;
-        IOSchedulingClass = "idle";
-        IOSchedulingPriority = 6;
         User = cfg.user;
         Group = cfg.group;
         UMask = "0002";
         MemoryMax = "1G";
-        CPUQuota = "55%";
+        CPUQuota = "75%";
         LimitNOFILE = cfg.openFilesLimit;
-        BlockIOWeight = 500;
       };
     };
 
