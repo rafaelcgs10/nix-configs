@@ -72,6 +72,14 @@
     layout = "br";
     xkbVariant = "thinkpad";
   };
+  systemd.user.services.xmodmap = {
+    serviceConfig.PassEnvironment = "DISPLAY";
+    script = ''
+      ${pkgs.xorg.xmodmap}/bin/xmodmap -e "keycode 107 = Menu"
+  '';
+    wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+  };
 
 
   fileSystems."/" =
