@@ -48,12 +48,10 @@ in
     extensions = with nur.repos.rycee.firefox-addons; [
       bitwarden
       decentraleyes
-      https-everywhere
       privacy-badger
       ublock-origin
       vimium
       grammarly
-      wayback-machine
       darkreader
     ];
 
