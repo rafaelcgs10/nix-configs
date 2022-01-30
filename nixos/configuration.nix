@@ -132,7 +132,7 @@ in {
     # libdbusmenu
   ];
 
-  service.smartd = {
+  services.smartd = {
     enable = true;
     notifications.x11.enable = true;
     # notifications.mail.enable = true;
