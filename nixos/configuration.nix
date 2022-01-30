@@ -112,6 +112,7 @@ in {
     homemanager.home-manager
     btrfs-progs
     compsize
+    smartmontools
 
     ecryptfs
     ecryptfs-helper
