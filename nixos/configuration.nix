@@ -112,6 +112,7 @@ in {
     homemanager.home-manager
     btrfs-progs
     compsize
+    smartmontools
 
     ecryptfs
     ecryptfs-helper
@@ -130,6 +131,13 @@ in {
     # libnotify
     # libdbusmenu
   ];
+
+  services.smartd = {
+    enable = true;
+    notifications.x11.enable = true;
+    # notifications.mail.enable = true;
+    notifications.wall.enable = true;
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
