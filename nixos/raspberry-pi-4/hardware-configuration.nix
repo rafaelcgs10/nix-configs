@@ -105,7 +105,10 @@
   services.xrdp.enable = true;
   services.xrdp.defaultWindowManager = "xmonad";
 
+  services.samba-wsdd.enable = true;
   services.samba-wsdd.discovery = true;
+  services.samba-wsdd.interface = "eth0";
+
   services.samba = {
     enable = true;
     securityType = "user";
@@ -115,6 +118,7 @@
       server string = smbnix
       netbios name = smbnix
       security = user
+      smb ports = 139
     #use sendfile = yes
     #max protocol = smb2
       hosts allow = 10.100.0.2/32 192.168.15.1/24 192.168.15.118
@@ -185,8 +189,6 @@
     enable = true;
     systemCronJobs = [
       "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
-      "40 0 */1 * *     downloader    find /bighd/downloader/Downloads -mtime +4 -type f -delete"
-      "50 0 */1 * *     downloader    find /bighd/downloader/Downloads -type d -empty -delete"
       "1 0 */1 * *      root          reboot"
     ];
   };
