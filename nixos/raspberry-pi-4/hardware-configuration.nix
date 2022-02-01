@@ -213,14 +213,11 @@
   };
 
   systemd.services.jellyfin.serviceConfig = {
-    Nice = 10;
-    IOSchedulingPriority = 0;
     MemoryMax = "1G";
-    CPUQuota = "50%";
+    CPUQuota = "80%";
   };
 
   systemd.services.syncthing.serviceConfig = {
-    Nice = 20;
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
     MemoryMax = "1G";
