@@ -216,7 +216,6 @@
 
   systemd.services.jellyfin.serviceConfig = {
     MemoryMax = "1G";
-    CPUQuota = "80%";
   };
 
   systemd.services.syncthing.serviceConfig = {
