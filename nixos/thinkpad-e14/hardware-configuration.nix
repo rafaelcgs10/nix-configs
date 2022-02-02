@@ -137,6 +137,7 @@
     enable = true;
     enableOnBoot = false;
   };
+  systemd.services.docker.serviceConfig.KillMode = "mixed";
 
   services.syncthing = {
     user = "rafael";

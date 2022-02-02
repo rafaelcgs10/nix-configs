@@ -288,6 +288,7 @@
     enable = true;
     enableOnBoot = true;
   };
+  systemd.services.docker.serviceConfig.KillMode = "mixed";
 
   virtualisation.oci-containers.containers.pi-hole = {
     autoStart = true;
