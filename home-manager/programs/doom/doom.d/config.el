@@ -282,8 +282,12 @@
               (yas-minor-mode)))
 
 
+  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
+  (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
   (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
+  (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
+
 
   (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t )))
   )
@@ -311,7 +315,6 @@
         yas-snippet-dirs)
   (setq lsp-isar-path-to-isabelle "/etc/isabelle-docker/")
   )
-
 
 (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
 
@@ -384,4 +387,7 @@ With prefix argument (`C-u'), also kill the special buffers."
               (message "Killing buffer %s" buf-name)
               (kill-buffer buf))))))))
 
-(setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
+(setq doom-font (font-spec :family "mononoki" :size 14 :weight 'normal)
+      doom-big-font (font-spec :family "mononoki" :size 28 :weight 'normal)
+      doom-unicode-font (font-spec :family "mononoki")
+      )
