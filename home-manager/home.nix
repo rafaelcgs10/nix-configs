@@ -74,8 +74,8 @@ in {
     enable = true;
   };
 
-
   fonts.fontconfig.enable = true;
+  home.file.".local/share/fonts/IsabelleDejaVuSansMono.ttf".source = ../fonts/IsabelleDejaVuSansMono.ttf;
 
   programs.git = {
     enable = true;
