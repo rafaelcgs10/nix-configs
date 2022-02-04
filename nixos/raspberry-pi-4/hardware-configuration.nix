@@ -105,9 +105,9 @@
   services.xrdp.enable = true;
   services.xrdp.defaultWindowManager = "xmonad";
 
-  services.samba-wsdd.enable = true;
-  services.samba-wsdd.discovery = true;
-  services.samba-wsdd.interface = "eth0";
+  # services.samba-wsdd.enable = true;
+  # services.samba-wsdd.discovery = true;
+  # services.samba-wsdd.interface = "eth0";
 
   services.samba = {
     enable = true;
@@ -118,7 +118,7 @@
       server string = smbnix
       netbios name = smbnix
       security = user
-      smb ports = 139
+      # smb ports = 139
     #use sendfile = yes
     #max protocol = smb2
       hosts allow = 10.100.0.2/32 192.168.15.1/24 192.168.15.118
