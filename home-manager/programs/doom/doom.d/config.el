@@ -284,7 +284,6 @@
 
   (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
-  (add-hook 'isar-goal-mode-hook (lambda () (window-resize nil (- (truncate (* 0.7 (frame-width))) (window-width)) t)))
 
   (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t )))
   )
