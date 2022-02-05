@@ -387,7 +387,4 @@ With prefix argument (`C-u'), also kill the special buffers."
               (message "Killing buffer %s" buf-name)
               (kill-buffer buf))))))))
 
-(setq doom-font (font-spec :family "mononoki" :size 14 :weight 'normal)
-      doom-big-font (font-spec :family "mononoki" :size 28 :weight 'normal)
-      doom-unicode-font (font-spec :family "mononoki")
-      )
+(setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
