@@ -152,7 +152,7 @@ in {
     mode = "0555";
     text =  ''
       #!${pkgs.bash}/bin/bash
-      docker run --rm -i rafaelcgs10/isabelle-emacs:1.1 /app/bin/isabelle $1
+      podman run --rm -i rafaelcgs10/isabelle-emacs:1.1 /app/bin/isabelle $1
     '';
   };
 

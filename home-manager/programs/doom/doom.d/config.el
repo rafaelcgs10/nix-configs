@@ -61,18 +61,13 @@
 ;; they are implemented.
 
 ;; Setqs
-(setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
-
 (setq projectile-project-search-path '("~/Documents"))
 ;;
 ;; LSP tweaks
 (advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
-(setq gc-cons-threshold 500000000)
-(setq read-process-output-max (* 2048 2048))
+(setq gc-cons-threshold 100000000)
+(setq read-process-output-max (* 1024 1024))
 (setq lsp-idle-delay 0.800)
-(setq gc-cons-threshold 400000000)
-(setq read-process-output-max (* 2048 4096))
-(setq lsp-idle-delay 0.200)
 (setq lsp-lens-enable nil)
 ;; (setq lsp-completion-provider :comapany-capf)
 ;; (setq lsp-enable-completion-at-point t)
@@ -264,25 +259,6 @@
                   '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
 
 
-;; Isabelle setup
-(use-package! isar-mode
-  :mode "\\.thy\\'"
-  :config
-  ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
-  ;; (add-hook 'isar-mode-hook 'flycheck-mode)
-  (add-hook 'isar-mode-hook 'company-mode)
-  (add-hook 'isar-mode-hook
-            (lambda ()
-              (set (make-local-variable 'company-backends)
-                   '((company-dabbrev-code company-yasnippet)))))
-  (add-hook 'isar-mode-hook
-            (lambda ()
-              (set (make-local-variable 'indent-tabs-mode) nil)))
-  (add-hook 'isar-mode-hook
-            (lambda ()
-              (yas-minor-mode)))
-  )
-
 ;; (use-package! lsp-isar-parse-args
 ;;   :custom
 ;;   (lsp-isar-parse-args-nollvm nil))
@@ -304,7 +280,18 @@
   (add-hook 'isar-mode-hook
             (lambda ()
               (yas-minor-mode)))
+
+
+  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
+  (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
+  (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
+  (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
+  (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
+
+
+  (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t )))
   )
+
 
 (use-package! lsp-isar-parse-args
   :custom
@@ -325,9 +312,9 @@
   (add-hook 'isar-mode-hook #'lsp-isar-define-client-and-start)
 
   (push (concat "~/isabelle/Isabelle2021/src/Tools/emacs-lsp/yasnippet")
-   yas-snippet-dirs)
+        yas-snippet-dirs)
   (setq lsp-isar-path-to-isabelle "/etc/isabelle-docker/")
-)
+  )
 
 (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
 
@@ -399,3 +386,5 @@ With prefix argument (`C-u'), also kill the special buffers."
             (unless (string-match "^\\*\\(\\scratch\\|Messages\\)" buf-name)
               (message "Killing buffer %s" buf-name)
               (kill-buffer buf))))))))
+
+(setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))

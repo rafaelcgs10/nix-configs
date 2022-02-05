@@ -112,9 +112,9 @@
   services.xrdp.enable = true;
   services.xrdp.defaultWindowManager = "xmonad";
 
-  services.samba-wsdd.enable = true;
-  services.samba-wsdd.discovery = true;
-  services.samba-wsdd.interface = "eth0";
+  # services.samba-wsdd.enable = true;
+  # services.samba-wsdd.discovery = true;
+  # services.samba-wsdd.interface = "eth0";
 
   services.samba = {
     enable = true;
@@ -125,7 +125,7 @@
       server string = smbnix
       netbios name = smbnix
       security = user
-      smb ports = 139
+      # smb ports = 139
     #use sendfile = yes
     #max protocol = smb2
       hosts allow = 10.100.0.2/32 192.168.15.1/24 192.168.15.118
@@ -133,7 +133,7 @@
     '';
     shares = {
       private = {
-        path = "/bighd/downloader";
+        path = "/hugehd/downloader";
         browseable = "yes";
         "read only" = "no";
         "guest ok" = "yes";
@@ -153,7 +153,7 @@
 
   users.users.downloader = {
     isNormalUser = true;
-    home = "/bighd/downloader";
+    home = "/hugehd/downloader";
     extraGroups = [ "wheel" "networkmanager" "users" ];
   };
 
@@ -215,7 +215,7 @@
   services.syncthing = {
     user = "rafael";
     group = "users";
-    dataDir = "/bighd/Syncthing";
+    dataDir = "/hugehd/Syncthing";
     enable = true;
     relay.enable = true;
     guiAddress = "0.0.0.0:8384";
@@ -295,6 +295,7 @@
     enable = true;
     enableOnBoot = true;
   };
+  systemd.services.docker.serviceConfig.KillMode = "mixed";
 
   virtualisation.oci-containers.containers.pi-hole = {
     autoStart = true;
