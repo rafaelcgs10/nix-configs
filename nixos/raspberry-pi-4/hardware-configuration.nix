@@ -112,9 +112,9 @@
   services.xrdp.enable = true;
   services.xrdp.defaultWindowManager = "xmonad";
 
-  # services.samba-wsdd.enable = true;
-  # services.samba-wsdd.discovery = true;
-  # services.samba-wsdd.interface = "eth0";
+  services.samba-wsdd.enable = true;
+  services.samba-wsdd.discovery = true;
+  services.samba-wsdd.interface = "eth0";
 
   services.samba = {
     enable = true;
