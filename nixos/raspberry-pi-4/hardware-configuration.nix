@@ -61,6 +61,13 @@
     options = [ "rw" "noatime" "compress=zstd" "space_cache" ];
   };
 
+  fileSystems."/hugehd" =
+    { device = "/dev/disk/by-label/hugehd";
+    fsType = "btrfs";
+    options = [ "rw" "noatime" "compress=zstd" "space_cache" ];
+  };
+
+
   networking.hostName = "raspberry-pi-4";
 
   swapDevices =
