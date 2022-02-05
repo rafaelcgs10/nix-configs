@@ -126,7 +126,7 @@
     '';
     shares = {
       private = {
-        path = "/bighd/downloader";
+        path = "/hugehd/downloader";
         browseable = "yes";
         "read only" = "no";
         "guest ok" = "yes";
@@ -146,7 +146,7 @@
 
   users.users.downloader = {
     isNormalUser = true;
-    home = "/bighd/downloader";
+    home = "/hugehd/downloader";
     extraGroups = [ "wheel" "networkmanager" "users" ];
   };
 
@@ -208,7 +208,7 @@
   services.syncthing = {
     user = "rafael";
     group = "users";
-    dataDir = "/bighd/Syncthing";
+    dataDir = "/hugehd/Syncthing";
     enable = true;
     relay.enable = true;
     guiAddress = "0.0.0.0:8384";

@@ -17,7 +17,7 @@ in
 
     dataDir = mkOption {
       type = types.path;
-      default = "/bighd/downloader/.qbittorrent";
+      default = "/hugehd/downloader/.qbittorrent";
       description = ''
         The directory where qBittorrent will create files.
       '';
