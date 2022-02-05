@@ -138,6 +138,9 @@
     enableOnBoot = false;
   };
   systemd.services.docker.serviceConfig.KillMode = "mixed";
+  virtualisation.podman = {
+    enable = true;
+  };
 
   services.syncthing = {
     user = "rafael";
