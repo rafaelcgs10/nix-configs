@@ -58,13 +58,13 @@
   fileSystems."/bighd" =
     { device = "/dev/disk/by-label/bighd";
     fsType = "btrfs";
-    options = [ "rw" "noatime" "compress=zstd" "space_cache" ];
+    options = [ "rw" "nobootwait" "nofail" "noatime" "compress=zstd" "space_cache" ];
   };
 
   fileSystems."/hugehd" =
     { device = "/dev/disk/by-label/hugehd";
     fsType = "btrfs";
-    options = [ "rw" "noatime" "compress=zstd" "space_cache" ];
+    options = [ "rw" "nobootwait" "nofail" "noatime" "compress=zstd" "space_cache" ];
   };
 
 
