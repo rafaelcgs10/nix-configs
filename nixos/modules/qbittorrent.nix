@@ -84,13 +84,16 @@ in
     ];
 
     systemd.services.qbittorrent = {
-      after = [ "network.target" ];
+      after = [ "network.target" "remote-fs.target" ];
       description = "qBittorrent Daemon";
       wantedBy = [ "multi-user.target" ];
       path = [ pkgs.qbittorrent ];
       serviceConfig = {
+        ExecStartPre = ''
+          ${pkgs.coreutils}/bin/sleep 5
+          '';
         ExecStart = ''
-          ${pkgs.qbittorrent}/bin/qbittorrent-nox \
+           ${pkgs.qbittorrent}/bin/qbittorrent-nox \
             --profile=${configDir} \
             --webui-port=${toString cfg.port}
         '';
