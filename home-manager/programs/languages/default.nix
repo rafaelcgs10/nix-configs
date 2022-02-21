@@ -3,7 +3,9 @@ let
   moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz);
   nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
   ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
-
+  new_isabelle_pkgs = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz";
+  }) {};
   inherit (pkgs) haskellPackages;
 
   haskellDeps = ps: with ps; [
@@ -77,7 +79,7 @@ in
     pkgs.haskellPackages.stack
     pkgs.haskellPackages.apply-refact
     pkgs.haskellPackages.hoogle
-    pkgs.isabelle
+    new_isabelle_pkgs.isabelle
     pkgs.coq
     pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken

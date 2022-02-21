@@ -297,6 +297,8 @@
   :custom
   (lsp-isar-parse-args-nollvm nil))
 
+(setq lsp-isabelle-options (list "-d" "/app/afp-2022-02-13/thys"))
+
 (setq display-line-numbers-mode t)
 
 (use-package! lsp-isar
