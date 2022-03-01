@@ -90,7 +90,7 @@ in
       path = [ pkgs.qbittorrent ];
       serviceConfig = {
         ExecStartPre = ''
-          ${pkgs.coreutils}/bin/sleep 5
+          ${pkgs.coreutils}/bin/sleep 10
           '';
         ExecStart = ''
            ${pkgs.qbittorrent}/bin/qbittorrent-nox \
