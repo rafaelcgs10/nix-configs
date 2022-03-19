@@ -124,6 +124,7 @@
   services.samba-wsdd.interface = "eth0";
 
   services.samba = {
+    package = pkgs.sambaFull;
     enable = true;
     securityType = "user";
     nsswins = true;
@@ -132,6 +133,9 @@
       server string = smbnix
       netbios name = smbnix
       security = user
+      load printers = yes
+      printing = cups
+      printcap name = cups
       # smb ports = 139
     #use sendfile = yes
     #max protocol = smb2
@@ -139,6 +143,17 @@
       map to guest = bad user
     '';
     shares = {
+      printers = {
+        comment = "All Printers";
+        path = "/var/spool/samba";
+        public = "yes";
+        browseable = "yes";
+        # to allow user 'guest account' to print.
+        "guest ok" = "yes";
+        writable = "no";
+        printable = "yes";
+        "create mode" = 0700;
+      };
       private = {
         path = "/hugehd/downloader";
         browseable = "yes";
@@ -151,6 +166,9 @@
       };
     };
   };
+  systemd.tmpfiles.rules = [
+    "d /var/spool/samba 1777 root root -"
+  ];
 
   services.xserver = {
     resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
