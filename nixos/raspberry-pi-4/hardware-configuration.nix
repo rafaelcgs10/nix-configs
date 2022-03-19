@@ -22,6 +22,13 @@
       options iwlwifi power_save=0
   '';
 
+  # Printer and scanner stuff
+  services.printing.enable = true;
+  services.printing.drivers = [ pkgs.hplipWithPlugin ];
+  hardware.sane.enable = true;
+  hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
+  users.users.rafael.extraGroups = [ "scanner" "lp" ];
+
   boot.postBootCommands = ''
    echo mq-deadline > /sys/block/sda/queue/scheduler
    echo mq-deadline > /sys/block/sdb/queue/scheduler
