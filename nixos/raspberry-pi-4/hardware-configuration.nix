@@ -23,8 +23,18 @@
   '';
 
   # Printer and scanner stuff
+  # Enable automatic discovery of the printer from other Linux systems with avahi running.
+  services.avahi.enable = true;
+  services.avahi.nssmdns = true;
+  services.avahi.publish.enable = true;
+  services.avahi.publish.userServices = true;
+  services.printing.browsing = true;
+  services.printing.listenAddresses = [ "*:631" ];
+  services.printing.allowFrom = [ "all" ];
+  services.printing.defaultShared = true;
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplipWithPlugin ];
+
   hardware.sane.enable = true;
   hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
   users.users.rafael.extraGroups = [ "scanner" "lp" ];
@@ -134,8 +144,8 @@
       netbios name = smbnix
       security = user
       load printers = yes
-      printing = cups
-      printcap name = cups
+      # printing = cups
+      # printcap name = cups
       # smb ports = 139
     #use sendfile = yes
     #max protocol = smb2
@@ -143,17 +153,18 @@
       map to guest = bad user
     '';
     shares = {
-      printers = {
-        comment = "All Printers";
-        path = "/var/spool/samba";
-        public = "yes";
-        browseable = "yes";
-        # to allow user 'guest account' to print.
-        "guest ok" = "yes";
-        writable = "no";
-        printable = "yes";
-        "create mode" = 0700;
-      };
+      # printers = {
+      #   comment = "All Printers";
+      #   path = "/var/spool/samba";
+      #   public = "yes";
+      #   browseable = "yes";
+      #   "printer name" = "queue";
+      #   # to allow user 'guest account' to print.
+      #   "guest ok" = "yes";
+      #   writable = "no";
+      #   printable = "yes";
+      #   "create mode" = 0700;
+      # };
       private = {
         path = "/hugehd/downloader";
         browseable = "yes";
