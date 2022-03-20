@@ -149,7 +149,7 @@
       # smb ports = 139
     #use sendfile = yes
     #max protocol = smb2
-      hosts allow = 10.100.0.2/32 192.168.15.1/24 192.168.15.118
+      hosts allow = 10.100.0.2/32 10.100.0.3/32 192.168.15.1/24 192.168.15.118
       map to guest = bad user
     '';
     shares = {
