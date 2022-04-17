@@ -120,7 +120,7 @@
 ;; (add-hook 'lsp-mode-hook 'lsp-ui-mode)
 ;; (add-hook 'ruby-mode-hook 'chruby-use-corresponding)
 ;; (add-hook 'prog-mode-hook 'origami-mode)
-(add-hook 'before-save-hook 'my-prog-nuke-trailing-whitespace)
+;; (add-hook 'before-save-hook 'my-prog-nuke-trailing-whitespace)
 ;; (add-hook 'lsp-mode-hook 'dynamic-completion-mode)
 ;; (add-hook 'ruby-mode-hook 'highlight-indentation-current-column-mode)
 
@@ -246,9 +246,9 @@
   ;; Corrects (and improves) org-mode's native fontification.
   (doom-themes-org-config))
 
-(defun my-prog-nuke-trailing-whitespace ()
-  (when (derived-mode-p 'prog-mode)
-    (delete-trailing-whitespace)))
+;; (defun my-prog-nuke-trailing-whitespace ()
+;;   (when (derived-mode-p 'prog-mode)
+;;     (delete-trailing-whitespace)))
 
 (setq haskell-process-type 'cabal-new-repl)
 

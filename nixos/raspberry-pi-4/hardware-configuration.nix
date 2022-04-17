@@ -24,15 +24,12 @@
 
   # Printer and scanner stuff
   # Enable automatic discovery of the printer from other Linux systems with avahi running.
-  services.avahi.enable = true;
-  services.avahi.nssmdns = true;
   services.avahi.publish.enable = true;
   services.avahi.publish.userServices = true;
   services.printing.browsing = true;
   services.printing.listenAddresses = [ "*:631" ];
   services.printing.allowFrom = [ "all" ];
   services.printing.defaultShared = true;
-  services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplipWithPlugin ];
 
   hardware.sane.enable = true;

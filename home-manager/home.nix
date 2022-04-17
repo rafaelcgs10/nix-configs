@@ -25,6 +25,7 @@ in {
     pkgs.ripgrep
     pkgs.jq
     pkgs.tree
+    pkgs.ranger
     pkgs.nmap
     pkgs.unzip
     pkgs.unrar

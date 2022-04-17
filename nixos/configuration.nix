@@ -134,6 +134,11 @@ in {
     # libdbusmenu
   ];
 
+  # printing
+  services.printing.enable = true;
+  services.avahi.enable = true;
+  services.avahi.nssmdns = true;
+
   # to wireguard work with networkmanager
   networking.firewall = {
     # if packets are still dropped, they will show up in dmesg
