@@ -72,12 +72,6 @@
     "sched_migration_cost_ns"  = "7000000";
   };
 
-  fileSystems."/bighd" =
-    { device = "/dev/disk/by-label/bighd";
-    fsType = "btrfs";
-    options = [ "rw" "nofail" "noatime" "compress=zstd" "space_cache" ];
-  };
-
   fileSystems."/hugehd" =
     { device = "/dev/disk/by-label/hugehd";
     fsType = "btrfs";
@@ -153,18 +147,6 @@
       map to guest = bad user
     '';
     shares = {
-      # printers = {
-      #   comment = "All Printers";
-      #   path = "/var/spool/samba";
-      #   public = "yes";
-      #   browseable = "yes";
-      #   "printer name" = "queue";
-      #   # to allow user 'guest account' to print.
-      #   "guest ok" = "yes";
-      #   writable = "no";
-      #   printable = "yes";
-      #   "create mode" = 0700;
-      # };
       private = {
         path = "/hugehd/downloader";
         browseable = "yes";
@@ -180,6 +162,15 @@
   systemd.tmpfiles.rules = [
     "d /var/spool/samba 1777 root root -"
   ];
+
+  # webcam surveillance
+  services.zoneminder.enable = true;
+  services.zoneminder.openFirewall = true;
+  services.zoneminder.storageDir = "/hugehd/cam";
+  services.zoneminder.database.username = "zoneminder";
+  users.users.zoneminder.extraGroups = [ "video" ];
+  services.zoneminder.database.createLocally = true;
+
 
   services.xserver = {
     resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
