@@ -114,6 +114,7 @@ in {
     compsize
     smartmontools
     wireguard-tools
+    openh264
 
     ecryptfs
     ecryptfs-helper
