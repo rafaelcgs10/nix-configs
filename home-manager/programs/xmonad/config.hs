@@ -76,6 +76,7 @@ import XMonad.Util.SpawnOnce
 import XMonad.Actions.Navigation2D
 import XMonad.Actions.FloatKeys (keysResizeWindow)
 import XMonad.Util.EZConfig (additionalKeysP)
+import XMonad.Actions.UpdatePointer
 
 myFont :: String
 myFont = "xft:Roboto Mono:bold:size=9:antialias=true:hinting=true"
@@ -121,10 +122,10 @@ myStartupHook = do
   spawnOnOnce "emacs" "emacs"
   spawnOnOnce "web" "firefox"
   spawnOnce "flameshot"
+  spawnOnce "blueman-applet"
   spawnOnce "nm-applet"
   spawnOnce "pa-applet"
   spawnOnce "copyq"
-  spawnOnce "polybar mybar"
   spawnOnce "light-locker --lock-on-lid --no-lock-on-suspend"
   setWMName "LG3D"
 
@@ -411,6 +412,7 @@ main = do
               workspaces = myWorkspaces,
               borderWidth = myBorderWidth,
               normalBorderColor = myNormColor,
+              logHook = updatePointer (0.5, 0.5) (0, 0),
               focusedBorderColor = myFocusColor
             }
           `additionalKeysP` myKeysP

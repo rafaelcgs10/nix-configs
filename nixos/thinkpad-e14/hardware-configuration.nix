@@ -3,6 +3,14 @@
 # to /etc/nixos/configuration.nix instead.
 { config, lib, pkgs, modulesPath, ... }:
 
+let
+  oldpkgs = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz";
+  }) {};
+
+
+  oldBluez = oldpkgs.bluez;
+in
 {
   imports =
     [ (modulesPath + "/installer/scan/not-detected.nix")
@@ -11,13 +19,28 @@
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.kernelModules = [ "kvm-amd" ];
+
   services.xserver = {
     videoDrivers = [ "amdgpu" ];
+
+    serverLayoutSection = ''
+      Option "BlankTime" "0"
+      Option "StandbyTime" "0"
+      Option "SuspendTime" "0"
+      Option "OffTime" "0"
+    '';
 
     deviceSection = ''
       Option "DRI" "3"
       Option "TearFree" "True"
     '';
+  };
+  services.autorandr.enable = true;
+  systemd.services.autorandr = {
+    serviceConfig = {
+      RestartSec = 5;
+      Restart = "on-failure";
+    };
   };
 
   systemd.sleep.extraConfig = ''
@@ -160,6 +183,7 @@
 
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
+  hardware.bluetooth.package = oldBluez;
 
   powerManagement.cpuFreqGovernor = "ondemand";
 
