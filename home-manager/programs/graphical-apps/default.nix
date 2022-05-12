@@ -13,6 +13,8 @@ in
     pkgs.vlc
     pkgs.lxappearance
     pkgs.feh
+    pkgs.qtikz
+    pkgs.pdfpc
     pkgs.gpicview
     pkgs.pscircle
     (pkgs.calibre.override { unrarSupport = true; })
@@ -35,6 +37,7 @@ in
     pkgs.xorg.xwininfo
     pkgs.xdotool
     pkgs.lxrandr
+    pkgs.srandrd
     pkgs.glxinfo
 
     pkgs.zotero
