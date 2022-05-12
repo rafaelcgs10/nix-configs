@@ -351,26 +351,27 @@
            :gdbpath "rust-gdb"
            :target nil
            :cwd nil))
-    (dap-register-debug-template
-     "Rust::LLDB Run Configuration"
-     (list :type "lldb"
-           :request "launch"
-           :name "LLDB::Run"
-           :gdbpath "rust-lldb"
-           :target nil
-           :cwd nil))
     )
   )
 
 (use-package dap-mode
-  :ensure t
+  :ensure
   :config
   (dap-ui-mode)
   (dap-ui-controls-mode 1)
+
   (require 'dap-lldb)
   (require 'dap-gdb-lldb)
+  ;; installs .extension/vscode
   (dap-gdb-lldb-setup)
-  )
+  (dap-register-debug-template
+   "Rust::LLDB Run Configuration"
+   (list :type "lldb"
+         :request "launch"
+         :name "LLDB::Run"
+	 :gdbpath "rust-lldb"
+         :target nil
+         :cwd nil)))
 
 (defun modi/kill-non-project-buffers (&optional kill-special)
   "Kill buffers that do not belong to a `projectile' project.
