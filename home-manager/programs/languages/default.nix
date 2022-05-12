@@ -60,12 +60,12 @@ in
     pkgs.rustfmt
     pkgs.clippy
     pkgs.texlab
-    pkgs.llvm_12
+    # pkgs.llvm_12
     pkgs.lldb
     pkgs.gdb
-    # pkgs.libllvm
+    pkgs.libllvm
     pkgs.texlab
-    # pkgs.nodejs-10_x
+    pkgs.nodejs
     (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
     pkgs.rust-analyzer
     pkgs.go
