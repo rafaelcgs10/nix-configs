@@ -23,10 +23,14 @@ in {
   networking.networkmanager = {
    enable = true;
    wifi.powersave = false;
+   extraConfig = ''
+      [main]
+      rc-manager=file
+   '';
   };
 
   # Set your time zone.
-  time.timeZone = "America/Sao_Paulo";
+  time.timeZone = null;
 
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
