@@ -56,6 +56,7 @@ in
       vimium
       grammarly
       darkreader
+      i-dont-care-about-cookies
     ];
 
     profiles = {
@@ -66,6 +67,7 @@ in
           "browser.ctrlTab.recentlyUsedOrder" = false;
           "extensions.pocket.enabled" = false;
           "middlemouse.paste" = false;
+          "browser.casting.enabled" = true;
 
           # Hardware acceleration related settings.
           "gfx.webrender.all" = true;

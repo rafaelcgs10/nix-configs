@@ -124,6 +124,7 @@ myStartupHook = do
   spawnOnce "flameshot"
   spawnOnce "blueman-applet"
   spawnOnce "nm-applet"
+  spawnOnce "autorandr -c"
   spawnOnce "pa-applet"
   spawnOnce "copyq"
   spawnOnce "light-locker --lock-on-lid --no-lock-on-suspend"

@@ -12,6 +12,7 @@ in
     package = mypolybar;
     config = ./config.ini;
     script = ''
+      ${pkgs.gawk} 2> /devl/null
       for m in $(polybar --list-monitors | ${pkgs.coreutils}/bin/cut -d":" -f1 | ${pkgs.coreutils}/bin/head -n 1); do
           MONITOR=$m polybar mybar &
       done
