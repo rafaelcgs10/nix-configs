@@ -1,5 +1,10 @@
 { config, pkgs, lib, ... }:
 
+let 
+  new_pkgs = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz";
+  }) {};
+in
 {
   imports = [
     "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"
@@ -142,6 +147,7 @@
     #max protocol = smb2
       hosts allow = 10.100.0.2/32 10.100.0.3/32 192.168.15.1/24 192.168.15.118
       map to guest = bad user
+      socket options = IPTOS_LOWDELAY TCP_NODELAY IPTOS_THROUGHPUT SO_RCVBUF=131072 SO_SNDBUF=131072
     '';
     shares = {
       private = {
@@ -160,15 +166,6 @@
     "d /var/spool/samba 1777 root root -"
   ];
 
-  # webcam surveillance
-  services.zoneminder.enable = true;
-  services.zoneminder.openFirewall = true;
-  services.zoneminder.storageDir = "/hugehd/cam";
-  services.zoneminder.database.username = "zoneminder";
-  users.users.zoneminder.extraGroups = [ "video" ];
-  services.zoneminder.database.createLocally = true;
-
-
   services.xserver = {
     resolutions = [ { x = 1280; y = 720; } { x = 1024; y = 768; }];
   };
@@ -178,7 +175,7 @@
   users.users.downloader = {
     isNormalUser = true;
     home = "/hugehd/downloader";
-    extraGroups = [ "wheel" "networkmanager" "users" ];
+    extraGroups = [ "wheel" "networkmanager" "users" "video" ];
   };
 
   # services = {
@@ -197,6 +194,7 @@
     openFirewall = true;
     user = "downloader";
     group = "users";
+    package = new_pkgs.jellyfin;
   };
 
   services.vsftpd = {
@@ -316,7 +314,7 @@
     username = "rafaelcgs10@gmail.com";
     password = builtins.readFile /home/rafael/cf-api-token;
     zone = "rafaelcgs.com";
-    domains = [ "vpn.rafaelcgs.com" ];
+    domains = [ "vpn.rafaelcgs.com" "jellyfin.rafaelcgs.com" ];
   };
 
   # Docker config
@@ -326,23 +324,4 @@
   };
   systemd.services.docker.serviceConfig.KillMode = "mixed";
 
-  virtualisation.oci-containers.containers.pi-hole = {
-    autoStart = true;
-    image = "pihole/pihole:latest";
-    ports = [
-      "53:53/tcp"
-      "53:53/udp"
-      "80:80/tcp"
-    ];
-    volumes = [
-      "/etc/pihole/:/etc/pihole/"
-      "/etc/dnsmasq.d/:/etc/dnsmasq.d/"
-    ];
-    environment = {
-      TZ = "America/Sao_Paulo";
-      WEBTHEME = "default-darker";
-      WEBPASSWORD = "pihole";
-    };
-    extraOptions = [ "--network=host" ];
-  };
 }
