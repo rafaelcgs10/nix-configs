@@ -21,6 +21,17 @@ in
   boot.kernelModules = [ "kvm-amd" ];
 
   services.xserver = {
+    libinput = {
+      enable = true;
+
+      mouse = {
+        disableWhileTyping = true;
+        accelProfile = "flat";
+        accelSpeed = "0";
+        calibrationMatrix = ".5 0 0 0 .5 0 0 0 1";
+      };
+    };
+
     videoDrivers = [ "amdgpu" ];
 
     serverLayoutSection = ''
@@ -42,13 +53,16 @@ in
       Restart = "on-failure";
     };
   };
+  services.xserver.libinput.touchpad.tappingDragLock = false;
+  services.xserver.libinput.touchpad.tapping = false;
+  services.xserver.libinput.mouse.tapping = false;
 
   systemd.sleep.extraConfig = ''
       HibernateDelaySec=3m
     '';
 
   services.logind.lidSwitchExternalPower = "suspend";
-  services.logind.lidSwitch = "suspend-then-hibernate";
+  services.logind.lidSwitch = "hybrid-sleep";
   services.logind.killUserProcesses = true;
   services.tlp.enable = true;
 
@@ -127,12 +141,6 @@ in
   '';
 
   boot.kernelPackages = pkgs.linuxPackages_zen;
-
-  boot.kernel.sysctl = {
-    "sched_latency_ns" = "1000000";
-    "sched_min_granularity_ns" = "100000";
-    "sched_migration_cost_ns"  = "7000000";
-  };
 
 
   fileSystems."/tmp" = {
