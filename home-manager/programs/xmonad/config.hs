@@ -364,6 +364,7 @@ myKeysP =
     ("M-S-u", spawn "setxkbmap -layout us -variant intl"),
     ("M-S-b", spawn "setxkbmap -layout br -variant abnt2"),
     ("M-p", spawn "flameshot gui"),
+    ("M-o", spawn "light-locker-command -l"),
     ("M-s", spawn "/home/rafael/nix-configs/pauser.sh"),
     ("M-S-s", spawn "/home/rafael/nix-configs/unpauser.sh"),
     ("M-S-p", spawn "flameshot screen -c"),

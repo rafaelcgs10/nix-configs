@@ -4,7 +4,7 @@ let
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
-  home.stateVersion = "21.05";
+  home.stateVersion = "22.05";
 
   imports = [
     ./imports/default.nix
@@ -55,6 +55,8 @@ in {
     pkgs.ffmpeg
     pkgs.imagemagick
     pkgs.enhanced-ctorrent
+    pkgs.gcalcli
+    pkgs.conky
 
     # Fonts
     pkgs.noto-fonts

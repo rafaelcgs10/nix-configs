@@ -1,5 +1,7 @@
 set -e
 
+conky -c $HOME/nix-configs/wallpapers/conky.conf
+
 while :
 do
     w=$(xrandr | grep '*' | awk -F ' ' '{print $1}' | awk -F 'x' '{print $1}' | tail -n 1)
