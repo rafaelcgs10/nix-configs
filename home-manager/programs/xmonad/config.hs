@@ -127,7 +127,8 @@ myStartupHook = do
   spawnOnce "autorandr -c"
   spawnOnce "pa-applet"
   spawnOnce "copyq"
-  spawnOnce "light-locker --lock-on-lid --no-lock-on-suspend"
+  spawnOnce "light-locker --lock-on-lid --lock-on-suspend"
+  setWMName "conky -c /home/rafael/nix-configs/wallpapers/conky.conf"
   setWMName "LG3D"
 
 myColorizer :: Window -> Bool -> X (String, String)

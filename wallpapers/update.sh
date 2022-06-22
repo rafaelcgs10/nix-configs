@@ -1,6 +1,6 @@
 set -e
 
-conky -c $HOME/nix-configs/wallpapers/conky.conf
+
 
 while :
 do
