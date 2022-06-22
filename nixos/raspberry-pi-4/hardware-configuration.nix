@@ -2,7 +2,7 @@
 
 let 
   new_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz";
+    url = "https://github.com/NixOS/nixpkgs/archive/b0e09fdea3ec0eb9b1a273a01a830a7677808f44.tar.gz";
   }) {};
 in
 {
