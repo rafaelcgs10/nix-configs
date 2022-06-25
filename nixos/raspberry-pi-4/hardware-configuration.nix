@@ -327,11 +327,11 @@ in
   virtualisation.oci-containers.containers.tdarr-server = {
     image = "ghcr.io/haveagitgat/tdarr:2.00.18";
     volumes = [
-      "/home/downloader/.tdarr_server:/app/server"
-      "/home/downloader/.tdarr_configs:/app/configs"
-      "/home/downloader/.tdarr_logs:/app/logs"
-      "/home/downloader/.temp:/temp"
-      "/home/downloader/Downloads:/media"
+      "/hugehd/downloader/.tdarr_server:/app/server"
+      "/hugehd/downloader/.tdarr_configs:/app/configs"
+      "/hugehd/downloader/.tdarr_logs:/app/logs"
+      "/hugehd/downloader/.temp:/temp"
+      "/hugehd/downloader/Downloads:/media"
     ];
     environment = {
       serverIP = "192.168.15.42";
@@ -351,10 +351,10 @@ in
   virtualisation.oci-containers.containers.tdarr-node = {
     image = "ghcr.io/haveagitgat/tdarr_node:2.00.18";
     volumes = [
-      "/tmp/configs2:/app/configs"
-      "/tmp/logs2:/app/logs"
-      "/home/downloader/.temp:/temp"
-      "/home/downloader/Downloads:/media"
+      "/hugehd/downloader/configs2:/app/configs"
+      "/hugehd/downloader/logs2:/app/logs"
+      "/hugehd/downloader/.temp:/temp"
+      "/hugehd/downloader/Downloads:/media"
     ];
     environment = {
       serverIP = "192.168.15.42";
