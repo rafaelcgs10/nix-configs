@@ -215,4 +215,5 @@ in
         onFailure = [ "hibernate.target" ];
         script = "${battery-level-sufficient}/bin/battery-level-sufficient";
       };
+
 }

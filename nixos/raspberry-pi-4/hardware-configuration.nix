@@ -324,4 +324,52 @@ in
   };
   systemd.services.docker.serviceConfig.KillMode = "mixed";
 
+  virtualisation.oci-containers.containers.tdarr-server = {
+    image = "ghcr.io/haveagitgat/tdarr:2.00.18";
+    volumes = [
+      "/home/downloader/.tdarr_server:/app/server"
+      "/home/downloader/.tdarr_configs:/app/configs"
+      "/home/downloader/.tdarr_logs:/app/logs"
+      "/home/downloader/.temp:/temp"
+      "/home/downloader/Downloads:/media"
+    ];
+    environment = {
+      serverIP = "192.168.15.42";
+      serverPort = "8266";
+      webUIPort = "8265";
+      TZ = "Europe/Copenhagen";
+      PUID = "1000";
+      PGID = "100";
+    };
+    ports = [ "8265:8265" "8266:8266" ];
+    extraOptions = [
+      "--network=bridge"
+      # "--gpus=all" "--device=/dev/dri:/dev/dri"
+    ];
+  };
+
+  virtualisation.oci-containers.containers.tdarr-node = {
+    image = "ghcr.io/haveagitgat/tdarr_node:2.00.18";
+    volumes = [
+      "/tmp/configs2:/app/configs"
+      "/tmp/logs2:/app/logs"
+      "/home/downloader/.temp:/temp"
+      "/home/downloader/Downloads:/media"
+    ];
+    environment = {
+      serverIP = "192.168.15.42";
+      serverPort = "8266";
+      nodeID = "tdarr-node1";
+      nodeIP = "192.168.15.42";
+      nodePort = "8267";
+      TZ = "Europe/Copenhagen";
+      PUID = "1000";
+      PGID = "100";
+    };
+    ports = [ "8267:8267" ];
+    extraOptions = [
+      "--network=bridge"
+      # "--gpus=all" "--device=/dev/dri:/dev/dri"
+    ];
+  };
 }
