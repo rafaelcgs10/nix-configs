@@ -338,7 +338,7 @@ in
       serverPort = "8266";
       webUIPort = "8265";
       TZ = "Europe/Copenhagen";
-      PUID = "1000";
+      PUID = "1002";
       PGID = "100";
     };
     ports = [ "8265:8265" "8266:8266" ];
@@ -363,7 +363,7 @@ in
       nodeIP = "192.168.15.42";
       nodePort = "8267";
       TZ = "Europe/Copenhagen";
-      PUID = "1000";
+      PUID = "1002";
       PGID = "100";
     };
     ports = [ "8267:8267" ];
