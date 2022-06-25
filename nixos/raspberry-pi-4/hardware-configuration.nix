@@ -344,6 +344,7 @@ in
     ports = [ "8265:8265" "8266:8266" ];
     extraOptions = [
       "--network=bridge"
+      "--privileged"
       # "--gpus=all" "--device=/dev/dri:/dev/dri"
     ];
   };
@@ -369,6 +370,7 @@ in
     ports = [ "8267:8267" ];
     extraOptions = [
       "--network=bridge"
+      "--privileged"
       # "--gpus=all" "--device=/dev/dri:/dev/dri"
     ];
   };
