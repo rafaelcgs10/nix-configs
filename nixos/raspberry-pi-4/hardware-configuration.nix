@@ -327,10 +327,10 @@ in
   virtualisation.oci-containers.containers.tdarr-server = {
     image = "ghcr.io/haveagitgat/tdarr:2.00.18";
     volumes = [
-      "/hugehd/downloader/.tdarr_server:/app/server"
-      "/hugehd/downloader/.tdarr_configs:/app/configs"
-      "/hugehd/downloader/.tdarr_logs:/app/logs"
-      "/hugehd/downloader/.temp:/temp"
+      "/home/downloader/.tdarr_server:/app/server"
+      "/home/downloader/.tdarr_configs:/app/configs"
+      "/home/downloader/.tdarr_logs:/app/logs"
+      "/home/downloader/.temp:/temp"
       "/hugehd/downloader/Downloads:/media"
     ];
     environment = {
@@ -353,9 +353,9 @@ in
   virtualisation.oci-containers.containers.tdarr-node = {
     image = "ghcr.io/haveagitgat/tdarr_node:2.00.18";
     volumes = [
-      "/hugehd/downloader/configs2:/app/configs"
-      "/hugehd/downloader/logs2:/app/logs"
-      "/hugehd/downloader/.temp:/temp"
+      "/home/downloader/configs2:/app/configs"
+      "/home/downloader/logs2:/app/logs"
+      "/home/downloader/.temp:/temp"
       "/hugehd/downloader/Downloads:/media"
     ];
     environment = {
