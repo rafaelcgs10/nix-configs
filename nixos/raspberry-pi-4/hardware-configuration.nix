@@ -375,7 +375,7 @@ in
     ];
   };
 
-  systemd.services.docker-tdarr-server.serviceConfig = {
+  systemd.services.docker-tdarr-node.serviceConfig = {
     MemoryMax = "512M";
     CPUQuota = "50%";
   };
