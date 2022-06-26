@@ -249,7 +249,7 @@ in
   systemd.services.syncthing.serviceConfig = {
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
-    MemoryMax = "1G";
+    MemoryMax = "512M";
     CPUQuota = "50%";
     BlockIOWeight = 100;
   };
@@ -373,5 +373,14 @@ in
       "--privileged"
       # "--gpus=all" "--device=/dev/dri:/dev/dri"
     ];
+  };
+
+  systemd.services.docker-tdarr-server.serviceConfig = {
+    MemoryMax = "512M";
+    CPUQuota = "50%";
+  };
+  systemd.services.docker-tdarr-server.serviceConfig = {
+    MemoryMax = "512M";
+    CPUQuota = "50%";
   };
 }

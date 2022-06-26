@@ -103,7 +103,7 @@ in
         User = cfg.user;
         Group = cfg.group;
         UMask = "0002";
-        MemoryMax = "1G";
+        MemoryMax = "512M";
         CPUQuota = "75%";
         LimitNOFILE = cfg.openFilesLimit;
       };
