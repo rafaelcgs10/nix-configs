@@ -345,6 +345,7 @@ in
     extraOptions = [
       "--network=bridge"
       "--privileged"
+      "--memory=512m"
       # "--gpus=all" "--device=/dev/dri:/dev/dri"
     ];
   };
@@ -371,6 +372,7 @@ in
     extraOptions = [
       "--network=bridge"
       "--privileged"
+      "--memory=512m"
       # "--gpus=all" "--device=/dev/dri:/dev/dri"
     ];
   };
