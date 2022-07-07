@@ -122,6 +122,7 @@ myStartupHook = do
   spawnOnOnce "emacs" "emacs"
   spawnOnOnce "web" "firefox"
   spawnOnce "flameshot"
+  spawnOnce "xsetroot -cursor_name left_ptr"
   spawnOnce "blueman-applet"
   spawnOnce "nm-applet"
   spawnOnce "autorandr -c"

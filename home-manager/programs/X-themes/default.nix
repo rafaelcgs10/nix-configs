@@ -13,8 +13,16 @@
   };
 
   xsession.pointerCursor = {
+    defaultCursor = "left_ptr";
     package = pkgs.qogir-icon-theme;
     name = "Qogir-dark";
     size = 28;
   };
+
+  xresources.properties = { "Xft.dpi" = "96"; };
+  xsession.profileExtra = ''
+    export GDK_SCALE=1
+    export GDK_DPI_SCALE=1
+    export QT_AUTO_SCREEN_SCALE_FACTOR=1
+  '';
 }
