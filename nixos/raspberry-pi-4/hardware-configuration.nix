@@ -242,10 +242,6 @@ in
     guiAddress = "0.0.0.0:8384";
   };
 
-  systemd.services.jellyfin.serviceConfig = {
-    MemoryMax = "1G";
-  };
-
   systemd.services.syncthing.serviceConfig = {
     IOSchedulingClass = "idle";
     IOSchedulingPriority = 6;
