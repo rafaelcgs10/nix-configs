@@ -122,6 +122,7 @@ myStartupHook = do
   spawnOnOnce "emacs" "emacs"
   spawnOnOnce "web" "firefox"
   spawnOnce "flameshot"
+  spawnOnce "xsetroot -cursor_name left_ptr"
   spawnOnce "blueman-applet"
   spawnOnce "nm-applet"
   spawnOnce "autorandr -c"
@@ -225,11 +226,11 @@ tabs =
     myTabConfig =
       def
         { fontName = "xft:mononoki:regular:pixelsize=11",
-          activeColor = "#ffffff",
+          activeColor = "#6d778d",
           inactiveColor = "#3e445e",
           activeBorderColor = "#000000",
           inactiveBorderColor = "#282c34",
-          activeTextColor = "#ffffff",
+          activeTextColor = "#d0d0d0",
           inactiveTextColor = "#d0d0d0"
         }
 

@@ -28,7 +28,6 @@ in
         disableWhileTyping = true;
         accelProfile = "flat";
         accelSpeed = "0";
-        calibrationMatrix = ".5 0 0 0 .5 0 0 0 1";
       };
     };
 
