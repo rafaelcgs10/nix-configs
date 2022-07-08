@@ -218,6 +218,7 @@ in
     enable = true;
     systemCronJobs = [
       "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
+      "* 1 * * *     downloader   /hugehd/downloader/cleanup.sh"
     ];
   };
 
