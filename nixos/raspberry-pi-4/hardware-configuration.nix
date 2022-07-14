@@ -314,6 +314,11 @@ in
     domains = [ "vpn.rafaelcgs.com" "jellyfin.rafaelcgs.com" ];
   };
 
+  virtualisation.oci-containers.containers.flaresolverr = {
+    image = "ghcr.io/flaresolverr/flaresolverr:latest";
+    ports = [ "8181:8181" ];
+  };
+
   # Docker config
   virtualisation.docker = {
     enable = true;
