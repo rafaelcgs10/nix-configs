@@ -27,6 +27,10 @@ in
       options iwlwifi power_save=0
   '';
 
+  networking.localCommands = ''
+    ${pkgs.iw}/bin/iw wlan0 set power_save off
+  '';
+
   # Printer and scanner stuff
   # Enable automatic discovery of the printer from other Linux systems with avahi running.
   services.avahi.publish.enable = true;
@@ -249,6 +253,9 @@ in
     MemoryMax = "512M";
     CPUQuota = "50%";
     BlockIOWeight = 100;
+    RestartSec = 10;
+    Restart = lib.mkForce "always";
+    Type = lib.mkForce "simple";
   };
 
   # enable NAT
