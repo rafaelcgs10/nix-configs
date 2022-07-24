@@ -129,7 +129,7 @@ myStartupHook = do
   spawnOnce "pa-applet"
   spawnOnce "copyq"
   spawnOnce "light-locker --lock-on-lid --lock-on-suspend"
-  setWMName "conky -c /home/rafael/nix-configs/wallpapers/conky.conf"
+  -- spawnOnce "conky -c /home/rafael/nix-configs/wallpapers/conky.conf"
   setWMName "LG3D"
 
 myColorizer :: Window -> Bool -> X (String, String)
@@ -363,6 +363,8 @@ myKeysP =
     ("M-C-d", namedScratchpadAction myScratchPads "discord"),
     -- Apps
     ("M-u", spawn "pavucontrol"),
+    ("M-t", spawn "gnome-system-monitor"),
+    ("M-n", spawn "nemo"),
     ("M-S-u", spawn "setxkbmap -layout us -variant intl"),
     ("M-S-b", spawn "setxkbmap -layout br -variant abnt2"),
     ("M-p", spawn "flameshot gui"),
@@ -416,7 +418,7 @@ main = do
               workspaces = myWorkspaces,
               borderWidth = myBorderWidth,
               normalBorderColor = myNormColor,
-              logHook = updatePointer (0.5, 0.5) (0, 0),
+              -- logHook = updatePointer (0.5, 0.5) (0, 0),
               focusedBorderColor = myFocusColor
             }
           `additionalKeysP` myKeysP
