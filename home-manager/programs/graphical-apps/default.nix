@@ -18,8 +18,10 @@ in
     pkgs.gpicview
     pkgs.pscircle
     (pkgs.calibre.override { unrarSupport = true; })
+    pkgs.libreoffice
+    pkgs.gnome.gnome-system-monitor
     pkgs.remmina
-    pkgs.pcmanfm
+    pkgs.cinnamon.nemo
     pkgs.ffmpegthumbnailer
     pkgs.libappindicator
     pkgs.gdk-pixbuf
