@@ -316,7 +316,7 @@ in
 
   virtualisation.oci-containers.containers.flaresolverr = {
     image = "ghcr.io/flaresolverr/flaresolverr:latest";
-    ports = [ "8181:8181" ];
+    ports = [ "8191:8191" ];
   };
 
   # Docker config
