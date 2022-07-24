@@ -12,8 +12,11 @@
     };
   };
 
-  xsession.pointerCursor = {
-    defaultCursor = "left_ptr";
+  home.pointerCursor = {
+    x11 = {
+      enable = true;
+      defaultCursor = "left_ptr";
+    };
     package = pkgs.qogir-icon-theme;
     name = "Qogir-dark";
     size = 28;
