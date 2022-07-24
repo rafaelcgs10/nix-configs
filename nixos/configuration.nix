@@ -46,7 +46,7 @@ in {
 
 
   services = {
-    gnome.gnome-keyring.enable = true;
+    # gnome.gnome-keyring.enable = true;
     upower.enable = true;
 
     dbus = {
@@ -142,6 +142,20 @@ in {
   services.printing.enable = true;
   services.avahi.enable = true;
   services.avahi.nssmdns = true;
+  services.avahi.extraServiceFiles = {
+    ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
+    smb = ''
+    <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+    <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+    <service-group>
+      <name replace-wildcards="yes">%h</name>
+      <service>
+        <type>_smb._tcp</type>
+        <port>445</port>
+      </service>
+    </service-group>
+  '';
+  };
 
   # to wireguard work with networkmanager
   networking.firewall = {
@@ -165,7 +179,7 @@ in {
     notifications.wall.enable = true;
   };
 
-  services.pcscd.enable = true;
+  # services.pcscd.enable = true;
   programs.gnupg.agent = {
     enable = true;
     pinentryFlavor = "curses";
@@ -191,8 +205,8 @@ in {
   # Or disable the firewall altogether.
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
-  networking.firewall.allowedTCPPorts = [ 8080 8384 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 ];
-  networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 ];
+  networking.firewall.allowedTCPPorts = [ 8080 8384 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 22000 ];
+  networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 22000 ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

@@ -45,11 +45,14 @@ in
       Option "TearFree" "True"
     '';
   };
+
   services.autorandr.enable = true;
   systemd.services.autorandr = {
+    startLimitIntervalSec = lib.mkForce 10;
+    startLimitBurst = lib.mkForce 5;
     serviceConfig = {
-      RestartSec = 5;
-      Restart = "on-failure";
+      ExecStart = lib.mkForce "${pkgs.autorandr}/bin/autorandr -c --batch";
+      Type = lib.mkForce "simple";
     };
   };
   services.xserver.libinput.touchpad.tappingDragLock = false;
@@ -78,7 +81,7 @@ in
   hardware.opengl.driSupport = true;
   hardware.opengl.driSupport32Bit = true;
 
-  boot.extraModulePackages = with config.boot.kernelPackages; [ rtw89 ];
+  # boot.extraModulePackages = with config.boot.kernelPackages; [ rtw89 ];
 
   services.earlyoom = {
     enable = true;
@@ -129,8 +132,11 @@ in
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-label/swap"; }
+    [ { priority = 1; device = "/dev/disk/by-label/swap"; }
     ];
+  zramSwap.enable = true;
+  zramSwap.algorithm = "zstd";
+  zramSwap.priority = 10;
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
@@ -139,7 +145,10 @@ in
     echo 1 > /sys/block/nvme0n1/queue/iosched/fifo_batch
   '';
 
-  boot.kernelPackages = pkgs.linuxPackages_zen;
+  boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
+  boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
+
+  boot.kernelPackages = pkgs.linuxPackages_5_17;
 
 
   fileSystems."/tmp" = {
@@ -179,18 +188,36 @@ in
     enable = true;
     relay.enable = true;
   };
+  systemd.services.syncthing = {
+    serviceConfig = {
+      RestartSec = 10;
+      Restart = lib.mkForce "always";
+      Type = lib.mkForce "simple";
+    };
+  };
 
   # Enable cron service
   services.cron = {
     enable = true;
     systemCronJobs = [
       "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
+      "5 * * * *     rafael    rm /home/rafael/Downloads/*.torrent"
     ];
   };
 
+  services = {
+    udev.extraRules = ''
+      SUBSYSTEM=="block", ENV{ID_FS_TYPE}=="ntfs", ENV{ID_FS_TYPE}="ntfs3"
+    '';
+  };
+
+
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
-  hardware.bluetooth.package = oldBluez;
+  systemd.services.bluetooth.serviceConfig.ExecStart = [
+    ""
+    "${pkgs.bluez}/libexec/bluetooth/bluetoothd --noplugin=sap,avrcp"
+  ];
 
   powerManagement.cpuFreqGovernor = "ondemand";
 
