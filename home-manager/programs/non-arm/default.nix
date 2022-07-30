@@ -10,10 +10,11 @@ in
     pkgs.insomnia
     pkgs.tdesktop
     pkgs.obs-studio
-    pkgs.lutris
+    unstable.lutris
     pkgs.tlaplusToolbox
     unstable.discord
     pkgs.bitwarden
+    pkgs.steam
 
     pkgs.google-cloud-sdk
   ];

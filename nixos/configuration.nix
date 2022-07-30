@@ -51,7 +51,7 @@ in {
 
     dbus = {
       enable = true;
-      packages = [ pkgs.gnome.dconf ];
+      packages = [ pkgs.dconf ];
     };
   };
 

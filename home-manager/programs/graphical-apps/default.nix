@@ -7,30 +7,34 @@ let
 in
 {
   home.packages = [
-    pkgs.evince
-    pkgs.okular
-    pkgs.gimp
+    pkgs.gimp-with-plugins
     pkgs.vlc
+    pkgs.kdenlive
     pkgs.lxappearance
     pkgs.feh
     pkgs.qtikz
+    pkgs.grsync
+    pkgs. gsettings-desktop-schemas
     pkgs.pdfpc
     pkgs.gpicview
     pkgs.pscircle
     (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
-    pkgs.gnome.gnome-system-monitor
     pkgs.remmina
     pkgs.cinnamon.nemo
     pkgs.ffmpegthumbnailer
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.gparted
+    pkgs.gnome.gnome-system-monitor
+    pkgs.gnome.gnome-calculator
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
     pkgs.sc-controller
     unstable.zulip
+    pkgs.evince
+    pkgs.masterpdfeditor4
 
     pkgs.flameshot
     pkgs.noisetorch

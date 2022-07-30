@@ -149,7 +149,10 @@ myScratchPads =
     NS "slack" spawnSlack findSlack manageScratch,
     NS "whatsapp-for-linux" spawnWhats findWhats manageScratch,
     NS "telegram" spawnTelegram findTelegram manageScratch,
-    NS "discord" spawnDiscord findDiscord manageScratch
+    NS "discord" spawnDiscord findDiscord manageScratch,
+    NS "gnome-calculator" spawnCalculator findCalculator manageScratch,
+    NS "grsync" spawnGrsync findGrsync manageScratch,
+    NS "languagetool" spawnLanguagetool findLanguagetool manageScratch
   ]
   where
     manageScratch = customFloating $ W.RationalRect l t w h
@@ -170,6 +173,12 @@ myScratchPads =
     findTelegram = className =? "TelegramDesktop"
     spawnDiscord = "discord"
     findDiscord = className =? "discord"
+    spawnCalculator = "gnome-calculator"
+    findCalculator = className =? "Gnome-calculator"
+    spawnLanguagetool = "languagetool"
+    findLanguagetool = className =? "org-languagetool-gui-Main"
+    spawnGrsync = "grsync"
+    findGrsync = className =? "Grsync"
 
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
@@ -252,7 +261,7 @@ myLayoutHook =
   where
     myDefaultLayout =
       smartBorders tall
-        ||| smartBorders magnify
+        ||| smartBorders Main.magnify
         ||| smartBorders grid
         ||| noBorders tabs
 
@@ -263,6 +272,9 @@ myManageHook = composeAll
      -- the full name of my workspaces.
      [ className =? "TelegramDesktop"     --> doFloat
      , className =? "copyq"     --> doFloat
+     , className =? "Gnome-calculator"     --> doFloat
+     , className =? "Grsync"     --> doFloat
+     , className =? "org-languagetool-gui-Main"     --> doFloat
      , className =? "spotify"     --> doFloat
      , className =? "firefox"     --> doShift ( head myWorkspaces )
      , className =? "Emacs"     --> doShift ( myWorkspaces !! 1 )
@@ -356,9 +368,11 @@ myKeysP =
 
     -- Scratchpads
     -- , ("M-C-<Return>", namedScratchpadAction myScratchPads "terminal")
-    ("M-C-c", namedScratchpadAction myScratchPads "spotify"),
+    ("M-C-c", namedScratchpadAction myScratchPads "gnome-calculator"),
+    ("M-C-g", namedScratchpadAction myScratchPads "languagetool"),
     ("M-C-t", namedScratchpadAction myScratchPads "telegram"),
-    ("M-C-s", namedScratchpadAction myScratchPads "slack"),
+    ("M-C-r", namedScratchpadAction myScratchPads "grsync"),
+    ("M-C-s", namedScratchpadAction myScratchPads "spotify"),
     ("M-C-w", namedScratchpadAction myScratchPads "whatsapp-for-linux"),
     ("M-C-d", namedScratchpadAction myScratchPads "discord"),
     -- Apps

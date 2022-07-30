@@ -1,6 +1,6 @@
 set -e
 
-
+cd ~/nix-configs/wallpapers
 
 while :
 do
@@ -20,21 +20,26 @@ do
         --link-color-max=375143 \
         --dot-color-min=7c762f \
         --dot-color-max=b56e46 \
-        --tree-font-size=24 \
+        --tree-font-size=20 \
         --tree-font-color=94bfd1 \
         --tree-font-face="mononoki" \
         --root-pid=1 \
         --max-children=10 \
         --tree-sector-angle=1.7 \
         --tree-rotate=true \
-        --tree-rotation-angle=1.7 \
+        --tree-rotation-angle=1.8\
         --tree-center=-$l:$r \
-        --cpulist-center=$r:-200 \
-        --memlist-center=$r:200 \
+        --cpulist-center=-$l:-900 \
+        --memlist-center=-$l:-650 \
         --output-width=$w2 \
         --output-height=$h2 \
-    --output=$HOME/nix-configs/wallpapers/process.jpeg
+        --output=$HOME/nix-configs/wallpapers/process.jpeg
 
-    feh $HOME/nix-configs/wallpapers/process.jpeg --bg-scal
-	sleep 10
+    convert -font mononoki-Regular -pointsize 20 -fill yellow -draw "text 1600,1400 \" `echo "ERRORS:"; journalctl --since "60 min ago" -p err..alert | tail -n 5` \"" process.jpeg process_2.jpeg || true
+    convert -font mononoki-Regular -pointsize 20 -fill "#9ba798" -draw "text 1600,1550 \" `echo "LOGS:"; journalctl --since "10 min ago" | tail -n 20` \"" process_2.jpeg process_3.jpeg || true
+    convert <( curl -s wttr.in/copenhagen_background=1e2226.png ) -resize 125% weather_report.png || true
+    convert process_3.jpeg weather_report.png -geometry +1400+100 -composite process_4.jpeg || true
+
+    feh $HOME/nix-configs/wallpapers/process_4.jpeg --bg-scal
+    sleep 5
 done
