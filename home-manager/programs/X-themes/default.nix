@@ -3,9 +3,10 @@
 {
   gtk = {
     enable = true;
-    theme.package = pkgs.qogir-theme;
+    theme.package = pkgs.arc-theme;
     # theme.name = "Adwaita-dark";
-    theme.name = "Qogir-dark";
+    # theme.name = "Qogir-dark";
+    theme.name = "Arc-Dark";
     iconTheme = {
       name = "Zafiro-icons";
       package = pkgs.zafiro-icons;

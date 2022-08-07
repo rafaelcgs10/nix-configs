@@ -5,7 +5,9 @@
     enable = true;
 
     settings = {
-      scrolling.history = 10000;
+      scrolling.history = 100000;
+      scrolling.auto_scroll = false;
+
       TERM = "xterm-256color";
 
       window = {

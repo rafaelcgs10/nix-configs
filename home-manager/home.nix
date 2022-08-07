@@ -14,6 +14,9 @@ in {
   home.homeDirectory = "/home/rafael";
 
   home.sessionVariables = {
+    XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:$XDG_DATA_DIRS";
+    _JAVA_OPTIONS = "-Dawt.useSystemAAFontSettings=on";
+    JAVA_OPTS = "-Xverify:none";
     PAGER = "less";
     EDITOR = "vim";
     DIRENV_ALLOW_NIX = 1;

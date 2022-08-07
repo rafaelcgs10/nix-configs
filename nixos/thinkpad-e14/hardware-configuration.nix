@@ -19,6 +19,7 @@ in
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.kernelModules = [ "kvm-amd" ];
+  # boot.blacklistedKernelModules = [ "rtw88_8821ce" ];
 
   services.xserver = {
     libinput = {
@@ -81,13 +82,14 @@ in
   hardware.opengl.driSupport = true;
   hardware.opengl.driSupport32Bit = true;
 
+  # wifi fix
   # boot.extraModulePackages = with config.boot.kernelPackages; [ rtw89 ];
 
-  services.earlyoom = {
-    enable = true;
-    useKernelOOMKiller = true;
-    freeMemThreshold = 5;
-  };
+  # services.earlyoom = {
+  #   enable = true;
+  #   useKernelOOMKiller = true;
+  #   freeMemThreshold = 5;
+  # };
 
   programs.light.enable = true;
   services.acpid.enable = true;
@@ -148,7 +150,7 @@ in
   boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
   boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
 
-  boot.kernelPackages = pkgs.linuxPackages_5_17;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
 
   fileSystems."/tmp" = {
@@ -158,8 +160,6 @@ in
   };
 
   networking.hostName = "thinkpad";
-
-  programs.steam.enable = true;
 
   # virtualisation.virtualbox.host.enable = true;
   # users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
