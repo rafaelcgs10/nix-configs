@@ -126,46 +126,47 @@ in
 
   powerManagement.cpuFreqGovernor = "ondemand";
 
-  services.xrdp.enable = true;
-  services.xrdp.defaultWindowManager = "xmonad";
+  # services.xrdp.enable = true;
+  # services.xrdp.defaultWindowManager = "xmonad";
 
-  services.samba-wsdd.enable = true;
-  services.samba-wsdd.discovery = true;
-  services.samba-wsdd.interface = "eth0";
+  # services.samba-wsdd.enable = true;
+  # services.samba-wsdd.discovery = true;
+  # services.samba-wsdd.interface = "eth0";
 
-  services.samba = {
-    package = pkgs.sambaFull;
-    enable = true;
-    securityType = "user";
-    nsswins = true;
-    extraConfig = ''
-      workgroup = WORKGROUP
-      server string = smbnix
-      netbios name = smbnix
-      security = user
-      load printers = yes
-      # printing = cups
-      # printcap name = cups
-      # smb ports = 139
-    #use sendfile = yes
-    #max protocol = smb2
-      hosts allow = 10.100.0.2/32 10.100.0.3/32 192.168.15.1/24 192.168.15.118
-      map to guest = bad user
-      socket options = IPTOS_LOWDELAY TCP_NODELAY IPTOS_THROUGHPUT SO_RCVBUF=131072 SO_SNDBUF=131072
-    '';
-    shares = {
-      private = {
-        path = "/hugehd/downloader";
-        browseable = "yes";
-        "read only" = "no";
-        "guest ok" = "yes";
-        "create mask" = "0644";
-        "directory mask" = "0755";
-        "force user" = "downloader";
-        "force group" = "users";
-      };
-    };
-  };
+  # services.samba = {
+  #   package = pkgs.sambaFull;
+  #   enable = true;
+  #   securityType = "user";
+  #   nsswins = true;
+  #   extraConfig = ''
+  #     workgroup = WORKGROUP
+  #     server string = smbnix
+  #     netbios name = smbnix
+  #     security = user
+  #     load printers = yes
+  #     # printing = cups
+  #     # printcap name = cups
+  #     # smb ports = 139
+  #   #use sendfile = yes
+  #   #max protocol = smb2
+  #     hosts allow = 10.100.0.2/32 10.100.0.3/32 192.168.15.1/24 192.168.15.118
+  #     map to guest = bad user
+  #     socket options = IPTOS_LOWDELAY TCP_NODELAY IPTOS_THROUGHPUT SO_RCVBUF=131072 SO_SNDBUF=131072
+  #   '';
+  #   shares = {
+  #     private = {
+  #       path = "/hugehd/downloader";
+  #       browseable = "yes";
+  #       "read only" = "no";
+  #       "guest ok" = "yes";
+  #       "create mask" = "0644";
+  #       "directory mask" = "0755";
+  #       "force user" = "downloader";
+  #       "force group" = "users";
+  #     };
+  #   };
+  # };
+  #
   systemd.tmpfiles.rules = [
     "d /var/spool/samba 1777 root root -"
   ];
@@ -201,18 +202,18 @@ in
     package = new_pkgs.jellyfin;
   };
 
-  services.vsftpd = {
-    enable = true;
-    localUsers = true;
-    writeEnable = true;
-    anonymousUser = true;
-    extraConfig = ''
-      pasv_enable=YES
-      pasv_min_port=64000
-      pasv_max_port=64000
-      port_enable=YES
-    '';
-  };
+  # services.vsftpd = {
+  #   enable = true;
+  #   localUsers = true;
+  #   writeEnable = true;
+  #   anonymousUser = true;
+  #   extraConfig = ''
+  #     pasv_enable=YES
+  #     pasv_min_port=64000
+  #     pasv_max_port=64000
+  #     port_enable=YES
+  #   '';
+  # };
 
   services.qbittorrent.enable = true;
   users.users.qbittorrent.isSystemUser = true;
@@ -226,17 +227,17 @@ in
     ];
   };
 
-  nix = {
-    gc = {
-      automatic = true;
-      dates = "daily";
-      options = "--delete-older-than 1d";
-    };
+  # nix = {
+  #   gc = {
+  #     automatic = true;
+  #     dates = "daily";
+  #     options = "--delete-older-than 1d";
+  #   };
 
-    daemonIONiceLevel = 10;
-    daemonNiceLevel = 5;
-    buildCores = 2;
-  };
+  #   daemonIONiceLevel = 10;
+  #   daemonNiceLevel = 5;
+  #   buildCores = 2;
+  # };
 
   services.syncthing = {
     user = "rafael";
@@ -321,10 +322,10 @@ in
     domains = [ "vpn.rafaelcgs.com" "jellyfin.rafaelcgs.com" ];
   };
 
-  virtualisation.oci-containers.containers.flaresolverr = {
-    image = "ghcr.io/flaresolverr/flaresolverr:latest";
-    ports = [ "8181:8181" ];
-  };
+  # virtualisation.oci-containers.containers.flaresolverr = {
+  #   image = "ghcr.io/flaresolverr/flaresolverr:latest";
+  #   ports = [ "8181:8181" ];
+  # };
 
   # Docker config
   virtualisation.docker = {
