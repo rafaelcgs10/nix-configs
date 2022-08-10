@@ -202,6 +202,11 @@ in
     package = new_pkgs.jellyfin;
   };
 
+  systemd.services.jellyfin.serviceConfig = {
+    MemoryMax = "800M";
+    CPUQuota = "50%";
+  };
+
   # services.vsftpd = {
   #   enable = true;
   #   localUsers = true;
