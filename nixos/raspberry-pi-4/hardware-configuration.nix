@@ -87,6 +87,9 @@ in
 
   networking.hostName = "raspberry-pi-4";
 
+  zramSwap.enable = true;
+  zramSwap.algorithm = "zstd";
+  zramSwap.priority = 10;
   swapDevices =
     [ { device = "/dev/disk/by-label/swap"; }
     ];
