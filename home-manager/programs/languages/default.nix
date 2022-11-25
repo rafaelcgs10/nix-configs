@@ -1,13 +1,35 @@
-{ pkgs, lib, options, config, specialArgs, modulesPath }:
+{ pkgs, lib, options, stdenv, fetchhg, config, specialArgs, modulesPath }:
 let
   moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz);
   nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
   ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
-  new_isabelle_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz";
-  }) {};
-  inherit (pkgs) haskellPackages;
 
+  new_isabelle_pkgs = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/c100196b085a72aa453bd3f86e731e77c2666aee.tar.gz";
+  }) {};
+
+  # isabelle2022 = pkgs.isabelle.overrideAttrs (prev: {
+  #   version = "2022-RC0";
+  #   dirname = "Isabelle2022-RC0";
+  #   sourceRoot = "Isabelle2022-RC0";
+
+  #   src = pkgs.fetchurl {
+  #     url = "https://isabelle.sketis.net/website-Isabelle2022-RC0/Isabelle2022-RC0_linux.tar.gz ";
+  #     sha256 = "fi+hywGz2CXDMMLtoqAtcVbmx6j4WkYlqQhE/y0FXr0=";
+  #   };
+  # });
+
+  polyml_test = pkgs.polyml.overrideAttrs (prev: {
+    version = "test-15c840d48c9a ";
+    src = pkgs.fetchFromGitHub {
+      owner = "polyml";
+      repo = "polyml";
+      rev = "15c840d48c9a3142222aedda44d66554af0bcbb9";
+      sha256 = "FnkUM5gUH2xoQuTvSgFwg53VzicaaDGdB7gdjae4r90=";
+    };
+  });
+
+  inherit (pkgs) haskellPackages;
   haskellDeps = ps: with ps; [
     base
     QuickCheck
@@ -49,11 +71,19 @@ let
 in
 {
   home.packages = [
+    # isabelle2022
+    # (pkgs.callPackage ./isabelle { java = pkgs.jdk; polyml = polyml_test ; } )
+    new_isabelle_pkgs.isabelle
     pkgs.rnix-lsp
     # ruststable
     lldb-mi
     pkgs.z3
     pkgs.vampire
+    pkgs.python310
+    # pkgs.conda
+    # pkgs.python310Packages.conda
+    # pkgs.python310Packages.tensorflow
+    pkgs.python310Packages.venvShellHook
     pkgs.veriT
     pkgs.cargo
     pkgs.rustc
@@ -62,6 +92,8 @@ in
     pkgs.texlab
     # pkgs.llvm_12
     pkgs.lldb
+    pkgs.adoptopenjdk-hotspot-bin-15
+    pkgs.ant
     pkgs.gdb
     pkgs.libllvm
     pkgs.texlab
@@ -79,9 +111,8 @@ in
     pkgs.haskellPackages.stack
     pkgs.haskellPackages.apply-refact
     pkgs.haskellPackages.hoogle
-    new_isabelle_pkgs.isabelle
     pkgs.coq
-    pkgs.pythonFull
+    # pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken
     pkgs.ruby
     pkgs.solargraph

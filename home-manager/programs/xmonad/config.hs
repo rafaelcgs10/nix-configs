@@ -174,7 +174,7 @@ myScratchPads =
     spawnDiscord = "discord"
     findDiscord = className =? "discord"
     spawnCalculator = "gnome-calculator"
-    findCalculator = className =? "Gnome-calculator"
+    findCalculator = className =? "gnome-calculator"
     spawnLanguagetool = "languagetool"
     findLanguagetool = className =? "org-languagetool-gui-Main"
     spawnGrsync = "grsync"
@@ -272,7 +272,7 @@ myManageHook = composeAll
      -- the full name of my workspaces.
      [ className =? "TelegramDesktop"     --> doFloat
      , className =? "copyq"     --> doFloat
-     , className =? "Gnome-calculator"     --> doFloat
+     , className =? "gnome-calculator"     --> doFloat
      , className =? "Grsync"     --> doFloat
      , className =? "org-languagetool-gui-Main"     --> doFloat
      , className =? "spotify"     --> doFloat

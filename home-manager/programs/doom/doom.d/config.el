@@ -282,8 +282,8 @@
               (yas-minor-mode)))
 
 
-  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
-  (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
+  ;; (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
+  ;; (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
   (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
@@ -391,3 +391,60 @@ With prefix argument (`C-u'), also kill the special buffers."
               (kill-buffer buf))))))))
 
 (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
+
+(use-package! nix-mode
+  :interpreter ("\\(?:cached-\\)?nix-shell" . +nix-shell-init-mode)
+  :mode "\\.nix\\'"
+  :init
+  (add-to-list 'auto-mode-alist
+               (cons "/flake\\.lock\\'"
+                     (if (featurep! :lang json)
+                         'json-mode
+                       'js-mode)))
+  :config
+  (after! lsp-mode
+    (add-to-list 'lsp-language-id-configuration '(nix-mode . "nix"))
+
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection '("rnix-lsp"))
+                      :major-modes '(nix-mode)
+                      :server-id 'nix))
+
+    )
+  (add-hook 'nix-mode-hook #'lsp!)
+
+  (set-popup-rule! "^\\*nixos-options-doc\\*$" :ttl 0 :quit t)
+
+  (setq-hook! 'nix-mode-hook company-idle-delay nil)
+
+  (map! :localleader
+        :map nix-mode-map
+        "f" #'nix-update-fetch
+        "p" #'nix-format-buffer
+        "r" #'nix-repl-show
+        "s" #'nix-shell
+        "b" #'nix-build
+        "u" #'nix-unpack
+        "o" #'+nix/lookup-option))
+
+(use-package! nix-drv-mode
+  :mode "\\.drv\\'")
+
+(setq lsp-java-workspace-cache-dir t
+      lsp-java-format-enabled t
+      lsp-java-format-comments-enabled t
+      lsp-java-save-action-organize-imports t
+      lsp-java-save-action-organize-imports t
+      lsp-java-import-gradle-enabled t
+      lsp-java-import-maven-enabled t
+      lsp-java-auto-build t
+      lsp-java-workspace-dir "/home/rafael/.cache/java-projects"
+      lsp-java-progress-report t
+      lsp-java-completion-guess-arguments t
+      lsp-java-enable-file-watch t
+      lsp-java-jdt-download-url "https://download.eclipse.org/jdtls/milestones/1.9.0/jdt-language-server-1.9.0-202203031534.tar.gz"
+      lsp-file-watch-ignored
+      '(".idea" ".ensime_cache" ".eunit" "node_modules"
+        ".git" ".hg" ".fslckout" "_FOSSIL_"
+        ".bzr" "_darcs" ".tox" ".svn" ".stack-work"
+        "build"))

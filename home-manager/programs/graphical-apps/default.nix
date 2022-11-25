@@ -8,6 +8,7 @@ in
 {
   home.packages = [
     pkgs.gimp-with-plugins
+    pkgs.inkscape
     pkgs.vlc
     pkgs.kdenlive
     pkgs.lxappearance
@@ -34,7 +35,7 @@ in
     pkgs.sc-controller
     unstable.zulip
     pkgs.evince
-    pkgs.masterpdfeditor4
+    # pkgs.masterpdfeditor4
 
     pkgs.flameshot
     pkgs.noisetorch

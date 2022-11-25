@@ -33,6 +33,7 @@ in {
     pkgs.unzip
     pkgs.unrar
     pkgs.p7zip
+    pkgs.zip
     pkgs.zsh
     pkgs.lazydocker
     pkgs.libgccjit

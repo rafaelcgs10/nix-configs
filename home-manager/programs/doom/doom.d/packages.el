@@ -3,3 +3,4 @@
 (package! lsp-isar)
 (package! lsp-isar-parse-args)
 (package! session-async)
+(package! academic-phrases)

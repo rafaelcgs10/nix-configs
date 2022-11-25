@@ -65,7 +65,7 @@ in
     '';
 
   services.logind.lidSwitchExternalPower = "suspend";
-  services.logind.lidSwitch = "hybrid-sleep";
+  services.logind.lidSwitch = "suspend";
   services.logind.killUserProcesses = true;
   services.tlp.enable = true;
 
