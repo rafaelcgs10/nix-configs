@@ -19,6 +19,7 @@ in {
     JAVA_OPTS = "-Xverify:none";
     PAGER = "less";
     EDITOR = "vim";
+    # LSP_USE_PLISTS = "true";
     DIRENV_ALLOW_NIX = 1;
   };
 

@@ -4,3 +4,8 @@
 (package! lsp-isar-parse-args)
 (package! session-async)
 (package! academic-phrases)
+;; (package! grammarly)
+;; (package! lsp-grammarly :recipe (:host github :repo "emacs-grammarly/lsp-grammarly"))
+(package! flycheck-grammarly)
+(package! flycheck-languagetool)
+(package! company-posframe)

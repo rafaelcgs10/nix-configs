@@ -66,9 +66,12 @@
 ;; LSP tweaks
 (advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
 (setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 1024 1024))
-(setq lsp-idle-delay 0.800)
+(setq read-process-output-max (* (* 1024 1024) 3))
+(setq lsp-idle-delay 2.0)
 (setq lsp-lens-enable nil)
+(setq lsp-log-io nil)
+(setq lsp-ui-mode nil)
+;; (setq lsp-use-plists t)
 ;; (setq lsp-completion-provider :comapany-capf)
 ;; (setq lsp-enable-completion-at-point t)
 (setq prettify-symbols-mode t)
@@ -99,14 +102,12 @@
 ;; (setq global-so-long-mode t)
 
 ;; Flycheck configs
-(use-package! flycheck-golangci-lint
-  :ensure t
-  :hook (go-mode . flycheck-golangci-lint-setup))
+;; (use-package! flycheck-golangci-lint :ensure t :hook (go-mode . flycheck-golangci-lint-setup))
 (setq flycheck-golangci-lint-tests t)
 (setq flycheck-golangci-lint-enable-all t)
 
 ;; Minimap configs
-(setq minimap-update-delay 0.1)
+(setq minimap-update-delay 1)
 ;; (add-hook 'prog-mode-hook 'minimap-mode)
 
 ;; Ace-window configs
@@ -151,12 +152,8 @@
 (global-set-key "\M-r" 'lsp-ui-peek-find-references)
 (global-set-key "\M-m" 'rinari-find-model)
 (global-set-key "\M-v" 'rinari-find-view)
+;; (map! :leader (:prefix-map ("l" . "lsp") (:desc "Restart lsp workspace" "r" #'lsp-workspace-restart)))
 (global-set-key "\M-c" 'rinari-find-controller)
-(map! :leader
-      (:prefix-map ("l" . "lsp")
-       (:desc "Restart lsp workspace" "r" #'lsp-workspace-restart)))
-
-
 
 ;; Packages configs
 (use-package! treemacs
@@ -166,13 +163,13 @@
   :config
   (progn
     (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
-          treemacs-deferred-git-apply-delay      0.2
+          treemacs-deferred-git-apply-delay      1.0
           treemacs-directory-name-transformer    #'identity
           treemacs-display-in-side-window        t
           treemacs-eldoc-display                 t
           treemacs-file-event-delay              5000
           treemacs-file-extension-regex          treemacs-last-period-regex-value
-          treemacs-file-follow-delay             0.2
+          treemacs-file-follow-delay             0.8
           treemacs-file-name-transformer         #'identity
           treemacs-follow-after-init             t
           treemacs-git-command-pipe              ""
@@ -199,7 +196,7 @@
           treemacs-sorting                       'alphabetic-asc
           treemacs-space-between-root-nodes      t
           treemacs-tag-follow-cleanup            t
-          treemacs-tag-follow-delay              0.5
+          treemacs-tag-follow-delay              0.8
           treemacs-width                         35)
 
     (treemacs-follow-mode t)
@@ -213,11 +210,12 @@
        (treemacs-git-mode 'simple))))
   :bind
   (:map global-map
-        ("M-0"       . treemacs)
+        ;; ("M-0"       . treemacs)
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
-        ("C-x t M-t" . treemacs-find-tag)))
+        ("C-x t M-t" . treemacs-find-tag))
+  )
 
 (use-package! treemacs-projectile
   :after treemacs projectile
@@ -259,10 +257,6 @@
                   '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
 
 
-;; (use-package! lsp-isar-parse-args
-;;   :custom
-;;   (lsp-isar-parse-args-nollvm nil))
-
 ;; Isabelle setup
 (use-package! isar-mode
   :mode "\\.thy\\'"
@@ -282,22 +276,21 @@
               (yas-minor-mode)))
 
 
-  ;; (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
-  ;; (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
+  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-add-help-echo t)))
+  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
+  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-highlight-unicode t)))
+  (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
   (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
-
-
-  (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t )))
+  (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t)))
   )
 
+(setq unicode-tokens-fontsymb-properties ())
 
 (use-package! lsp-isar-parse-args
   :custom
   (lsp-isar-parse-args-nollvm nil))
-
-(setq lsp-isabelle-options (list "-d" "/app/afp-2022-02-13/thys"))
 
 (setq display-line-numbers-mode t)
 
@@ -315,8 +308,13 @@
 
   (push (concat "~/isabelle/Isabelle2021/src/Tools/emacs-lsp/yasnippet")
         yas-snippet-dirs)
-  (setq lsp-isar-path-to-isabelle "/etc/isabelle-docker/")
+
   )
+
+(setq lsp-isabelle-options (list "-d" "~/Documents/Vespa/" "-R" "Dataplane"))
+
+(setq lsp-isar-path-to-isabelle "/nix/store/95aj3pr7l23kz1ilw4lxivc2y582xmh5-isabelle-2022/")
+;; (setq lsp-isabelle-options (list "-d" "~/Documents/afp-2022-02-13/thys"))
 
 (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
 
@@ -415,7 +413,7 @@ With prefix argument (`C-u'), also kill the special buffers."
 
   (set-popup-rule! "^\\*nixos-options-doc\\*$" :ttl 0 :quit t)
 
-  (setq-hook! 'nix-mode-hook company-idle-delay nil)
+  ;; (setq-hook! 'nix-mode-hook company-idle-delay nil)
 
   (map! :localleader
         :map nix-mode-map
@@ -448,3 +446,47 @@ With prefix argument (`C-u'), also kill the special buffers."
         ".git" ".hg" ".fslckout" "_FOSSIL_"
         ".bzr" "_darcs" ".tox" ".svn" ".stack-work"
         "build"))
+
+(with-eval-after-load 'flycheck
+  (flycheck-grammarly-setup))
+
+(use-package! flycheck-languagetool :hook (flycheck-mode . flycheck-languagetool-setup))
+(use-package! flycheck-grammarly    :hook (flycheck-mode . flycheck-grammarly-setup))
+
+(setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
+
+(setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
+(setq flycheck-grammarly-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
+(setq lsp-ui-sideline-enable nil)
+(setq flycheck-posframe-mode nil)
+
+;; (with-eval-after-load 'flycheck (flycheck-add-next-checker 'languagetool 'grammarly 'append))
+
+(with-eval-after-load 'flycheck-languagetool
+(flycheck-add-next-checker 'languagetool 'grammarly 'append))
+
+(setq flycheck-grammarly-check-time 3.0)
+
+(use-package! company-posframe
+  :ensure
+  :custom
+  (company-posframe-mode t)
+  )
+
+(defun toggle-maximize-buffer ()
+  "Maximize buffer."
+  (interactive)
+  (save-excursion
+    (if (and (= 1 (length (cl-remove-if
+                           (lambda (w)
+                             (or (and (fboundp 'treemacs-is-treemacs-window?)
+                                      (treemacs-is-treemacs-window? w))
+                                 (and (bound-and-true-p neo-global--window)
+                                      (eq neo-global--window w))))
+                           (window-list))))
+             (assoc ?_ register-alist))
+        (jump-to-register ?_)
+      (window-configuration-to-register ?_)
+      (delete-other-windows))))
+
+(global-set-key "\M-f" 'toggle-maximize-buffer)

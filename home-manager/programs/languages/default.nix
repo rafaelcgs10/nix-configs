@@ -8,6 +8,10 @@ let
     url = "https://github.com/NixOS/nixpkgs/archive/c100196b085a72aa453bd3f86e731e77c2666aee.tar.gz";
   }) {};
 
+  newer_isabelle_pkgs = import (builtins.fetchTarball {
+    url = "https://github.com/jvanbruegge/nixpkgs/archive/fa28ed48582cb30afdce232a3313bb6fe32644e4.tar.gz";
+  }) {};
+
   # isabelle2022 = pkgs.isabelle.overrideAttrs (prev: {
   #   version = "2022-RC0";
   #   dirname = "Isabelle2022-RC0";
@@ -71,8 +75,31 @@ let
 in
 {
   home.packages = [
-    # isabelle2022
-    # (pkgs.callPackage ./isabelle { java = pkgs.jdk; polyml = polyml_test ; } )
+    # (pkgs.callPackage ./isabelle {
+    #   polyml = pkgs.polyml.overrideAttrs (_: {
+    #     pname = "polyml-for-isabelle";
+    #     version = "2022";
+    #     configureFlags = [ "--enable-intinf-as-int" "--with-gmp" "--disable-shared" ];
+    #     buildFlags = [ "compiler" ];
+    #     src = pkgs.fetchFromGitHub {
+    #       owner = "polyml";
+    #       repo = "polyml";
+    #       rev = "bafe319bc3a65bf63bd98a4721a6f4dd9e0eabd6";
+    #       sha256 = "1ygs09zzq8icq1gc8qf4sb24lxx7sbcyd5hw3vw67a3ryaki0qw2";
+    #     };
+    #   });
+    #   java = newer_isabelle_pkgs.openjdk17;
+    #   scala_3 = newer_isabelle_pkgs.scala_3;
+    #   z3 = pkgs.z3_4_4_0.overrideAttrs (_: {
+    #     src = pkgs.fetchFromGitHub {
+    #       owner = "Z3Prover";
+    #       repo = "z3";
+    #       rev = "0482e7fe727c75e259ac55a932b28cf1842c530e";
+    #       sha256 = "1m53avlljxqd2p8w266ksmjywjycsd23h224yn786qsnf36dr63x";
+    #     };
+    #   });
+    # })
+    # newer_isabelle_pkgs.isabelle
     new_isabelle_pkgs.isabelle
     pkgs.rnix-lsp
     # ruststable
