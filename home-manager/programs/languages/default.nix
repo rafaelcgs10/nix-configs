@@ -41,69 +41,70 @@ let
 
   ghc = haskellPackages.ghcWithPackages haskellDeps;
 
-  lldb-mi = pkgs.stdenv.mkDerivation {
-    pname = "lldb-mi";
-    name = "lldb-mi";
+  # lldb-mi = pkgs.stdenv.mkDerivation {
+  #   pname = "lldb-mi";
+  #   name = "lldb-mi";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "lldb-tools";
-      repo = "lldb-mi";
-      rev = "2388bd74133bc21eac59b2e2bf97f2a30770a315";
-      sha256 = "1ag7dvdg5hxyzh3ngawxlb84x9n44mix96qa6q4zlrjqccwsc6x8";
-    };
+  #   src = pkgs.fetchFromGitHub {
+  #     owner = "lldb-tools";
+  #     repo = "lldb-mi";
+  #     rev = "2388bd74133bc21eac59b2e2bf97f2a30770a315";
+  #     sha256 = "1ag7dvdg5hxyzh3ngawxlb84x9n44mix96qa6q4zlrjqccwsc6x8";
+  #   };
 
-    buildInputs = [
-      pkgs.cmake
-      pkgs.llvm_12
-      pkgs.lldb
-      pkgs.libllvm
-      pkgs.clang
-    ];
+  #   buildInputs = [
+  #     pkgs.cmake
+  #     pkgs.llvm_12
+  #     pkgs.lldb
+  #     pkgs.libllvm
+  #     pkgs.clang
+  #   ];
 
-    buildPhase = ''
-      cmake .
-      cmake --build .
-    '';
+  #   buildPhase = ''
+  #     cmake .
+  #     cmake --build .
+  #   '';
 
-    installPhase = ''
-      mkdir -p "$out/bin"
-      cp src/lldb-mi "$out/bin"
-    '';
+  #   installPhase = ''
+  #     mkdir -p "$out/bin"
+  #     cp src/lldb-mi "$out/bin"
+  #   '';
 
-    phases = [ "unpackPhase" "buildPhase" "installPhase" ];
-  };
+  #   phases = [ "unpackPhase" "buildPhase" "installPhase" ];
+  # };
 in
 {
   home.packages = [
-    # (pkgs.callPackage ./isabelle {
-    #   polyml = pkgs.polyml.overrideAttrs (_: {
-    #     pname = "polyml-for-isabelle";
-    #     version = "2022";
-    #     configureFlags = [ "--enable-intinf-as-int" "--with-gmp" "--disable-shared" ];
-    #     buildFlags = [ "compiler" ];
-    #     src = pkgs.fetchFromGitHub {
-    #       owner = "polyml";
-    #       repo = "polyml";
-    #       rev = "bafe319bc3a65bf63bd98a4721a6f4dd9e0eabd6";
-    #       sha256 = "1ygs09zzq8icq1gc8qf4sb24lxx7sbcyd5hw3vw67a3ryaki0qw2";
-    #     };
-    #   });
-    #   java = newer_isabelle_pkgs.openjdk17;
-    #   scala_3 = newer_isabelle_pkgs.scala_3;
-    #   z3 = pkgs.z3_4_4_0.overrideAttrs (_: {
-    #     src = pkgs.fetchFromGitHub {
-    #       owner = "Z3Prover";
-    #       repo = "z3";
-    #       rev = "0482e7fe727c75e259ac55a932b28cf1842c530e";
-    #       sha256 = "1m53avlljxqd2p8w266ksmjywjycsd23h224yn786qsnf36dr63x";
-    #     };
-    #   });
-    # })
+    (pkgs.callPackage ./isabelle {
+      polyml = pkgs.polyml.overrideAttrs (_: {
+        pname = "polyml-for-isabelle";
+        version = "2022";
+        configureFlags = [ "--enable-intinf-as-int" "--with-gmp" "--disable-shared" ];
+        buildFlags = [ "compiler" ];
+        src = pkgs.fetchFromGitHub {
+          owner = "polyml";
+          repo = "polyml";
+          rev = "bafe319bc3a65bf63bd98a4721a6f4dd9e0eabd6";
+          sha256 = "1ygs09zzq8icq1gc8qf4sb24lxx7sbcyd5hw3vw67a3ryaki0qw2";
+        };
+      });
+      java = newer_isabelle_pkgs.openjdk17;
+      scala_3 = newer_isabelle_pkgs.scala_3;
+      coreutils = new_isabelle_pkgs.coreutils;
+      z3 = new_isabelle_pkgs.z3_4_4_0.overrideAttrs (_: {
+        src = new_isabelle_pkgs.fetchFromGitHub {
+          owner = "Z3Prover";
+          repo = "z3";
+          rev = "0482e7fe727c75e259ac55a932b28cf1842c530e";
+          sha256 = "1m53avlljxqd2p8w266ksmjywjycsd23h224yn786qsnf36dr63x";
+        };
+      });
+    })
     # newer_isabelle_pkgs.isabelle
-    new_isabelle_pkgs.isabelle
+    # new_isabelle_pkgs.isabelle
     pkgs.rnix-lsp
     # ruststable
-    lldb-mi
+    # lldb-mi
     pkgs.z3
     pkgs.vampire
     pkgs.python310
@@ -112,13 +113,17 @@ in
     # pkgs.python310Packages.tensorflow
     pkgs.python310Packages.venvShellHook
     pkgs.veriT
+    pkgs.iprover
+    pkgs.cvc5
+    pkgs.leo3-bin
+    pkgs.satallax
     pkgs.cargo
     pkgs.rustc
     pkgs.rustfmt
     pkgs.clippy
     pkgs.texlab
     # pkgs.llvm_12
-    pkgs.lldb
+    # pkgs.lldb
     pkgs.adoptopenjdk-hotspot-bin-15
     pkgs.ant
     pkgs.gdb

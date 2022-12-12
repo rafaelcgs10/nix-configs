@@ -4,7 +4,7 @@ let
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
-  home.stateVersion = "22.05";
+  home.stateVersion = "22.11";
 
   imports = [
     ./imports/default.nix
@@ -20,13 +20,20 @@ in {
     PAGER = "less";
     EDITOR = "vim";
     # LSP_USE_PLISTS = "true";
+
+    USER_HOME = "/home/rafael";
     DIRENV_ALLOW_NIX = 1;
+    CVC5_SOLVER = "/nix/store/wn18dx41k7b81naxgb3bv3qmkllaprsc-home-manager-path/bin/cvc5";
+    IPROVER_HOME = "~/.nix-profile/bin";
+    SATALLAX_HOME = "~/.nix-profile/bin";
+    LEO3_HOME = "~/.nix-profile/bin";
   };
 
   nixpkgs.config.allowUnfree = true;
 
   home.packages = [
     pkgs.ripgrep
+    pkgs.gawk
     pkgs.jq
     pkgs.tree
     pkgs.ranger

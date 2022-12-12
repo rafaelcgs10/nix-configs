@@ -19,7 +19,7 @@
        ;;japanese
 
        :completion
-       (company +auto)   ; the ultimate code completion backend
+       (company +childframe)   ; the ultimate code completion backend
        ;; (helm +fuzzy)              ; the *other* search engine for love and life
        ;;ido             ; the other *other* search engine...
        (ivy +prescient +icons)               ; a search engine for love and life
@@ -33,9 +33,9 @@
        fill-column       ; a `fill-column' indicator
        hl-todo           ; highlight TODO/FIXME/NOTE/DEPRECATED/HACK/REVIEW
        ;;hydra
-       indent-guides     ; highlighted indent columns
+       ;; indent-guides     ; highlighted indent columns
        minimap           ; show a map of the code on the side
-       modeline          ; snazzy, Atom-inspired modeline, plus API
+       (modeline +light)          ; snazzy, Atom-inspired modeline, plus API
        ;; nav-flash         ; blink cursor line after big motions
        ;;neotree           ; a project drawer, like NERDTree for vim
        ophints           ; highlight the region an operation acts on
@@ -78,9 +78,9 @@
        ;;vterm             ; the best terminal emulation in Emacs
 
        :checkers
-       (syntax +childframe) ; tasing you for every semicolon you forget
+       (syntax) ; tasing you for every semicolon you forget
        (spell +flyspell)  ; tasing you for misspelling mispelling
-       ;; grammar           ; tasing grammar mistake every you make
+       grammar           ; tasing grammar mistake every you make
 
        :tools
        ;;ansible

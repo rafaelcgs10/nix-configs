@@ -8,4 +8,5 @@
 ;; (package! lsp-grammarly :recipe (:host github :repo "emacs-grammarly/lsp-grammarly"))
 (package! flycheck-grammarly)
 (package! flycheck-languagetool)
-(package! company-posframe)
+(package! cycle-themes)
+;; (package! company-posframe)

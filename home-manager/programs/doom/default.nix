@@ -1,14 +1,23 @@
 { lib, options, config, specialArgs, modulesPath }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/5c03fb3e6636b7121b8c3b126d2351e78cb54d4f.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/612fc9ab31d2cdfe6ca99d606c49072d90c4e42b.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   doom-emacs = pkgs.callPackage (builtins.fetchTarball {
-    url = https://github.com/vlaci/nix-doom-emacs/archive/3c02175dd06714c15ddd2f73708de9b4dacc6aa9.tar.gz;
+    url = https://github.com/nix-community/nix-doom-emacs/archive/c852431c25a9d2b8f9322505a38868d4cee6b8d6.tar.gz;
   }) {
     # bundledPackages = true;
-    # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGit;
-    emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGitNativeComp;
+    emacsPackages = pkgs.emacsPackagesFor (pkgs.emacsGit.overrideAttrs (prev: {
+      # version = "29";
+      src = pkgs.fetchFromGitHub {
+        owner = "mattiasdrp";
+        repo = "emacs";
+        rev = "a5d882185ba23a9750b0abc5a188cb003a1d96a1";
+        sha256 = "sha256-0+glVeg/oqZG4kMMc/xDnjlEgkI5nCRDD3toc4kZ3+Q=";
+      };
+    }));
+    # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGitNativeComp;
+    # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsLsp;
     doomPrivateDir = ./doom.d;
     dependencyOverrides = {
       "emacs-overlay" = emacs-overlay;
@@ -26,6 +35,7 @@ let
           };
       in {
         academic-phrases = pkgs.emacsPackages.academic-phrases;
+        cycle-themes = pkgs.emacsPackages.cycle-themes;
         gitignore-mode = pkgs.emacsPackages.git-modes;
         flycheck-grammarly = pkgs.emacsPackages.flycheck-grammarly;
         flycheck-languagetool = pkgs.emacsPackages.flycheck-languagetool;

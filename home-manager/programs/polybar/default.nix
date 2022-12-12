@@ -2,7 +2,7 @@
 
 let
   pkgs = import (builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/8a5fcd583fd14ebbcd6654fbcbd35ec14aa96a28.tar.gz";
+        url = "https://github.com/NixOS/nixpkgs/archive/4d2b37a84fad1091b9de401eb450aae66f1a741e.tar.gz";
     }) {};
   mypolybar = pkgs.polybar;
 in

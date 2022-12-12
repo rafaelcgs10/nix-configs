@@ -85,11 +85,10 @@ in
   # wifi fix
   # boot.extraModulePackages = with config.boot.kernelPackages; [ rtw89 ];
 
-  # services.earlyoom = {
-  #   enable = true;
-  #   useKernelOOMKiller = true;
-  #   freeMemThreshold = 5;
-  # };
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 10;
+  };
 
   programs.light.enable = true;
   services.acpid.enable = true;
@@ -107,6 +106,7 @@ in
     # Force use of the thinkpad_acpi driver for backlight control.
     # This allows the backlight save/load systemd service to work.
     "acpi_backlight=native"
+    "mitigations=off"
   ];
 
   services.xserver = {
@@ -150,7 +150,7 @@ in
   boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
   boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_zen;
 
 
   fileSystems."/tmp" = {

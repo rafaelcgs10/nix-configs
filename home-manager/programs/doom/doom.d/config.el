@@ -29,7 +29,9 @@
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/org/")
+(after! org
+  (setq org-directory "~/org/")
+  )
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -63,27 +65,6 @@
 ;; Setqs
 (setq projectile-project-search-path '("~/Documents"))
 ;;
-;; LSP tweaks
-(advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
-(setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* (* 1024 1024) 3))
-(setq lsp-idle-delay 2.0)
-(setq lsp-lens-enable nil)
-(setq lsp-log-io nil)
-(setq lsp-ui-mode nil)
-;; (setq lsp-use-plists t)
-;; (setq lsp-completion-provider :comapany-capf)
-;; (setq lsp-enable-completion-at-point t)
-(setq prettify-symbols-mode t)
-(setq lsp-completion-show-detail t)
-(setq lsp-enable-on-type-formatting t)
-(setq doom-modeline-enable-word-count nil)
-(setq scroll-conservatively 101)
-(setq lsp-solargraph-use-bundler nil)
-;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
-(setq lsp-solargraph-multi-root t)
-(setq company-minimum-prefix-length 1
-      company-idle-delay 0.1)
 ;; (setq mode-require-final-newline nil)
 
 (global-prettify-symbols-mode -1)
@@ -103,11 +84,10 @@
 
 ;; Flycheck configs
 ;; (use-package! flycheck-golangci-lint :ensure t :hook (go-mode . flycheck-golangci-lint-setup))
-(setq flycheck-golangci-lint-tests t)
-(setq flycheck-golangci-lint-enable-all t)
 
 ;; Minimap configs
 (setq minimap-update-delay 1)
+(setq minimap-automatically-delete-window t)
 ;; (add-hook 'prog-mode-hook 'minimap-mode)
 
 ;; Ace-window configs
@@ -148,7 +128,7 @@
 (global-set-key (kbd "C-<left>") 'windmove-left)
 (global-unset-key (kbd "C-x C-b"))
 ;; (global-set-key (kbd "C-x b") 'project-switch-to-buffer)
-(global-set-key "\M-d" 'lsp-ui-peek-find-definitions)
+(global-set-key "\M-d" 'lsp-find-definition)
 (global-set-key "\M-r" 'lsp-ui-peek-find-references)
 (global-set-key "\M-m" 'rinari-find-model)
 (global-set-key "\M-v" 'rinari-find-view)
@@ -210,7 +190,7 @@
        (treemacs-git-mode 'simple))))
   :bind
   (:map global-map
-        ;; ("M-0"       . treemacs)
+        ("M-0"       . treemacs)
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
@@ -250,13 +230,6 @@
 
 (setq haskell-process-type 'cabal-new-repl)
 
-(custom-set-faces '(flycheck-duplicate ((t (:underline '(:style line)))))
-                  '(flycheck-incorrect ((t (:underline '(:style line)))))
-                  '(flycheck-error ((t (:underline '(:style line)))))
-                  '(flycheck-warning ((t (:underline '(:style line)))))
-                  '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
-
-
 ;; Isabelle setup
 (use-package! isar-mode
   :mode "\\.thy\\'"
@@ -280,6 +253,7 @@
   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-highlight-unicode t)))
   (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
+  (add-hook 'isar-goal-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
   (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
   (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
@@ -297,9 +271,11 @@
 (use-package! lsp-isar
   :commands lsp-isar-define-client-and-start
   :custom
-  (lsp-isar-output-use-async t)
   (lsp-isar-output-time-before-printing-goal nil)
+  (lsp-isar-output-use-async t)
   (lsp-isar-experimental t)
+  ;; (lsp-isar-decorations-delayed-printing t)
+  ;; (lsp-isar-progress--request-delay 8)
   (lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
   (lsp-isar-decorations-delayed-printing t)
   :init
@@ -313,13 +289,51 @@
 
 (setq lsp-isabelle-options (list "-d" "~/Documents/Vespa/" "-R" "Dataplane"))
 
-(setq lsp-isar-path-to-isabelle "/nix/store/95aj3pr7l23kz1ilw4lxivc2y582xmh5-isabelle-2022/")
+(setq lsp-isar-path-to-isabelle "/nix/store/8n41f2i68mkj6xjmnyzrd8fcayjlwxib-isabelle-2022")
 ;; (setq lsp-isabelle-options (list "-d" "~/Documents/afp-2022-02-13/thys"))
 
 (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
 
 (after! lsp-mode
-  (advice-remove #'lsp #'+lsp-dont-prompt-to-install-servers-maybe-a))
+  (advice-remove #'lsp #'+lsp-dont-prompt-to-install-servers-maybe-a)
+  ;; LSP tweaks
+  (advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
+  (setq gc-cons-threshold 5000000000)
+  (add-hook 'focus-out-hook 'garbage-collect)
+  (run-with-idle-timer 5 t 'garbage-collect)
+  (setq read-process-output-max (* (* 1024 1024) 3))
+  (setq lsp-idle-delay 2.0)
+  (setq lsp-lens-enable nil)
+  (setq lsp-log-io nil)
+  (setq lsp-enable-folding nil)
+  (setq lsp-response-timeout 10)
+  (setq lsp-tcp-connection-timeout 10)
+  (setq lsp-sqls-timeout 10)
+
+  ;; (setq lsp-diagnostics-disabled-modes 'isar-mode)
+  ;; (setq lsp-use-plists t)
+  (setq lsp-completion-provider :comapany-capf)
+  ;; (setq lsp-enable-completion-at-point t)
+  (setq prettify-symbols-mode t)
+  (setq lsp-completion-show-detail t)
+  (setq lsp-enable-on-type-formatting t)
+  (setq doom-modeline-enable-word-count nil)
+  (setq scroll-conservatively 101)
+  (setq lsp-solargraph-use-bundler nil)
+  ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
+  (setq lsp-solargraph-multi-root t)
+  (setq company-minimum-prefix-length 1)
+  (setq company-idle-delay 0.7)
+  (setq lsp-ui-mode nil)
+  (setq lsp-ui-sideline-enable nil)
+  (setq lsp-lens-enable nil)
+  (setq lsp-headerline-breadcrumb-enable nil)
+  (setq lsp-ui-sideline-enable nil)
+  (setq lsp-modeline-code-actions-enable nil)
+  (setq lsp-signature-auto-activate nil)
+  (setq lsp-signature-render-documentation nil)
+  ;; (setq lsp-prefer-capf t)
+  )
 
 ;; (require 'dap-cpptools)
 ;; (setq gdb-many-windows t)
@@ -367,7 +381,7 @@
    (list :type "lldb"
          :request "launch"
          :name "LLDB::Run"
-	 :gdbpath "rust-lldb"
+         :gdbpath "rust-lldb"
          :target nil
          :cwd nil)))
 
@@ -447,31 +461,16 @@ With prefix argument (`C-u'), also kill the special buffers."
         ".bzr" "_darcs" ".tox" ".svn" ".stack-work"
         "build"))
 
-(with-eval-after-load 'flycheck
-  (flycheck-grammarly-setup))
-
 (use-package! flycheck-languagetool :hook (flycheck-mode . flycheck-languagetool-setup))
 (use-package! flycheck-grammarly    :hook (flycheck-mode . flycheck-grammarly-setup))
 
-(setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
-
-(setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
-(setq flycheck-grammarly-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
-(setq lsp-ui-sideline-enable nil)
-(setq flycheck-posframe-mode nil)
-
 ;; (with-eval-after-load 'flycheck (flycheck-add-next-checker 'languagetool 'grammarly 'append))
 
-(with-eval-after-load 'flycheck-languagetool
-(flycheck-add-next-checker 'languagetool 'grammarly 'append))
-
-(setq flycheck-grammarly-check-time 3.0)
-
-(use-package! company-posframe
-  :ensure
-  :custom
-  (company-posframe-mode t)
-  )
+;; (use-package! company-posframe
+;;   :ensure
+;;   :custom
+;;   (company-posframe-mode t)
+;;   )
 
 (defun toggle-maximize-buffer ()
   "Maximize buffer."
@@ -490,3 +489,43 @@ With prefix argument (`C-u'), also kill the special buffers."
       (delete-other-windows))))
 
 (global-set-key "\M-f" 'toggle-maximize-buffer)
+
+;; (custom-set-faces
+;;  '(lsp-isar-font-background-unprocessed1 ((t (:foreground "blue" :priority 5 :background "blue" :weight bold :height 2.5 :box (:line-width 10 :color "blue"))))))
+
+(custom-set-faces
+ '(lsp-isar-font-foreground-quoted ((t (:background nil)))))
+
+(setq custom-safe-themes t)
+(use-package! cycle-themes
+  :ensure t
+  :init
+  (setq custom-safe-themes t)
+  (load-theme 'doom-one-light t nil)
+  (load-theme 'doom-one t nil)
+  (setq cycle-themes-theme-list '(doom-one doom-one-light))
+  :config
+  (cycle-themes-mode))
+
+(after! flycheck
+  (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
+  (setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
+  (setq flycheck-grammarly-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
+  ;; (setq flycheck-posframe-mode nil)
+  ;; (setq flycheck-golangci-lint-tests t)
+  ;; (setq flycheck-golangci-lint-enable-all t)
+  (setq flycheck-idle-change-delay 1.5)
+  (custom-set-faces '(flycheck-duplicate ((t (:underline '(:style line)))))
+                    '(flycheck-incorrect ((t (:underline '(:style line)))))
+                    '(flycheck-error ((t (:underline '(:style line)))))
+                    '(flycheck-warning ((t (:underline '(:style line)))))
+                    '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
+  (with-eval-after-load 'flycheck
+    (flycheck-grammarly-setup))
+
+  (flycheck-popup-tip-mode -1)
+  (setq flycheck-grammarly-check-time 3.0)
+  )
+
+(with-eval-after-load 'flycheck-languagetool
+  (flycheck-add-next-checker 'languagetool 'grammarly 'append))

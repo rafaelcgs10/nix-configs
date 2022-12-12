@@ -8,20 +8,22 @@ in
 {
   home.packages = [
     pkgs.gimp-with-plugins
-    pkgs.inkscape
-    pkgs.vlc
-    pkgs.kdenlive
+    # pkgs.inkscape
+    # pkgs.vlc
+    # pkgs.kdenlive
     pkgs.lxappearance
+    pkgs.redshift
+    pkgs.xfce.xfce4-xkb-plugin
     pkgs.feh
     pkgs.qtikz
     pkgs.grsync
     pkgs. gsettings-desktop-schemas
-    pkgs.pdfpc
+    # pkgs.pdfpc
     pkgs.gpicview
     pkgs.pscircle
-    (pkgs.calibre.override { unrarSupport = true; })
+    # (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
-    pkgs.remmina
+    # pkgs.remmina
     pkgs.cinnamon.nemo
     pkgs.ffmpegthumbnailer
     pkgs.libappindicator
@@ -29,6 +31,7 @@ in
     pkgs.gparted
     pkgs.gnome.gnome-system-monitor
     pkgs.gnome.gnome-calculator
+    pkgs.gnome.gnome-calendar
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
@@ -38,7 +41,7 @@ in
     # pkgs.masterpdfeditor4
 
     pkgs.flameshot
-    pkgs.noisetorch
+    # pkgs.noisetorch
     pkgs.networkmanagerapplet
     pkgs.pa_applet
     pkgs.xorg.xwininfo

@@ -381,7 +381,7 @@ myKeysP =
     ("M-t", spawn "gnome-system-monitor"),
     ("M-n", spawn "nemo"),
     ("M-S-u", spawn "setxkbmap -layout us -variant intl"),
-    ("M-S-b", spawn "setxkbmap -layout br -variant abnt2"),
+    ("M-S-b", spawn "setxkbmap -layout br -variant thinkpad"),
     ("M-p", spawn "flameshot gui"),
     ("M-o", spawn "light-locker-command -l"),
     ("M-s", spawn "/home/rafael/nix-configs/pauser.sh"),
