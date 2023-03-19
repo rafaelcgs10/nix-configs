@@ -1,9 +1,24 @@
-{ pkgs, ...}:
+{ pkgs, lib, ...}:
 let
   unstable = import <nixpkgs-unstable> {};
   nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/628884f74d718438364c3c38c632b31f28faebf8.tar.gz") {
     inherit pkgs;
   };
+
+  alt_pkgs = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/c03f5f557979825bcd34c4fbbd65766d1d44586d.tar.gz";
+  }) {};
+
+  purple_facebook =
+    pkgs.purple-facebook.overrideAttrs (prev: {
+      src = pkgs.fetchFromGitHub {
+        owner = "dequis";
+        repo = "purple-facebook";
+        rev = "1a6711f83d62e374ca2bed41fd4ca25b6bc654a2";
+        sha256 = "sha256-cqMsnJD5beYmrkKMkmBrOWFWiHjZ+mK/rJffR0aBOZ0=";
+      };
+    }) ;
+
 in
 {
   home.packages = [
@@ -51,9 +66,22 @@ in
     pkgs.glxinfo
 
     pkgs.zotero
-    pkgs.chromium
     pkgs.simple-scan
   ];
+
+  programs.brave = {
+    enable = true;
+    extensions = [
+      {id = "nngceckbapebfimnlniiiahkandclblb";} # Bitwarden
+      {id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";} # uBlock Origin
+      {id = "dbepggeogbaibhgnhhndojpepiihcmeb";} # Vimium
+      {id = "ekhagklcjbdpajgpjgmbionohlpdbjgc";} # Zotero
+      {id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";} # Dark reader
+      {id = "oldceeleldhonbafppcapldpdifcinji";} # LanguageTool
+      {id = "mdjildafknihdffpkfmmpnpoiajfjnjd";} # Consent-O-Matic
+      { updateUrl = "https://raw.githubusercontent.com/libredirect/libredirect/master/src/updates/updates.xml"; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
+    ];
+  };
 
   programs.firefox = {
     enable = true;

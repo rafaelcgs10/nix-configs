@@ -9,6 +9,7 @@ in
     pkgs.whatsapp-for-linux
     pkgs.insomnia
     pkgs.tdesktop
+    pkgs.caprine-bin
     pkgs.obs-studio
     unstable.lutris
     pkgs.tlaplusToolbox

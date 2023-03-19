@@ -19,16 +19,24 @@ in {
 
   nix.autoOptimiseStore = true;
 
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  # networking.wireless.enable = true;
+  #  Enables wireless support via wpa_supplicant.
   networking.networkmanager = {
    enable = true;
+   dns = "none";
    wifi.powersave = false;
    extraConfig = ''
       [main]
       rc-manager=file
    '';
   };
-
+  networking = {
+    nameservers = [ "127.0.0.1" "::1" ];
+  };
+  services.nextdns = {
+    enable = true;
+    arguments = [ "-config" "7de4a9" "-cache-size" "20MB" ];
+  };
   # Set your time zone.
   time.timeZone = null;
 
@@ -79,8 +87,18 @@ in {
   # services.xserver.xkbOptions = "eurosign:e";
 
   # Enable sound.
-  sound.enable = true;
-  hardware.pulseaudio.enable = true;
+  # sound.enable = true;
+  # hardware.pulseaudio.enable = true;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    # If you want to use JACK applications, uncomment this
+    #jack.enable = true;
+  };
+
 
   # Enable touchpad support (enabled default in most desktopManager).
   services.xserver.libinput.enable = true;
@@ -160,12 +178,12 @@ in {
   # to wireguard work with networkmanager
   networking.firewall = {
     # if packets are still dropped, they will show up in dmesg
-    logReversePathDrops = true;
+    # logReversePathDrops = true;
     # wireguard trips rpfilter up
-    extraCommands = ''
-     ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN
-     ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN
-   '';
+   #  extraCommands = ''
+   #   ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN
+   #   ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN
+   # '';
     extraStopCommands = ''
      ip46tables -t raw -D nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN || true
      ip46tables -t raw -D nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN || true

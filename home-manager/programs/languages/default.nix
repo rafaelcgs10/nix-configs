@@ -1,5 +1,6 @@
 { pkgs, lib, options, stdenv, fetchhg, config, specialArgs, modulesPath }:
 let
+  unstable = import <nixpkgs-unstable> {};
   moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz);
   nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
   ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
@@ -75,33 +76,35 @@ let
 in
 {
   home.packages = [
-    (pkgs.callPackage ./isabelle {
-      polyml = pkgs.polyml.overrideAttrs (_: {
-        pname = "polyml-for-isabelle";
-        version = "2022";
-        configureFlags = [ "--enable-intinf-as-int" "--with-gmp" "--disable-shared" ];
-        buildFlags = [ "compiler" ];
-        src = pkgs.fetchFromGitHub {
-          owner = "polyml";
-          repo = "polyml";
-          rev = "bafe319bc3a65bf63bd98a4721a6f4dd9e0eabd6";
-          sha256 = "1ygs09zzq8icq1gc8qf4sb24lxx7sbcyd5hw3vw67a3ryaki0qw2";
-        };
-      });
-      java = newer_isabelle_pkgs.openjdk17;
-      scala_3 = newer_isabelle_pkgs.scala_3;
-      coreutils = new_isabelle_pkgs.coreutils;
-      z3 = new_isabelle_pkgs.z3_4_4_0.overrideAttrs (_: {
-        src = new_isabelle_pkgs.fetchFromGitHub {
-          owner = "Z3Prover";
-          repo = "z3";
-          rev = "0482e7fe727c75e259ac55a932b28cf1842c530e";
-          sha256 = "1m53avlljxqd2p8w266ksmjywjycsd23h224yn786qsnf36dr63x";
-        };
-      });
-    })
+    # (pkgs.callPackage ./isabelle {
+    #   polyml = pkgs.polyml.overrideAttrs (_: {
+    #     pname = "polyml-for-isabelle";
+    #     version = "2022";
+    #     configureFlags = [ "--enable-intinf-as-int" "--with-gmp" "--disable-shared" ];
+    #     buildFlags = [ "compiler" ];
+    #     src = pkgs.fetchFromGitHub {
+    #       owner = "polyml";
+    #       repo = "polyml";
+    #       rev = "bafe319bc3a65bf63bd98a4721a6f4dd9e0eabd6";
+    #       sha256 = "1ygs09zzq8icq1gc8qf4sb24lxx7sbcyd5hw3vw67a3ryaki0qw2";
+    #     };
+    #   });
+    #   java = newer_isabelle_pkgs.openjdk17;
+    #   scala_3 = newer_isabelle_pkgs.scala_3;
+    #   coreutils = new_isabelle_pkgs.coreutils;
+    #   z3 = new_isabelle_pkgs.z3_4_4_0.overrideAttrs (_: {
+    #     src = new_isabelle_pkgs.fetchFromGitHub {
+    #       owner = "Z3Prover";
+    #       repo = "z3";
+    #       rev = "0482e7fe727c75e259ac55a932b28cf1842c530e";
+    #       sha256 = "1m53avlljxqd2p8w266ksmjywjycsd23h224yn786qsnf36dr63x";
+    #     };
+    #   });
+    # })
     # newer_isabelle_pkgs.isabelle
     # new_isabelle_pkgs.isabelle
+    # unstable.isabelle
+    newer_isabelle_pkgs.isabelle
     pkgs.rnix-lsp
     # ruststable
     # lldb-mi

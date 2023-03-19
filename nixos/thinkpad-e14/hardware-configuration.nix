@@ -67,6 +67,9 @@ in
   services.logind.lidSwitchExternalPower = "suspend";
   services.logind.lidSwitch = "suspend";
   services.logind.killUserProcesses = true;
+  services.logind.extraConfig = ''
+    HandlePowerKey=suspend
+  '';
   services.tlp.enable = true;
 
   hardware.opengl.extraPackages = with pkgs; [
@@ -87,8 +90,10 @@ in
 
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 10;
+    freeMemThreshold = 2;
   };
+
+  programs.adb.enable = true;
 
   programs.light.enable = true;
   services.acpid.enable = true;
@@ -128,6 +133,12 @@ in
       fsType = "ext4";
     };
 
+  fileSystems."/SSD" =
+    { device = "/dev/disk/by-label/ssd";
+      fsType = "ntfs3";
+      options = [ "rw" "uid=1000"];
+    };
+
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/D412-AF4E";
       fsType = "vfat";
@@ -161,6 +172,9 @@ in
 
   networking.hostName = "thinkpad";
 
+  # Wireguard fix
+  networking.firewall.checkReversePath = false;
+
   # virtualisation.virtualbox.host.enable = true;
   # users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
 
@@ -169,7 +183,7 @@ in
   services.printing.drivers = [ pkgs.hplipWithPlugin ];
   hardware.sane.enable = true;
   hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
-  users.users.rafael.extraGroups = [ "scanner" "lp" ];
+  users.users.rafael.extraGroups = [ "scanner" "lp" "adbusers" ];
 
   # Docker config
   virtualisation.docker = {

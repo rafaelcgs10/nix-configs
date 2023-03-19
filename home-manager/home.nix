@@ -55,7 +55,7 @@ in {
     pkgs.lm_sensors
     pkgs.bc
     pkgs.kubectl
-    pkgs.gitui
+    pkgs.lazygit
     pkgs.k9s
     pkgs.xclip
     pkgs.direnv

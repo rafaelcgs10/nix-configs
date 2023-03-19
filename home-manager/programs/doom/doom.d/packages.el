@@ -9,4 +9,5 @@
 (package! flycheck-grammarly)
 (package! flycheck-languagetool)
 (package! cycle-themes)
+(package! quail :disable t)
 ;; (package! company-posframe)

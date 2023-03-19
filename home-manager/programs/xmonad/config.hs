@@ -89,7 +89,7 @@ myTerminal = "alacritty" -- Sets default terminal
 -- myTerminal = "emacsclient -c -e '(multi-term)'"
 
 myBrowser :: String
-myBrowser = "firefox " -- Sets qutebrowser as browser for tree select
+myBrowser = "brave " -- Sets qutebrowser as browser for tree select
 -- myBrowser = myTerminal ++ " -e lynx " -- Sets lynx as browser for tree select
 
 myEditor :: String
@@ -121,7 +121,7 @@ myStartupHook = do
   -- spawnOnce "setxkbmap -layout us -variant altgr-intl -option caps:swapescape &"
   -- setWMName "LG3D"
   spawnOnOnce "emacs" "emacs"
-  spawnOnOnce "web" "firefox"
+  spawnOnOnce "web" "brave"
   spawnOnce "flameshot"
   spawnOnce "xsetroot -cursor_name left_ptr"
   spawnOnce "blueman-applet"
@@ -129,6 +129,7 @@ myStartupHook = do
   spawnOnce "autorandr -c"
   spawnOnce "pa-applet"
   spawnOnce "copyq"
+  spawnOnOnce "nsp" "languagetool"
   spawnOnce "light-locker --lock-on-lid --lock-on-suspend"
   -- spawnOnce "conky -c /home/rafael/nix-configs/wallpapers/conky.conf"
   setWMName "LG3D"
@@ -150,6 +151,7 @@ myScratchPads =
     NS "slack" spawnSlack findSlack manageScratch,
     NS "whatsapp-for-linux" spawnWhats findWhats manageScratch,
     NS "telegram" spawnTelegram findTelegram manageScratch,
+    NS "caprine" spawnFacebook findFacebook manageScratch,
     NS "discord" spawnDiscord findDiscord manageScratch,
     NS "gnome-calculator" spawnCalculator findCalculator manageScratch,
     NS "grsync" spawnGrsync findGrsync manageScratch,
@@ -170,6 +172,8 @@ myScratchPads =
     findSlack = className =? "Slack"
     spawnWhats = "whatsapp-for-linux"
     findWhats = className =? "Whatsapp-for-linux"
+    spawnFacebook = "caprine"
+    findFacebook= className =? "Caprine"
     spawnTelegram = "telegram-desktop"
     findTelegram = className =? "TelegramDesktop"
     spawnDiscord = "discord"
@@ -276,8 +280,9 @@ myManageHook = composeAll
      , className =? "gnome-calculator"     --> doFloat
      , className =? "Grsync"     --> doFloat
      , className =? "org-languagetool-gui-Main"     --> doFloat
+     , className =? "Caprine"     --> doFloat
      , className =? "spotify"     --> doFloat
-     , className =? "firefox"     --> doShift ( head myWorkspaces )
+     , className =? "brave"     --> doShift ( head myWorkspaces )
      , className =? "Emacs"     --> doShift ( myWorkspaces !! 1 )
      -- , className =? "vlc"     --> doShift ( myWorkspaces !! 7 )
      ] <+> namedScratchpadManageHook myScratchPads
@@ -372,6 +377,7 @@ myKeysP =
     ("M-C-c", namedScratchpadAction myScratchPads "gnome-calculator"),
     ("M-C-g", namedScratchpadAction myScratchPads "languagetool"),
     ("M-C-t", namedScratchpadAction myScratchPads "telegram"),
+    ("M-C-f", namedScratchpadAction myScratchPads "caprine"),
     ("M-C-r", namedScratchpadAction myScratchPads "grsync"),
     ("M-C-s", namedScratchpadAction myScratchPads "spotify"),
     ("M-C-w", namedScratchpadAction myScratchPads "whatsapp-for-linux"),
@@ -380,7 +386,7 @@ myKeysP =
     ("M-u", spawn "pavucontrol"),
     ("M-t", spawn "gnome-system-monitor"),
     ("M-n", spawn "nemo"),
-    ("M-S-u", spawn "setxkbmap -layout us -variant intl"),
+    ("M-S-u", spawn "setxkbmap -layout us -variant altgr-intl"),
     ("M-S-b", spawn "setxkbmap -layout br -variant thinkpad"),
     ("M-p", spawn "flameshot gui"),
     ("M-o", spawn "light-locker-command -l"),
@@ -396,8 +402,8 @@ myKeysP =
     ("<XF86AudioMute>", spawn "amixer set Master toggle"), -- Bug prevents it from toggling correctly in 12.04.
     ("<XF86AudioLowerVolume>", spawn "amixer set Master 5%- unmute"),
     ("<XF86AudioRaiseVolume>", spawn "amixer set Master 5%+ unmute"),
-    ("<XF86HomePage>", spawn "firefox"),
-    ("<XF86Search>", safeSpawn "firefox" ["https://www.google.com/"]),
+    ("<XF86HomePage>", spawn "brave"),
+    ("<XF86Search>", safeSpawn "brave" ["https://www.google.com/"]),
     ("<XF86Mail>", runOrRaise "geary" (resource =? "thunderbird")),
     ("<XF86Calculator>", runOrRaise "gcalctool" (resource =? "gcalctool")),
     ("<XF86Eject>", spawn "toggleeject"),

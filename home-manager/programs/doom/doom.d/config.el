@@ -77,6 +77,8 @@
 ;; Languagetool for working with nix
 ;; (setq langtool-java-bin "java")
 (setq langtool-bin "languagetool-commandline")
+(setq langtool-user-arguments '("--languagemodel" "/home/rafael/Downloads/ngram"))
+(setq langtool-server-user-arguments '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
 (setq langtool-default-language "en-US")
 ;; Long line perfomance tweak
 (setq bidi-inhibit-bpa t)
@@ -304,6 +306,7 @@
   (setq read-process-output-max (* (* 1024 1024) 3))
   (setq lsp-idle-delay 2.0)
   (setq lsp-lens-enable nil)
+  (setq lsp-headerline-breadcrumb-enable nil)
   (setq lsp-log-io nil)
   (setq lsp-enable-folding nil)
   (setq lsp-response-timeout 10)
@@ -509,8 +512,9 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 (after! flycheck
   (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
+  (setq flycheck-languagetool-server-args '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
   (setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
-  (setq flycheck-grammarly-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
+  ;; (setq flycheck-grammarly-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
   ;; (setq flycheck-posframe-mode nil)
   ;; (setq flycheck-golangci-lint-tests t)
   ;; (setq flycheck-golangci-lint-enable-all t)
@@ -525,7 +529,21 @@ With prefix argument (`C-u'), also kill the special buffers."
 
   (flycheck-popup-tip-mode -1)
   (setq flycheck-grammarly-check-time 3.0)
+  (setq flycheck-global-modes '(not isar-mode))
   )
 
-(with-eval-after-load 'flycheck-languagetool
-  (flycheck-add-next-checker 'languagetool 'grammarly 'append))
+;; (with-eval-after-load 'flycheck-languagetool
+;;   (flycheck-add-next-checker 'languagetool 'grammarly 'append))
+
+(after! writegood-mode
+  (custom-set-faces!
+    '(writegood-duplicates-face
+      :underline '(:style line)
+      )
+    '(writegood-passive-voice-face
+      :underline '(:style line)
+      )
+    '(writegood-weasels-face
+      :underline '(:style line)
+      ))
+  )
