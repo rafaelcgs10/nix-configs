@@ -64,6 +64,7 @@ in
     pkgs.lxrandr
     pkgs.srandrd
     pkgs.glxinfo
+    pkgs.pavucontrol
 
     pkgs.zotero
     pkgs.simple-scan
