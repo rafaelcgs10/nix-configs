@@ -23,7 +23,7 @@ in {
   #  Enables wireless support via wpa_supplicant.
   networking.networkmanager = {
    enable = true;
-   dns = "none";
+   # dns = "none";
    wifi.powersave = false;
    extraConfig = ''
       [main]
@@ -31,12 +31,12 @@ in {
    '';
   };
   networking = {
-    nameservers = [ "127.0.0.1" "::1" ];
+    nameservers = [ "45.90.28.219" ];
   };
-  services.nextdns = {
-    enable = true;
-    arguments = [ "-config" "7de4a9" "-cache-size" "20MB" ];
-  };
+  # services.nextdns = {
+  #   enable = true;
+  #   arguments = [ "-config" "7de4a9" "-cache-size" "20MB" ];
+  # };
   # Set your time zone.
   time.timeZone = null;
 
