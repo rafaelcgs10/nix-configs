@@ -15,6 +15,7 @@ set nocompatible
 set synmaxcol=300
 set ttyfast
 set lazyredraw
+set clipboard=unnamedplus
 " }}}
 "
 set number

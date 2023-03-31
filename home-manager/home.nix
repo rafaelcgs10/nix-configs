@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, getBin,... }:
 
 let
 in {
@@ -69,6 +69,8 @@ in {
     pkgs.enhanced-ctorrent
     pkgs.gcalcli
     pkgs.conky
+    pkgs.netcat-gnu
+    pkgs.traceroute
 
     # Fonts
     pkgs.noto-fonts
@@ -85,6 +87,16 @@ in {
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
   ];
+  programs.firejail = {
+    wrappedBinaries = {
+      firefox = {
+        executable = "${pkgs.firefox}/bin/firefox";
+        profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
+        # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
+        # extraArgs = [ "--private" ];
+      };
+    };
+  };
 
   programs.fzf = {
     enable = true;

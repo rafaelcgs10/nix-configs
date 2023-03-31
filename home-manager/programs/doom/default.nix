@@ -7,14 +7,14 @@ let
     url = https://github.com/nix-community/nix-doom-emacs/archive/c852431c25a9d2b8f9322505a38868d4cee6b8d6.tar.gz;
   }) {
     # bundledPackages = true;
-    emacsPackages = pkgs.emacsPackagesFor (pkgs.emacsGit.overrideAttrs (prev: {
+    emacsPackages = pkgs.emacsPackagesFor (pkgs.emacs.overrideAttrs (prev: {
       # version = "29";
-      src = pkgs.fetchFromGitHub {
-        owner = "mattiasdrp";
-        repo = "emacs";
-        rev = "a5d882185ba23a9750b0abc5a188cb003a1d96a1";
-        sha256 = "sha256-0+glVeg/oqZG4kMMc/xDnjlEgkI5nCRDD3toc4kZ3+Q=";
-      };
+      # src = pkgs.fetchFromGitHub {
+      #   owner = "mattiasdrp";
+      #   repo = "emacs";
+      #   rev = "a5d882185ba23a9750b0abc5a188cb003a1d96a1";
+      #   sha256 = "sha256-0+glVeg/oqZG4kMMc/xDnjlEgkI5nCRDD3toc4kZ3+Q=";
+      # };
     }));
     # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGitNativeComp;
     # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsLsp;

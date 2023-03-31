@@ -136,7 +136,7 @@ in
   fileSystems."/SSD" =
     { device = "/dev/disk/by-label/ssd";
       fsType = "ntfs3";
-      options = [ "rw" "uid=1000"];
+      options = [ "rw" "nofail" "uid=1000"];
     };
 
   fileSystems."/boot" =
@@ -145,7 +145,7 @@ in
     };
 
   swapDevices =
-    [ { priority = 1; device = "/dev/disk/by-label/swap"; }
+    [ { priority = 1; device = "/dev/disk/by-label/swap2"; }
     ];
   zramSwap.enable = true;
   zramSwap.algorithm = "zstd";

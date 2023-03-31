@@ -118,6 +118,19 @@ in {
 
   # Automount ecrypts
   security.pam.enableEcryptfs = true;
+  # Apparmor
+  security.apparmor = {
+    enable = true;
+    packages = with pkgs; [
+      apparmor-profiles
+      apparmor-utils
+      apparmor-parser
+      libapparmor
+    ];
+  };
+  programs.firejail = {
+    enable = true;
+  };
 
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
@@ -225,6 +238,10 @@ in {
   networking.firewall.allowPing = true;
   networking.firewall.allowedTCPPorts = [ 8080 8384 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 22000 ];
   networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 22000 ];
+  networking.firewall = {
+    allowedTCPPortRanges = [ { from = 1714; to = 1764; }  ];
+    allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
+  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -233,4 +250,5 @@ in {
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "22.11"; # Did you read the comment?
+
 }
