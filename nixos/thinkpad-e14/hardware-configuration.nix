@@ -128,10 +128,10 @@ in
   };
 
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/d8954d69-692d-4c52-8eaa-e4a1784d0b14";
-      fsType = "ext4";
-    };
+  # fileSystems."/" =
+  #   { device = "/dev/disk/by-uuid/d8954d69-692d-4c52-8eaa-e4a1784d0b14";
+  #     fsType = "ext4";
+  #   };
 
   # fileSystems."/SSD" =
   #   { device = "/dev/disk/by-label/ssd";
@@ -140,13 +140,31 @@ in
   #   };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/D412-AF4E";
+    { device = "/dev/disk/by-label/ROOT";
       fsType = "vfat";
     };
 
-  swapDevices =
-    [ { priority = 1; device = "/dev/disk/by-label/swap2"; }
-    ];
+  fileSystems."/" =
+    { device = "/dev/disk/by-label/nixos2";
+      fsType = "btrfs";
+      options = [ "subvol=root" "compress=zstd" ];
+    };
+
+  fileSystems."/home" =
+    { device = "/dev/disk/by-label/nixos2";
+      fsType = "btrfs";
+      options = [ "subvol=home" "compress=zstd" ];
+    };
+
+  fileSystems."/nix" =
+    { device = "/dev/disk/by-label/nixos2";
+      fsType = "btrfs";
+      options = [ "subvol=nix" "compress=zstd" "noatime" ];
+    };
+
+  # swapDevices =
+  #   [ { priority = 1; device = "/dev/disk/by-label/swap2"; }
+  #   ];
   zramSwap.enable = true;
   zramSwap.algorithm = "zstd";
   zramSwap.priority = 10;
