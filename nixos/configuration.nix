@@ -17,7 +17,7 @@ in {
 
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
-  nix.autoOptimiseStore = true;
+  nix.settings.auto-optimise-store = true;
 
   # networking.wireless.enable = true;
   #  Enables wireless support via wpa_supplicant.
@@ -110,7 +110,7 @@ in {
     home = "/home/rafael";
     extraGroups = [ "wheel" "networkmanager" "docker" "video" "users" ];
   };
-  nix.trustedUsers = [ "root" "rafael" ];
+  nix.settings.trusted-users = [ "root" "rafael" ];
 
   users.extraUsers.rafael = {
     shell = pkgs.zsh;

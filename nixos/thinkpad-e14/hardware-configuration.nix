@@ -133,11 +133,11 @@ in
       fsType = "ext4";
     };
 
-  fileSystems."/SSD" =
-    { device = "/dev/disk/by-label/ssd";
-      fsType = "ntfs3";
-      options = [ "rw" "nofail" "uid=1000"];
-    };
+  # fileSystems."/SSD" =
+  #   { device = "/dev/disk/by-label/ssd";
+  #     fsType = "ntfs3";
+  #     options = [ "rw" "nofail" "uid=1000"];
+  #   };
 
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/D412-AF4E";
