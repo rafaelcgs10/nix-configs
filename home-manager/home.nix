@@ -71,6 +71,7 @@ in {
     pkgs.conky
     pkgs.netcat-gnu
     pkgs.traceroute
+    pkgs.dmidecode
 
     # Fonts
     pkgs.noto-fonts
