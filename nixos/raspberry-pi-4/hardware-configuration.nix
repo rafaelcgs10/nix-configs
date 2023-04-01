@@ -1,35 +1,32 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, stdenv, nodejs, ... }:
 
 let 
-  new_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz";
-  }) {};
 in
-{
-  imports = [
-    "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"
-    ../modules/qbittorrent.nix
-    ./fan-control/default.nix
-  ];
+  {
+    imports = [
+      "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/5a6756294553fc3aa41e11563882db78c2dfbb4c.tar.gz" }/raspberry-pi/4"
+      ../modules/qbittorrent.nix
+      ./fan-control/default.nix
+      ];
 
-  boot.kernelParams = [
-    "usb-storage.quirks=152d:0578:u"
-    "usbcore.quirks=152d:0578:u"
-    "console=ttySO,115200n8"
-    "console=tty1MA0n115200n8"
-    "console=tty0"
-    "mitigations=off"
-  ];
+      boot.kernelParams = [
+        "usb-storage.quirks=152d:0578:u"
+        "usbcore.quirks=152d:0578:u"
+        "console=ttySO,115200n8"
+        "console=tty1MA0n115200n8"
+        "console=tty0"
+        "mitigations=off"
+      ];
 
-  boot.kernelModules = [ "bfq" ];
+      boot.kernelModules = [ "bfq" ];
 
-  boot.extraModprobeConfig = ''
-      options iwlwifi power_save=0
-  '';
+      boot.extraModprobeConfig = ''
+        options iwlwifi power_save=0
+      '';
 
-  networking.localCommands = ''
-    ${pkgs.iw}/bin/iw wlan0 set power_save off
-  '';
+      networking.localCommands = ''
+        ${pkgs.iw}/bin/iw wlan0 set power_save off
+      '';
 
   # Printer and scanner stuff
   # Enable automatic discovery of the printer from other Linux systems with avahi running.
@@ -81,7 +78,7 @@ in
   fileSystems."/hugehd" =
     { device = "/dev/disk/by-label/hugehd";
     fsType = "btrfs";
-    options = [ "rw" "nofail" "noatime" "compress=zstd" "space_cache" ];
+    options = [ "rw" "nofail" "noatime" "compress=zlib" "space_cache" ];
   };
 
 
@@ -92,7 +89,7 @@ in
   zramSwap.priority = 10;
   swapDevices =
     [ { device = "/dev/disk/by-label/swap"; }
-    ];
+  ];
 
   fileSystems = {
     "/" = {
@@ -197,18 +194,33 @@ in
     libraspberrypi
   ];
 
-  services.jellyfin = {
-    enable = true;
-    openFirewall = true;
-    user = "downloader";
-    group = "users";
-    package = new_pkgs.jellyfin;
+  virtualisation.oci-containers.backend = "docker";
+
+  virtualisation.oci-containers.containers.jellyfin = {
+    autoStart = true;
+    environment = {
+      PUID = "1002";
+      PGID = "100";
+    };
+    extraOptions = [
+      "--privileged"
+      "--memory=800m"
+      # "--gpus=all" "--device=/dev/dri:/dev/dri"
+    ];
+
+    image = "lscr.io/linuxserver/jellyfin";
+    ports = [ "8096:8096" "8443:8443" ];
+    volumes = [
+      "/home/downloader/jellyfin/cache:/cache"
+      "/home/downloader/jellyfin/config:/config"
+      "/hugehd/downloader:/data/media"
+    ];
   };
 
-  systemd.services.jellyfin.serviceConfig = {
-    MemoryMax = "800M";
-    CPUQuota = "50%";
-  };
+  # systemd.services.jellyfin.serviceConfig = {
+  #   MemoryMax = "800M";
+  #   CPUQuota = "50%";
+  # };
 
   # services.vsftpd = {
   #   enable = true;
@@ -253,6 +265,7 @@ in
     dataDir = "/hugehd/Syncthing";
     enable = true;
     relay.enable = true;
+    configDir = "/home/rafael/.config/syncthing";
     guiAddress = "0.0.0.0:8384";
   };
 
