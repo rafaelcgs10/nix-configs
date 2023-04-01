@@ -172,8 +172,8 @@ in
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
   boot.postBootCommands = ''
-    echo mq-deadline > /sys/block/nvme0n1/queue/scheduler
-    echo 1 > /sys/block/nvme0n1/queue/iosched/fifo_batch
+    echo none > /sys/block/nvme1n1/queue/scheduler
+    echo 1 > /sys/block/nvme1n1/queue/iosched/fifo_batch
   '';
 
   boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
