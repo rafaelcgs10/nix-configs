@@ -9,10 +9,6 @@ let
     url = "https://github.com/NixOS/nixpkgs/archive/c100196b085a72aa453bd3f86e731e77c2666aee.tar.gz";
   }) {};
 
-  newer_isabelle_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/jvanbruegge/nixpkgs/archive/fa28ed48582cb30afdce232a3313bb6fe32644e4.tar.gz";
-  }) {};
-
   # isabelle2022 = pkgs.isabelle.overrideAttrs (prev: {
   #   version = "2022-RC0";
   #   dirname = "Isabelle2022-RC0";
@@ -104,7 +100,6 @@ in
     # newer_isabelle_pkgs.isabelle
     # new_isabelle_pkgs.isabelle
     # unstable.isabelle
-    newer_isabelle_pkgs.isabelle
     pkgs.rnix-lsp
     # ruststable
     # lldb-mi

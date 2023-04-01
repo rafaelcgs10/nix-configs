@@ -8,6 +8,7 @@
     ../../programs/zsh/default.nix
     ../../programs/nvim/default.nix
     ../../programs/copyq/default.nix
+    ../../programs/jedit/default.nix
     ../../programs/alacritty/default.nix
     ../../programs/rofi/default.nix
     ../../programs/X-themes/default.nix
