@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE PERSPECTIVE SYSTEM "perspective.dtd">
+<PERSPECTIVE>
+<BUFFER AUTORELOAD="TRUE" AUTORELOAD_DIALOG="FALSE" UNTITLED="FALSE">/nix/store/ks6qnk07slhndw2y26g6bk5qj50mzpiw-isabelle-2022/Isabelle2022/src/HOL/Complete_Lattices.thy</BUFFER>
+<BUFFER AUTORELOAD="TRUE" AUTORELOAD_DIALOG="FALSE" UNTITLED="FALSE">/home/rafael/Documents/Vespa/dataplane/Hist.thy</BUFFER>
+<BUFFER AUTORELOAD="TRUE" AUTORELOAD_DIALOG="FALSE" UNTITLED="FALSE">/nix/store/ks6qnk07slhndw2y26g6bk5qj50mzpiw-isabelle-2022/Isabelle2022/src/HOL/List.thy</BUFFER>
+<BUFFER AUTORELOAD="TRUE" AUTORELOAD_DIALOG="FALSE" UNTITLED="FALSE">/home/rafael/Documents/Vespa/dataplane/Utils.thy</BUFFER>
+<BUFFER AUTORELOAD="TRUE" AUTORELOAD_DIALOG="FALSE" UNTITLED="FALSE">/home/rafael/Documents/Vespa/dataplane/Watermarked_Stream.thy</BUFFER>
+<VIEW PLAIN="FALSE">
+
+<TITLE>​Isabelle2022/HOL - </TITLE>
+<PANES>
+"/home/rafael/Documents/Vespa/dataplane/Hist.thy" buffer "/nix/store/ks6qnk07slhndw2y26g6bk5qj50mzpiw-isabelle-2022/Isabelle2022/src/HOL/Complete_Lattices.thy" buff "/home/rafael/Documents/Vespa/dataplane/Hist.thy" buff "/nix/store/ks6qnk07slhndw2y26g6bk5qj50mzpiw-isabelle-2022/Isabelle2022/src/HOL/List.thy" buff "/home/rafael/Documents/Vespa/dataplane/Utils.thy" buff "/home/rafael/Documents/Vespa/dataplane/Watermarked_Stream.thy" buff "global" bufferset
+</PANES>
+<GEOMETRY X="16" Y="16" WIDTH="1888" HEIGHT="1048" EXT_STATE="0" />
+</VIEW>
+</PERSPECTIVE>
