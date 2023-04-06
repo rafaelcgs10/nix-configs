@@ -4,7 +4,7 @@ let
   emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/612fc9ab31d2cdfe6ca99d606c49072d90c4e42b.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   doom-emacs = pkgs.callPackage (builtins.fetchTarball {
-    url = https://github.com/nix-community/nix-doom-emacs/archive/c852431c25a9d2b8f9322505a38868d4cee6b8d6.tar.gz;
+    url = https://github.com/nix-community/nix-doom-emacs/archive/7d7eb4c02eff4228c344d564edeaaf0458d6a742.tar.gz;
   }) {
     # bundledPackages = true;
     emacsPackages = pkgs.emacsPackagesFor (pkgs.emacs.overrideAttrs (prev: {

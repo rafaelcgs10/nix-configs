@@ -70,7 +70,7 @@ in
   services.logind.extraConfig = ''
     HandlePowerKey=suspend
   '';
-  services.tlp.enable = true;
+  # services.tlp.enable = true;
 
   hardware.opengl.extraPackages = with pkgs; [
     amdvlk
@@ -147,37 +147,35 @@ in
   fileSystems."/" =
     { device = "/dev/disk/by-label/nixos2";
       fsType = "btrfs";
-      options = [ "subvol=root" "compress=zstd" ];
+      options = [ "defaults" "discard=async" "subvol=root" "compress=zstd" ];
     };
 
   fileSystems."/home" =
     { device = "/dev/disk/by-label/nixos2";
       fsType = "btrfs";
-      options = [ "subvol=home" "compress=zstd" ];
+      options = [ "defaults" "discard=async" "subvol=home" "compress=zstd" ];
     };
 
   fileSystems."/nix" =
     { device = "/dev/disk/by-label/nixos2";
       fsType = "btrfs";
-      options = [ "subvol=nix" "compress=zstd" "noatime" ];
+      options = [ "defaults" "discard=async" "subvol=nix" "compress=zstd" "noatime" ];
     };
 
-  # swapDevices =
-  #   [ { priority = 1; device = "/dev/disk/by-label/swap2"; }
-  #   ];
-  zramSwap.enable = true;
-  zramSwap.algorithm = "zstd";
-  zramSwap.priority = 10;
+  swapDevices = [ { priority = 1; device = "/dev/disk/by-label/swap2"; } ];
+  # zramSwap.enable = true;
+  # zramSwap.algorithm = "zstd";
+  # zramSwap.priority = 10;
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
   boot.postBootCommands = ''
     echo none > /sys/block/nvme1n1/queue/scheduler
-    echo 1 > /sys/block/nvme1n1/queue/iosched/fifo_batch
   '';
+    # echo 1 > /sys/block/nvme1n1/queue/iosched/fifo_batch
 
-  boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
-  boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
+  # boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
+  # boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
 
   boot.kernelPackages = pkgs.linuxPackages_zen;
 

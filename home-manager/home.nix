@@ -29,6 +29,27 @@ in {
     LEO3_HOME = "~/.nix-profile/bin";
   };
 
+  xdg = {
+    enable = true;
+    mime.enable = true;
+    mimeApps = {
+      enable = true;
+      defaultApplications = {
+        "application/pdf" = [ "org.gnome.Evince.desktop" ];
+        "image/jpeg" = [ "org.gnome.eog.desktop" ];
+        "x-scheme-handler/http=" = [ "brave-browser.desktop" ];
+        "x-scheme-handler/https=" = [ "brave-browser.desktop" ];
+        "x-scheme-handler/chrome" = [ "brave-browser.desktop" ];
+        "text/html" = [ "brave-browser.desktop" ];
+        "application/x-zip" = [ "org.gnome.FileRoller.desktop" ];
+        "application/zip" = "org.gnome.FileRoller.desktop";
+        "application/rar" = "org.gnome.FileRoller.desktop";
+        "application/7z" = "org.gnome.FileRoller.desktop";
+        "application/*tar" = "org.gnome.FileRoller.desktop";
+      };
+    };
+  };
+
   nixpkgs.config.allowUnfree = true;
 
   home.packages = [
@@ -72,6 +93,12 @@ in {
     pkgs.netcat-gnu
     pkgs.traceroute
     pkgs.dmidecode
+    pkgs.sysstat
+    pkgs.hdparm
+    pkgs.wdisplays
+    pkgs.kanshi
+    pkgs.gnome.file-roller
+    pkgs.gnome.eog
 
     # Fonts
     pkgs.noto-fonts
@@ -96,6 +123,10 @@ in {
         # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
         # extraArgs = [ "--private" ];
       };
+      brave = {
+        executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
+        profile = "${pkgs.firejail}/etc/firejail/brave.profile";
+      };
     };
   };
 
@@ -116,6 +147,26 @@ in {
     enable = true;
     tray = "auto";
   };
+
+  home.file.".languagetool.cfg".text = ''
+    #LanguageTool configuration (5.9/2022-09-28 14:38:38 +0000)
+    #Mon Apr 03 14:44:01 CEST 2023
+    ltVersion=5.9
+    #Profile: Default
+    #Mon Apr 03 14:44:01 CEST 2023
+    enabledRules.en-US=HASH_SYMBOL,E_PRIME_LOOSE,WIKIPEDIA_CONTRACTIONS,WIKIPEDIA_CURRENTLY,E_PRIME_STRICT,READABILITY_RULE_SIMPLE,READABILITY_RULE_DIFFICULT,WIKIPEDIA_12_PM,WIKIPEDIA_12_AM
+    serverMode=false
+    taggerShowsDisambigLog=false
+    font.size=13
+    useGUIConfig=false
+    font.name=mononoki
+    language=en-US
+    serverPort=8081
+    autoDetect=false
+    lookAndFeelName=GTK+
+    enabledCategories.en-US=Creative Writing,Text Analysis,Wikipedia
+    font.style=0
+  '';
 
   # services.lorri.enable = true;
   programs.direnv.enable = true;

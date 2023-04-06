@@ -12,13 +12,13 @@ in
     # pkgs.inkscape
     # pkgs.vlc
     # pkgs.kdenlive
-    pkgs.lxappearance
+    # pkgs.lxappearance
     pkgs.redshift
-    pkgs.xfce.xfce4-xkb-plugin
+    # pkgs.xfce.xfce4-xkb-plugin
     pkgs.feh
     pkgs.qtikz
     pkgs.grsync
-    pkgs. gsettings-desktop-schemas
+    pkgs.gsettings-desktop-schemas
     # pkgs.pdfpc
     pkgs.gpicview
     pkgs.pscircle
@@ -27,7 +27,9 @@ in
     pkgs.dialect
     pkgs.kdeconnect
     # pkgs.remmina
-    pkgs.cinnamon.nemo
+    # pkgs.cinnamon.nemo
+    unstable.cinnamon.nemo-fileroller
+    unstable.cinnamon.nemo-with-extensions
     pkgs.ffmpegthumbnailer
     pkgs.libappindicator
     pkgs.gdk-pixbuf
@@ -69,7 +71,7 @@ in
       {id = "dphilobhebphkdjbpfohgikllaljmgbn";} # Simple login
       {id = "oldceeleldhonbafppcapldpdifcinji";} # LanguageTool
       {id = "mdjildafknihdffpkfmmpnpoiajfjnjd";} # Consent-O-Matic
-      { updateUrl = "https://raw.githubusercontent.com/libredirect/libredirect/master/src/updates/updates.xml"; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
+      { version = "2.1.0"; crxPath = pkgs.fetchurl {url = "https://github.com/libredirect/libredirect/releases/download/v2.1.0/libredirect-2.1.0.crx"; sha256 = "0zhhpxpzxlmhxmsii85j1h53q5dn8gsyc1g79hi43vrwnggiwhl1"; }; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
     ];
   };
 

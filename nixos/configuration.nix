@@ -6,6 +6,11 @@
 
 let
   homemanager = import <home-manager> {};
+   flake-compat = builtins.fetchTarball "https://github.com/edolstra/flake-compat/archive/master.tar.gz";
+
+  hyprland = (import flake-compat {
+    src = builtins.fetchTarball "https://github.com/hyprwm/Hyprland/archive/master.tar.gz";
+  }).defaultNix;
 in {
   imports =
     [ # Include the results of the hardware scan.
@@ -13,11 +18,13 @@ in {
       ./boot-loader.nix
       ./hardware-configuration.nix
       <home-manager/nixos>
+      hyprland.nixosModules.default
     ];
 
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
   nix.settings.auto-optimise-store = true;
+  nix.settings.experimental-features = "nix-command flakes";
 
   # networking.wireless.enable = true;
   #  Enables wireless support via wpa_supplicant.
@@ -63,18 +70,34 @@ in {
     };
   };
 
+  services.xserver.windowManager.xmonad.enable = true;
+
+ programs.hyprland = {
+   enable = true;
+
+   # default options, you don't need to set them
+   package = hyprland.packages.${pkgs.system}.default;
+
+   xwayland = {
+     enable = true;
+     hidpi = true;
+   };
+
+   nvidiaPatches = false;
+ };
+
   # Xserver basic
   services.xserver = {
     enable = true;
 
     desktopManager = {
-      xfce.enable = true;
+      plasma5.enable = true;
       xterm.enable = false;
     };
 
     displayManager = {
-        lightdm.enable = true;
-        defaultSession = "xfce";
+        sddm.enable = true;
+        # defaultSession = "xfce";
     };
   };
 
@@ -131,6 +154,19 @@ in {
   programs.firejail = {
     enable = true;
   };
+  nixpkgs.overlays = [
+    (self: super: {
+      firejail = super.firejail.overrideAttrs (old: {
+        version = "0.9.70";
+        src = super.fetchFromGitHub {
+          owner = "netblue30";
+          repo = "firejail";
+          rev = "0.9.70";
+          sha256  = "sha256-x1txt0uER66bZN6BD6c/31Zu6fPPwC9kl/3bxEE6Ce8=";
+        };
+      });
+    })
+  ];
 
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
