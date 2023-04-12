@@ -6,11 +6,6 @@
 
 let
   homemanager = import <home-manager> {};
-   flake-compat = builtins.fetchTarball "https://github.com/edolstra/flake-compat/archive/master.tar.gz";
-
-  hyprland = (import flake-compat {
-    src = builtins.fetchTarball "https://github.com/hyprwm/Hyprland/archive/master.tar.gz";
-  }).defaultNix;
 in {
   imports =
     [ # Include the results of the hardware scan.
@@ -18,7 +13,6 @@ in {
       ./boot-loader.nix
       ./hardware-configuration.nix
       <home-manager/nixos>
-      hyprland.nixosModules.default
     ];
 
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
@@ -38,12 +32,12 @@ in {
    '';
   };
   networking = {
-    nameservers = [ "45.90.28.219" ];
+    nameservers = [ "127.0.0.1" "45.90.28.219" ];
   };
-  # services.nextdns = {
-  #   enable = true;
-  #   arguments = [ "-config" "7de4a9" "-cache-size" "20MB" ];
-  # };
+  services.nextdns = {
+    enable = true;
+    arguments = [ "-config" "7de4a9" "-cache-size" "20MB" ];
+  };
   # Set your time zone.
   time.timeZone = "Europe/Copenhagen";
 
@@ -72,19 +66,6 @@ in {
 
   services.xserver.windowManager.xmonad.enable = true;
 
- programs.hyprland = {
-   enable = true;
-
-   # default options, you don't need to set them
-   package = hyprland.packages.${pkgs.system}.default;
-
-   xwayland = {
-     enable = true;
-     hidpi = true;
-   };
-
-   nvidiaPatches = false;
- };
 
   # Xserver basic
   services.xserver = {
@@ -251,15 +232,6 @@ in {
     enable = true;
     pinentryFlavor = "curses";
     enableSSHSupport = true;
-  };
-
-  # List services that you want to enable:
-  environment.etc."isabelle-docker/bin/isabelle" = {
-    mode = "0555";
-    text =  ''
-      #!${pkgs.bash}/bin/bash
-      podman run --rm -i rafaelcgs10/isabelle-emacs:1.2 /app/bin/isabelle $1
-    '';
   };
 
   # Enable the OpenSSH daemon.

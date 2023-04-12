@@ -5,6 +5,17 @@ let
   # };
   unstable = import <nixpkgs-unstable> {};
 
+  createBraveExtensionFor = browserVersion: { id, sha256, version }:
+    {
+      inherit id;
+      crxPath = builtins.fetchurl {
+        url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx";
+        name = "${id}.crx";
+        inherit sha256;
+      };
+      inherit version;
+    };
+  createBraveExtension = createBraveExtensionFor (lib.versions.major pkgs.brave.version);
 in
 {
   home.packages = [
@@ -71,7 +82,8 @@ in
       {id = "dphilobhebphkdjbpfohgikllaljmgbn";} # Simple login
       {id = "oldceeleldhonbafppcapldpdifcinji";} # LanguageTool
       {id = "mdjildafknihdffpkfmmpnpoiajfjnjd";} # Consent-O-Matic
-      { version = "2.1.0"; crxPath = pkgs.fetchurl {url = "https://github.com/libredirect/libredirect/releases/download/v2.1.0/libredirect-2.1.0.crx"; sha256 = "0zhhpxpzxlmhxmsii85j1h53q5dn8gsyc1g79hi43vrwnggiwhl1"; }; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
+      # ( createBraveExtension {id = "ongajcjccibkomjojhfmjedolopocllf"; version = "2.5.4"; sha256 = "1rc0r2ld17dswj961baz8fj99wvgvzgrhv7myvjw0w8hgg845mmv";} )
+      { version = "2.5.4"; crxPath = pkgs.fetchurl {url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx"; sha256 = "1rc0r2ld17dswj961baz8fj99wvgvzgrhv7myvjw0w8hgg845mmv"; }; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
     ];
   };
 
