@@ -75,6 +75,7 @@ in {
     pkgs.openfortivpn
     pkgs.lm_sensors
     pkgs.bc
+    pkgs.pv
     pkgs.kubectl
     pkgs.lazygit
     pkgs.k9s
