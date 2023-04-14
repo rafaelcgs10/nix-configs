@@ -183,7 +183,7 @@ in
   fileSystems."/tmp" = {
     device = "tmpfs";
     fsType = "tmpfs";
-    options = [ "mode=1777" "lazytime" "nosuid" "nodev" ];
+    options = [ "mode=1777" "size=24G"  "lazytime" "nosuid" "nodev" ];
   };
 
   networking.hostName = "thinkpad";

@@ -13,6 +13,16 @@ in
   ];
 
   home.file.".config/powermanagementprofilesrc".text = builtins.readFile ./powermanagementprofilesrc;
+  home.file.".config/autostart/bitwarden.desktop".text = ''
+    [Desktop Entry]
+    Categories=Utility
+    Comment=A secure and free password manager for all of your devices
+    Exec=bitwarden %U
+    Icon=bitwarden
+    Name=Bitwarden
+    Type=Application
+    Version=1.4
+  '';
 
   programs.plasma = {
     enable = true;
@@ -274,7 +284,7 @@ in
       "kdeglobals"."DirSelect Dialog"."DirSelectDialog Size" = "844,598";
       "kdeglobals"."General"."AllowKDEAppsToRememberWindowPositions" = true;
       "kdeglobals"."General"."BrowserApplication" = "brave-browser.desktop";
-      "kdeglobals"."KDE"."AnimationDurationFactor" = 0.17677669529663687;
+      "kdeglobals"."KDE"."AnimationDurationFactor" = 0.176777;
       "kdeglobals"."KDE"."SingleClick" = false;
       "kdeglobals"."KFileDialog Settings"."Allow Expansion" = false;
       "kdeglobals"."KFileDialog Settings"."Automatically select filename extension" = true;
@@ -801,47 +811,81 @@ in
       "khotkeysrc"."Data_3_9Triggers0"."GesturePointData" = "0,0.0625,-0.5,0.5,1,0.0625,0.0625,-0.5,0.5,0.875,0.125,0.0625,-0.5,0.5,0.75,0.1875,0.0625,-0.5,0.5,0.625,0.25,0.0625,-0.5,0.5,0.5,0.3125,0.0625,-0.5,0.5,0.375,0.375,0.0625,-0.5,0.5,0.25,0.4375,0.0625,-0.5,0.5,0.125,0.5,0.0625,0.5,0.5,0,0.5625,0.0625,0.5,0.5,0.125,0.625,0.0625,0.5,0.5,0.25,0.6875,0.0625,0.5,0.5,0.375,0.75,0.0625,0.5,0.5,0.5,0.8125,0.0625,0.5,0.5,0.625,0.875,0.0625,0.5,0.5,0.75,0.9375,0.0625,0.5,0.5,0.875,1,0,0,0.5,1";
       "khotkeysrc"."Data_3_9Triggers0"."Type" = "GESTURE";
       "khotkeysrc"."DirSelect Dialog"."DirSelectDialog Size[$d]" = "";
+      "khotkeysrc"."DirSelect Dialog"."DirSelectDialog Size\x5b$d\x5d" = "";
       "khotkeysrc"."General"."AllowKDEAppsToRememberWindowPositions[$d]" = "";
+      "khotkeysrc"."General"."AllowKDEAppsToRememberWindowPositions\x5b$d\x5d" = "";
       "khotkeysrc"."General"."BrowserApplication[$d]" = "";
+      "khotkeysrc"."General"."BrowserApplication\x5b$d\x5d" = "";
       "khotkeysrc"."General"."ColorSchemeHash[$d]" = "";
+      "khotkeysrc"."General"."ColorSchemeHash\x5b$d\x5d" = "";
       "khotkeysrc"."General"."ColorScheme[$d]" = "";
+      "khotkeysrc"."General"."ColorScheme\x5b$d\x5d" = "";
       "khotkeysrc"."Gestures"."Disabled" = true;
       "khotkeysrc"."Gestures"."MouseButton" = 2;
       "khotkeysrc"."Gestures"."Timeout" = 300;
       "khotkeysrc"."GesturesExclude"."Comment" = "";
       "khotkeysrc"."GesturesExclude"."WindowsCount" = 0;
       "khotkeysrc"."Icons"."Theme[$d]" = "";
+      "khotkeysrc"."Icons"."Theme\x5b$d\x5d" = "";
       "khotkeysrc"."KDE"."AnimationDurationFactor[$d]" = "";
+      "khotkeysrc"."KDE"."AnimationDurationFactor\x5b$d\x5d" = "";
       "khotkeysrc"."KDE"."LookAndFeelPackage[$d]" = "";
+      "khotkeysrc"."KDE"."LookAndFeelPackage\x5b$d\x5d" = "";
       "khotkeysrc"."KDE"."SingleClick[$d]" = "";
+      "khotkeysrc"."KDE"."SingleClick\x5b$d\x5d" = "";
       "khotkeysrc"."KDE"."widgetStyle[$d]" = "";
+      "khotkeysrc"."KDE"."widgetStyle\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Allow Expansion[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Allow Expansion\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Automatically select filename extension[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Automatically select filename extension\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Breadcrumb Navigation[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Breadcrumb Navigation\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Decoration position[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Decoration position\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."LocationCombo Completionmode[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."LocationCombo Completionmode\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."PathCombo Completionmode[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."PathCombo Completionmode\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Show Bookmarks[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Show Bookmarks\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Show Full Path[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Show Full Path\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Show Inline Previews[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Show Inline Previews\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Show Preview[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Show Preview\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Show Speedbar[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Show Speedbar\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Show hidden files[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Show hidden files\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Sort by[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Sort by\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Sort directories first[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Sort directories first\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Sort hidden files last[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Sort hidden files last\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Sort reversed[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Sort reversed\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."Speedbar Width[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."Speedbar Width\x5b$d\x5d" = "";
       "khotkeysrc"."KFileDialog Settings"."View Style[$d]" = "";
+      "khotkeysrc"."KFileDialog Settings"."View Style\x5b$d\x5d" = "";
       "khotkeysrc"."Main"."AlreadyImported" = "defaults,kde32b1,konqueror_gestures_kde321";
       "khotkeysrc"."Main"."Disabled" = false;
       "khotkeysrc"."Voice"."Shortcut" = "";
       "khotkeysrc"."WM"."activeBackground[$d]" = "";
+      "khotkeysrc"."WM"."activeBackground\x5b$d\x5d" = "";
       "khotkeysrc"."WM"."activeBlend[$d]" = "";
+      "khotkeysrc"."WM"."activeBlend\x5b$d\x5d" = "";
       "khotkeysrc"."WM"."activeForeground[$d]" = "";
+      "khotkeysrc"."WM"."activeForeground\x5b$d\x5d" = "";
       "khotkeysrc"."WM"."inactiveBackground[$d]" = "";
+      "khotkeysrc"."WM"."inactiveBackground\x5b$d\x5d" = "";
       "khotkeysrc"."WM"."inactiveBlend[$d]" = "";
+      "khotkeysrc"."WM"."inactiveBlend\x5b$d\x5d" = "";
       "khotkeysrc"."WM"."inactiveForeground[$d]" = "";
+      "khotkeysrc"."WM"."inactiveForeground\x5b$d\x5d" = "";
       "kiorc"."Confirmations"."ConfirmDelete" = false;
       "klipperrc"."General"."IgnoreImages" = false;
       "klipperrc"."General"."MaxClipItems" = 200;
@@ -878,7 +922,7 @@ in
       "plasmarc"."Wallpapers"."usersWallpapers" = "";
       "systemsettingsrc"."KFileDialog Settings"."detailViewIconSize" = 16;
       "systemsettingsrc"."Open-with settings"."CompletionMode" = 1;
-      "systemsettingsrc"."Open-with settings"."History" = "ala";
+      "systemsettingsrc"."Open-with settings"."History" = "bit,ala";
     };
   };
 
