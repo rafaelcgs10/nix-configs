@@ -72,6 +72,7 @@ let
 in
 {
   home.packages = [
+    (pkgs.qt6Packages.callPackage ../gpt4all.nix {})
     # (pkgs.callPackage ./isabelle {
     #   polyml = pkgs.polyml.overrideAttrs (_: {
     #     pname = "polyml-for-isabelle";
