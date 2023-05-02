@@ -11,9 +11,11 @@
 
   networking.hostName = "orange-pi-one";
   #networking.hostId = "24ebc6f2";
-  # networking.wireless.enable = true;
+  networking.wireless.enable = false;
+  networking.wireless.iwd.enable = true;
+
   security.sudo.enable = true;
-  # services.openssh.enable = true;
+  services.openssh.enable = true;
   #boot.kernel.sysctl."vm.overcommit_memory" = "1";
 
   # environment.variables.GC_INITIAL_HEAP_SIZE = "100000";
@@ -24,6 +26,11 @@
   environment.systemPackages = with pkgs; [
     htop
     git
+    wirelesstools
+    wireguard-tools
+    # sysbench
+    syncthing
+    pkg-config
 
     # libnotify
     # libdbusmenu
@@ -36,7 +43,14 @@
   users.extraUsers.rafael = {
     isNormalUser = true;
     uid = 1000;
+    password = "rafael";
+    home = "/home/rafael";
     extraGroups = [ "wheel" ];
+  };
+  nix.settings.trusted-users = [ "root" "rafael" ];
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
   };
 
 }
