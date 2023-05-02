@@ -14,7 +14,9 @@ in {
       ./hardware-configuration.nix
       <home-manager/nixos>
     ];
-
+  nixpkgs.config.permittedInsecurePackages = [
+    "python-2.7.18.6"
+  ];
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
   nix.settings.auto-optimise-store = true;
@@ -119,6 +121,7 @@ in {
   users.extraUsers.rafael = {
     shell = pkgs.zsh;
   };
+  programs.zsh.enable = true;
 
   # Automount ecrypts
   security.pam.enableEcryptfs = true;
@@ -135,6 +138,7 @@ in {
   programs.firejail = {
     enable = true;
   };
+
   nixpkgs.overlays = [
     (self: super: {
       firejail = super.firejail.overrideAttrs (old: {

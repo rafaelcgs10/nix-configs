@@ -76,6 +76,11 @@ in {
     pkgs.lm_sensors
     pkgs.bc
     pkgs.pv
+    pkgs.s-tui
+    pkgs.stress
+    pkgs.flamegraph
+    # pkgs.perf-tools
+    pkgs.git-lfs
     pkgs.kubectl
     pkgs.lazygit
     pkgs.k9s
@@ -116,20 +121,20 @@ in {
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
   ];
-  programs.firejail = {
-    wrappedBinaries = {
-      firefox = {
-        executable = "${pkgs.firefox}/bin/firefox";
-        profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
-        # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
-        # extraArgs = [ "--private" ];
-      };
-      brave = {
-        executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
-        profile = "${pkgs.firejail}/etc/firejail/brave.profile";
-      };
-    };
-  };
+  # programs.firejail = {
+  #   wrappedBinaries = {
+  #     firefox = {
+  #       executable = "${pkgs.firefox}/bin/firefox";
+  #       profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
+  #       # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
+  #       # extraArgs = [ "--private" ];
+  #     };
+  #     brave = {
+  #       executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
+  #       profile = "${pkgs.firejail}/etc/firejail/brave.profile";
+  #     };
+  #   };
+  # };
 
   programs.fzf = {
     enable = true;

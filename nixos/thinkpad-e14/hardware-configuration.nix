@@ -178,6 +178,9 @@ in
   # boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
 
   boot.kernelPackages = pkgs.linuxPackages_zen;
+  environment.systemPackages = with pkgs; [
+    linuxPackages_zen.perf
+  ];
 
 
   fileSystems."/tmp" = {

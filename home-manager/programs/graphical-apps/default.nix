@@ -1,8 +1,8 @@
 { pkgs, lib, ...}:
 let
-  # nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/628884f74d718438364c3c38c632b31f28faebf8.tar.gz") {
-  #   inherit pkgs;
-  # };
+  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/387cd526d04b589000b76e83f1c502508e9a8f88.tar.gz") {
+    inherit pkgs;
+  };
   unstable = import <nixpkgs-unstable> {};
 
   createBraveExtensionFor = browserVersion: { id, sha256, version }:
@@ -27,7 +27,6 @@ in
     pkgs.redshift
     # pkgs.xfce.xfce4-xkb-plugin
     pkgs.feh
-    pkgs.qtikz
     pkgs.grsync
     pkgs.gsettings-desktop-schemas
     # pkgs.pdfpc
@@ -55,6 +54,8 @@ in
     unstable.zulip
     pkgs.evince
     # pkgs.masterpdfeditor4
+    # nur.repos.some-pkgs.llama-cpp
+    nur.repos.some-pkgs.alpaca-cpp
 
     pkgs.flameshot
     # pkgs.noisetorch
@@ -98,7 +99,6 @@ in
       #   privacy-badger
       #   ublock-origin
       #   vimium
-      #   grammarly
       #   darkreader
       #   i-dont-care-about-cookies
       # ];
