@@ -325,7 +325,7 @@
   (setq lsp-solargraph-use-bundler nil)
   ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
   (setq lsp-solargraph-multi-root t)
-  (setq company-minimum-prefix-length 1)
+  (setq company-minimum-prefix-length 2)
   (setq company-idle-delay 0.7)
   (setq lsp-ui-mode nil)
   (setq lsp-ui-sideline-enable nil)
@@ -465,9 +465,6 @@ With prefix argument (`C-u'), also kill the special buffers."
         "build"))
 
 (use-package! flycheck-languagetool :hook (flycheck-mode . flycheck-languagetool-setup))
-(use-package! flycheck-grammarly    :hook (flycheck-mode . flycheck-grammarly-setup))
-
-;; (with-eval-after-load 'flycheck (flycheck-add-next-checker 'languagetool 'grammarly 'append))
 
 ;; (use-package! company-posframe
 ;;   :ensure
@@ -514,7 +511,6 @@ With prefix argument (`C-u'), also kill the special buffers."
   (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
   (setq flycheck-languagetool-server-args '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
   (setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
-  ;; (setq flycheck-grammarly-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
   ;; (setq flycheck-posframe-mode nil)
   ;; (setq flycheck-golangci-lint-tests t)
   ;; (setq flycheck-golangci-lint-enable-all t)
@@ -524,16 +520,12 @@ With prefix argument (`C-u'), also kill the special buffers."
                     '(flycheck-error ((t (:underline '(:style line)))))
                     '(flycheck-warning ((t (:underline '(:style line)))))
                     '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
-  (with-eval-after-load 'flycheck
-    (flycheck-grammarly-setup))
 
   (flycheck-popup-tip-mode -1)
-  (setq flycheck-grammarly-check-time 3.0)
   (setq flycheck-global-modes '(not isar-mode))
   )
 
 ;; (with-eval-after-load 'flycheck-languagetool
-;;   (flycheck-add-next-checker 'languagetool 'grammarly 'append))
 
 (after! writegood-mode
   (custom-set-faces!

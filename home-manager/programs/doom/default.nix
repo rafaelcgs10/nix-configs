@@ -1,13 +1,13 @@
 { lib, options, config, specialArgs, modulesPath }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/612fc9ab31d2cdfe6ca99d606c49072d90c4e42b.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/c16be6de78ea878aedd0292aa5d4a1ee0a5da501.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   doom-emacs = pkgs.callPackage (builtins.fetchTarball {
-    url = https://github.com/nix-community/nix-doom-emacs/archive/7d7eb4c02eff4228c344d564edeaaf0458d6a742.tar.gz;
+    url = https://github.com/nix-community/nix-doom-emacs/archive/33db1786e0352cad4227fb931ac96c4e2e89de29.tar.gz;
   }) {
     # bundledPackages = true;
-    emacsPackages = pkgs.emacsPackagesFor (pkgs.emacs.overrideAttrs (prev: {
+    emacsPackages = pkgs.emacsPackagesFor (pkgs.pkgs.emacsPgtk.overrideAttrs (prev: {
       # version = "29";
       # src = pkgs.fetchFromGitHub {
       #   owner = "mattiasdrp";
@@ -19,9 +19,10 @@ let
     # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGitNativeComp;
     # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsLsp;
     doomPrivateDir = ./doom.d;
-    dependencyOverrides = {
-      "emacs-overlay" = emacs-overlay;
-    };
+    # emacsPackage = pkgs.emacsPgtkNativeComp;
+    # dependencyOverrides = {
+    #   "emacs-overlay" = emacs-overlay;
+    # };
     emacsPackagesOverlay = self: super:
       let
         mkGitPkg = { host, user, name, rev ? null }:
@@ -37,7 +38,6 @@ let
         academic-phrases = pkgs.emacsPackages.academic-phrases;
         cycle-themes = pkgs.emacsPackages.cycle-themes;
         gitignore-mode = pkgs.emacsPackages.git-modes;
-        flycheck-grammarly = pkgs.emacsPackages.flycheck-grammarly;
         flycheck-languagetool = pkgs.emacsPackages.flycheck-languagetool;
         company-posframe = pkgs.emacsPackages.company-posframe;
 
@@ -96,6 +96,7 @@ let
 in {
 
   home.packages = [ doom-emacs ];
+
   home.file.".emacs.d/init.el".text = ''
       (load "default.el")
   '';
