@@ -1,4 +1,4 @@
-{ lib , stdenv , fetchFromGitHub , cmake , qmake , qtquicktimeline , qtsvg }:
+{ lib , stdenv , fetchFromGitHub , cmake , qmake, wrapQtAppsHook, qtquicktimeline , qtsvg }:
 
 stdenv.mkDerivation {
   pname = "gpt4all-chat";
@@ -19,15 +19,13 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     cmake
-    qmake
+    wrapQtAppsHook
   ];
 
   buildInputs = [
     qtquicktimeline
     qtsvg
   ];
-
-  dontWrapQtApps = true;
 
   meta = with lib; {
     description = "Gpt4all-j chat";
