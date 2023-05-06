@@ -128,6 +128,7 @@ in {
   # Apparmor
   security.apparmor = {
     enable = true;
+    killUnconfinedConfinables = true;
     packages = with pkgs; [
       apparmor-profiles
       apparmor-utils
@@ -137,6 +138,19 @@ in {
   };
   programs.firejail = {
     enable = true;
+    wrappedBinaries = {
+      firefox = {
+        executable = "${pkgs.firefox}/bin/firefox";
+        profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
+        # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
+        # extraArgs = [ "--private" ];
+      };
+      brave = "${lib.getBin pkgs.brave}/bin/brave";
+      # brave = {
+      #   executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
+      #   profile = "${pkgs.firejail}/etc/firejail/brave.profile";
+      # };
+    };
   };
 
   nixpkgs.overlays = [
