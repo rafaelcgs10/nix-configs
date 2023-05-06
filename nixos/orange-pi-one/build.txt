@@ -1,0 +1,9 @@
+nix-build '<nixpkgs/nixos>' -A config.system.build.sdImage -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/db24d86dd8a4769c50d6b7295e81aa280cd93f35.tar.gz -I nixos-config=./configuration.nix
+
+nix-shell -p zstd --run "unzstd result/sd-image/nixos-sd-image-23.05pre-git-armv7l-linux.img.zst -o my-nixos-sd-image-23.05pre-git-armv7l-linux.img"
+
+nix-build -E 'let plat = ((import <nixpkgs> ){}).pkgsCross.armv7l-hf-multiplatform; in plat.buildUBoot{defconfig = "orangepi_one_defconfig"; extraMeta.platforms = ["armv7l-linux"]; filesToInstall = ["u-boot-sunxi-with-spl.bin"];}'
+
+sudo bash -c "pv my-nixos-sd-image-23.05pre-git-armv7l-linux.img > /dev/sda"
+
+sudo dd if=result/u-boot-sunxi-with-spl.bin of=/dev/sda bs=1024 seek=8

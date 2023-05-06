@@ -1,43 +1,64 @@
-{ pkgs, ...}:
+{ pkgs, lib, ...}:
 let
-  unstable = import <nixpkgs-unstable> {};
-  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/628884f74d718438364c3c38c632b31f28faebf8.tar.gz") {
+  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/387cd526d04b589000b76e83f1c502508e9a8f88.tar.gz") {
     inherit pkgs;
   };
+  unstable = import <nixpkgs-unstable> {};
+
+  createBraveExtensionFor = browserVersion: { id, sha256, version }:
+    {
+      inherit id;
+      crxPath = builtins.fetchurl {
+        url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx";
+        name = "${id}.crx";
+        inherit sha256;
+      };
+      inherit version;
+    };
+  createBraveExtension = createBraveExtensionFor (lib.versions.major pkgs.brave.version);
 in
 {
   home.packages = [
     pkgs.gimp-with-plugins
-    pkgs.vlc
-    pkgs.kdenlive
-    pkgs.lxappearance
+    # pkgs.inkscape
+    # pkgs.vlc
+    # pkgs.kdenlive
+    # pkgs.lxappearance
+    pkgs.redshift
+    # pkgs.xfce.xfce4-xkb-plugin
     pkgs.feh
-    pkgs.qtikz
     pkgs.grsync
-    pkgs. gsettings-desktop-schemas
-    pkgs.pdfpc
+    pkgs.gsettings-desktop-schemas
+    # pkgs.pdfpc
     pkgs.gpicview
     pkgs.pscircle
-    (pkgs.calibre.override { unrarSupport = true; })
+    # (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
-    pkgs.remmina
-    pkgs.cinnamon.nemo
+    pkgs.dialect
+    pkgs.kdeconnect
+    # pkgs.remmina
+    # pkgs.cinnamon.nemo
+    unstable.cinnamon.nemo-fileroller
+    unstable.cinnamon.nemo-with-extensions
     pkgs.ffmpegthumbnailer
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.gparted
     pkgs.gnome.gnome-system-monitor
     pkgs.gnome.gnome-calculator
+    pkgs.gnome.gnome-calendar
     pkgs.gnomeExtensions.topicons-plus
     pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
     pkgs.sc-controller
     unstable.zulip
     pkgs.evince
-    pkgs.masterpdfeditor4
+    # pkgs.masterpdfeditor4
+    # nur.repos.some-pkgs.llama-cpp
+    nur.repos.some-pkgs.alpaca-cpp
 
     pkgs.flameshot
-    pkgs.noisetorch
+    # pkgs.noisetorch
     pkgs.networkmanagerapplet
     pkgs.pa_applet
     pkgs.xorg.xwininfo
@@ -45,27 +66,42 @@ in
     pkgs.lxrandr
     pkgs.srandrd
     pkgs.glxinfo
+    pkgs.pavucontrol
 
     pkgs.zotero
-    pkgs.chromium
     pkgs.simple-scan
   ];
+
+  programs.brave = {
+    enable = true;
+    extensions = [
+      {id = "nngceckbapebfimnlniiiahkandclblb";} # Bitwarden
+      {id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";} # uBlock Origin
+      {id = "dbepggeogbaibhgnhhndojpepiihcmeb";} # Vimium
+      {id = "ekhagklcjbdpajgpjgmbionohlpdbjgc";} # Zotero
+      {id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";} # Dark reader
+      {id = "dphilobhebphkdjbpfohgikllaljmgbn";} # Simple login
+      {id = "oldceeleldhonbafppcapldpdifcinji";} # LanguageTool
+      {id = "mdjildafknihdffpkfmmpnpoiajfjnjd";} # Consent-O-Matic
+      # ( createBraveExtension {id = "ongajcjccibkomjojhfmjedolopocllf"; version = "2.5.4"; sha256 = "1rc0r2ld17dswj961baz8fj99wvgvzgrhv7myvjw0w8hgg845mmv";} )
+      { version = "2.5.4"; crxPath = pkgs.fetchurl {url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx"; sha256 = "1rc0r2ld17dswj961baz8fj99wvgvzgrhv7myvjw0w8hgg845mmv"; }; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
+    ];
+  };
 
   programs.firefox = {
     enable = true;
     package = pkgs.firefox;
-    extensions = with nur.repos.rycee.firefox-addons; [
-      bitwarden
-      decentraleyes
-      privacy-badger
-      ublock-origin
-      vimium
-      grammarly
-      darkreader
-      i-dont-care-about-cookies
-    ];
 
     profiles = {
+      # extensions = with nur.repos.rycee.firefox-addons; [
+      #   bitwarden
+      #   decentraleyes
+      #   privacy-badger
+      #   ublock-origin
+      #   vimium
+      #   darkreader
+      #   i-dont-care-about-cookies
+      # ];
       default = {
         isDefault = true;
         settings = {

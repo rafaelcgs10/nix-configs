@@ -1,5 +1,6 @@
 sudo nix-channel --add https://channels.nixos.org/nixpkgs-unstable/ nixpkgs-unstable
-sudo nix-channel --add https://github.com/nix-community/home-manager/archive/release-22.05.tar.gz home-manager
+ sudo  nix-channel --add https://nixos.org/channels/nixos-22.11 nixos
+sudo nix-channel --add https://github.com/nix-community/home-manager/archive/release-22.11.tar.gz home-manager
 sudo nix-channel --update
 
 sudo mkdir -p /mnt/etc/nixos

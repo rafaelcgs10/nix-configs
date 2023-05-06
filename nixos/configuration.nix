@@ -14,23 +14,34 @@ in {
       ./hardware-configuration.nix
       <home-manager/nixos>
     ];
-
+  nixpkgs.config.permittedInsecurePackages = [
+    "python-2.7.18.6"
+  ];
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
-  nix.autoOptimiseStore = true;
+  nix.settings.auto-optimise-store = true;
+  nix.settings.experimental-features = "nix-command flakes";
 
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  # networking.wireless.enable = true;
+  #  Enables wireless support via wpa_supplicant.
   networking.networkmanager = {
    enable = true;
+   # dns = "none";
    wifi.powersave = false;
    extraConfig = ''
       [main]
       rc-manager=file
    '';
   };
-
+  networking = {
+    nameservers = [ "127.0.0.1" "45.90.28.219" ];
+  };
+  services.nextdns = {
+    enable = true;
+    arguments = [ "-config" "7de4a9" "-cache-size" "20MB" ];
+  };
   # Set your time zone.
-  time.timeZone = null;
+  time.timeZone = "Europe/Copenhagen";
 
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
@@ -55,18 +66,21 @@ in {
     };
   };
 
+  services.xserver.windowManager.xmonad.enable = true;
+
+
   # Xserver basic
   services.xserver = {
     enable = true;
 
     desktopManager = {
-      xfce.enable = true;
+      plasma5.enable = true;
       xterm.enable = false;
     };
 
     displayManager = {
-        lightdm.enable = true;
-        defaultSession = "xfce";
+        sddm.enable = true;
+        # defaultSession = "xfce";
     };
   };
 
@@ -79,8 +93,18 @@ in {
   # services.xserver.xkbOptions = "eurosign:e";
 
   # Enable sound.
-  sound.enable = true;
-  hardware.pulseaudio.enable = true;
+  # sound.enable = true;
+  # hardware.pulseaudio.enable = true;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    # If you want to use JACK applications, uncomment this
+    #jack.enable = true;
+  };
+
 
   # Enable touchpad support (enabled default in most desktopManager).
   services.xserver.libinput.enable = true;
@@ -92,14 +116,56 @@ in {
     home = "/home/rafael";
     extraGroups = [ "wheel" "networkmanager" "docker" "video" "users" ];
   };
-  nix.trustedUsers = [ "root" "rafael" ];
+  nix.settings.trusted-users = [ "root" "rafael" ];
 
   users.extraUsers.rafael = {
     shell = pkgs.zsh;
   };
+  programs.zsh.enable = true;
 
   # Automount ecrypts
   security.pam.enableEcryptfs = true;
+  # Apparmor
+  security.apparmor = {
+    enable = true;
+    killUnconfinedConfinables = true;
+    packages = with pkgs; [
+      apparmor-profiles
+      apparmor-utils
+      apparmor-parser
+      libapparmor
+    ];
+  };
+  programs.firejail = {
+    enable = true;
+    wrappedBinaries = {
+      firefox = {
+        executable = "${pkgs.firefox}/bin/firefox";
+        profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
+        # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
+        # extraArgs = [ "--private" ];
+      };
+      brave = "${lib.getBin pkgs.brave}/bin/brave";
+      # brave = {
+      #   executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
+      #   profile = "${pkgs.firejail}/etc/firejail/brave.profile";
+      # };
+    };
+  };
+
+  nixpkgs.overlays = [
+    (self: super: {
+      firejail = super.firejail.overrideAttrs (old: {
+        version = "0.9.70";
+        src = super.fetchFromGitHub {
+          owner = "netblue30";
+          repo = "firejail";
+          rev = "0.9.70";
+          sha256  = "sha256-x1txt0uER66bZN6BD6c/31Zu6fPPwC9kl/3bxEE6Ce8=";
+        };
+      });
+    })
+  ];
 
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
@@ -160,12 +226,12 @@ in {
   # to wireguard work with networkmanager
   networking.firewall = {
     # if packets are still dropped, they will show up in dmesg
-    logReversePathDrops = true;
+    # logReversePathDrops = true;
     # wireguard trips rpfilter up
-    extraCommands = ''
-     ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN
-     ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN
-   '';
+   #  extraCommands = ''
+   #   ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN
+   #   ip46tables -t raw -I nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN
+   # '';
     extraStopCommands = ''
      ip46tables -t raw -D nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN || true
      ip46tables -t raw -D nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN || true
@@ -186,15 +252,6 @@ in {
     enableSSHSupport = true;
   };
 
-  # List services that you want to enable:
-  environment.etc."isabelle-docker/bin/isabelle" = {
-    mode = "0555";
-    text =  ''
-      #!${pkgs.bash}/bin/bash
-      podman run --rm -i rafaelcgs10/isabelle-emacs:1.2 /app/bin/isabelle $1
-    '';
-  };
-
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
   services.sshguard.enable = true;
@@ -205,8 +262,13 @@ in {
   # Or disable the firewall altogether.
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
+
   networking.firewall.allowedTCPPorts = [ 8080 8384 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 22000 63786 ];
   networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 22000 63786 ];
+  networking.firewall = {
+    allowedTCPPortRanges = [ { from = 1714; to = 1764; }  ];
+    allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
+  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -214,5 +276,6 @@ in {
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "22.05"; # Did you read the comment?
+  system.stateVersion = "22.11"; # Did you read the comment?
+
 }

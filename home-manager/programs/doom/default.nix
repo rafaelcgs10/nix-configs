@@ -1,20 +1,28 @@
 { lib, options, config, specialArgs, modulesPath }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/30a3d95bb4d9812e26822260b6ac45efde0d7700.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/c16be6de78ea878aedd0292aa5d4a1ee0a5da501.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
   doom-emacs = pkgs.callPackage (builtins.fetchTarball {
-    url = https://github.com/vlaci/nix-doom-emacs/archive/33064319607745856f488a998ca3db8ffcede865.tar.gz;
+    url = https://github.com/nix-community/nix-doom-emacs/archive/33db1786e0352cad4227fb931ac96c4e2e89de29.tar.gz;
   }) {
     # bundledPackages = true;
-    # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGcc;
-    # Directory containing your config.el init.el and packages.el files
+    emacsPackages = pkgs.emacsPackagesFor (pkgs.pkgs.emacsPgtk.overrideAttrs (prev: {
+      # version = "29";
+      # src = pkgs.fetchFromGitHub {
+      #   owner = "mattiasdrp";
+      #   repo = "emacs";
+      #   rev = "a5d882185ba23a9750b0abc5a188cb003a1d96a1";
+      #   sha256 = "sha256-0+glVeg/oqZG4kMMc/xDnjlEgkI5nCRDD3toc4kZ3+Q=";
+      # };
+    }));
+    # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsGitNativeComp;
+    # emacsPackages = pkgs.emacsPackagesFor pkgs.emacsLsp;
     doomPrivateDir = ./doom.d;
-    dependencyOverrides = {
-      "emacs-overlay" = (builtins.fetchTarball {
-        url = https://github.com/nix-community/emacs-overlay/archive/30a3d95bb4d9812e26822260b6ac45efde0d7700.tar.gz;
-      });
-    };
+    # emacsPackage = pkgs.emacsPgtkNativeComp;
+    # dependencyOverrides = {
+    #   "emacs-overlay" = emacs-overlay;
+    # };
     emacsPackagesOverlay = self: super:
       let
         mkGitPkg = { host, user, name, rev ? null }:
@@ -27,14 +35,26 @@ let
             };
           };
       in {
+        academic-phrases = pkgs.emacsPackages.academic-phrases;
+        cycle-themes = pkgs.emacsPackages.cycle-themes;
         gitignore-mode = pkgs.emacsPackages.git-modes;
-        gitconfig-mode = pkgs.emacsPackages.git-modes;
+        flycheck-languagetool = pkgs.emacsPackages.flycheck-languagetool;
+        company-posframe = pkgs.emacsPackages.company-posframe;
+
+        isar-goal-mode = self.trivialBuild {
+          pname = "isar-goal-mode";
+          ename = "isar-goal-mode";
+          version = "2020-11-20";
+          src = builtins.fetchTarball {
+            url = "https://github.com/m-fleury/isar-mode/archive/8675631462517a0a2723405177ef86d06dfaa6d5.tar.gz";
+          };
+        };
         isar-mode = self.trivialBuild {
           pname = "isar-mode";
           ename = "isar-mode";
           version = "2020-11-20";
           src = builtins.fetchTarball {
-            url = "https://github.com/m-fleury/isar-mode/archive/f29e28e5f73c36f2a05b19e8afcff63f5e1ccabf.tar.gz";
+            url = "https://github.com/m-fleury/isar-mode/archive/8675631462517a0a2723405177ef86d06dfaa6d5.tar.gz";
           };
         };
         # twauctex = self.trivialBuild {
@@ -54,7 +74,7 @@ let
           ename = "lsp-isar-parse-args";
           version = "2020-11-20";
           src = builtins.fetchTarball {
-            url = "https://github.com/m-fleury/isabelle-emacs/archive/767a5a69c175557e4ed32347b42c9197091061af.tar.gz";
+            url = "https://github.com/m-fleury/isabelle-emacs/archive/9f7cd9036714f957c700a91ca909451a4e567539.tar.gz";
           };
           buildPhase = ''
             cd src/Tools/emacs-lsp/lsp-isar
@@ -65,24 +85,18 @@ let
           ename = "lsp-isar";
           version = "2020-11-20";
           src = builtins.fetchTarball {
-            url = "https://github.com/m-fleury/isabelle-emacs/archive/767a5a69c175557e4ed32347b42c9197091061af.tar.gz";
+            url = "https://github.com/m-fleury/isabelle-emacs/archive/9f7cd9036714f957c700a91ca909451a4e567539.tar.gz";
           };
           buildPhase = ''
             cd src/Tools/emacs-lsp/lsp-isar
           '';
         };
-        isar-goal-mode = self.trivialBuild {
-          pname = "isar-goal-mode";
-          ename = "isar-goal-mode";
-          version = "2020-11-20";
-          src = builtins.fetchTarball {
-            url = "https://github.com/m-fleury/isar-mode/archive/f29e28e5f73c36f2a05b19e8afcff63f5e1ccabf.tar.gz";
-          };
-        };
       };
   };
 in {
+
   home.packages = [ doom-emacs ];
+
   home.file.".emacs.d/init.el".text = ''
       (load "default.el")
   '';

@@ -65,9 +65,12 @@ in
     '';
 
   services.logind.lidSwitchExternalPower = "suspend";
-  services.logind.lidSwitch = "hybrid-sleep";
+  services.logind.lidSwitch = "suspend";
   services.logind.killUserProcesses = true;
-  services.tlp.enable = true;
+  services.logind.extraConfig = ''
+    HandlePowerKey=suspend
+  '';
+  # services.tlp.enable = true;
 
   hardware.opengl.extraPackages = with pkgs; [
     amdvlk
@@ -85,11 +88,12 @@ in
   # wifi fix
   # boot.extraModulePackages = with config.boot.kernelPackages; [ rtw89 ];
 
-  # services.earlyoom = {
-  #   enable = true;
-  #   useKernelOOMKiller = true;
-  #   freeMemThreshold = 5;
-  # };
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 2;
+  };
+
+  programs.adb.enable = true;
 
   programs.light.enable = true;
   services.acpid.enable = true;
@@ -107,6 +111,7 @@ in
     # Force use of the thinkpad_acpi driver for backlight control.
     # This allows the backlight save/load systemd service to work.
     "acpi_backlight=native"
+    "mitigations=off"
   ];
 
   services.xserver = {
@@ -123,43 +128,71 @@ in
   };
 
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/d8954d69-692d-4c52-8eaa-e4a1784d0b14";
-      fsType = "ext4";
-    };
+  # fileSystems."/" =
+  #   { device = "/dev/disk/by-uuid/d8954d69-692d-4c52-8eaa-e4a1784d0b14";
+  #     fsType = "ext4";
+  #   };
+
+  # fileSystems."/SSD" =
+  #   { device = "/dev/disk/by-label/ssd";
+  #     fsType = "ntfs3";
+  #     options = [ "rw" "nofail" "uid=1000"];
+  #   };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/D412-AF4E";
+    { device = "/dev/disk/by-label/ROOT";
       fsType = "vfat";
     };
 
-  swapDevices =
-    [ { priority = 1; device = "/dev/disk/by-label/swap"; }
-    ];
-  zramSwap.enable = true;
-  zramSwap.algorithm = "zstd";
-  zramSwap.priority = 10;
+  fileSystems."/" =
+    { device = "/dev/disk/by-label/nixos2";
+      fsType = "btrfs";
+      options = [ "defaults" "discard=async" "subvol=root" "compress=zstd" ];
+    };
+
+  fileSystems."/home" =
+    { device = "/dev/disk/by-label/nixos2";
+      fsType = "btrfs";
+      options = [ "defaults" "discard=async" "subvol=home" "compress=zstd" ];
+    };
+
+  fileSystems."/nix" =
+    { device = "/dev/disk/by-label/nixos2";
+      fsType = "btrfs";
+      options = [ "defaults" "discard=async" "subvol=nix" "compress=zstd" "noatime" ];
+    };
+
+  swapDevices = [ { priority = 1; device = "/dev/disk/by-label/swap2"; } ];
+  # zramSwap.enable = true;
+  # zramSwap.algorithm = "zstd";
+  # zramSwap.priority = 10;
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
   boot.postBootCommands = ''
-    echo mq-deadline > /sys/block/nvme0n1/queue/scheduler
-    echo 1 > /sys/block/nvme0n1/queue/iosched/fifo_batch
+    echo none > /sys/block/nvme1n1/queue/scheduler
   '';
+    # echo 1 > /sys/block/nvme1n1/queue/iosched/fifo_batch
 
-  boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
-  boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
+  # boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
+  # boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_zen;
+  environment.systemPackages = with pkgs; [
+    linuxPackages_zen.perf
+  ];
 
 
   fileSystems."/tmp" = {
     device = "tmpfs";
     fsType = "tmpfs";
-    options = [ "mode=1777" "lazytime" "nosuid" "nodev" ];
+    options = [ "mode=1777" "size=24G"  "lazytime" "nosuid" "nodev" ];
   };
 
   networking.hostName = "thinkpad";
+
+  # Wireguard fix
+  networking.firewall.checkReversePath = false;
 
   # virtualisation.virtualbox.host.enable = true;
   # users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
@@ -169,7 +202,7 @@ in
   services.printing.drivers = [ pkgs.hplipWithPlugin ];
   hardware.sane.enable = true;
   hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
-  users.users.rafael.extraGroups = [ "scanner" "lp" ];
+  users.users.rafael.extraGroups = [ "scanner" "lp" "adbusers" ];
 
   # Docker config
   virtualisation.docker = {
@@ -213,7 +246,7 @@ in
 
 
   hardware.bluetooth.enable = true;
-  services.blueman.enable = true;
+  # services.blueman.enable = true;
   systemd.services.bluetooth.serviceConfig.ExecStart = [
     ""
     "${pkgs.bluez}/libexec/bluetooth/bluetoothd --noplugin=sap,avrcp"
