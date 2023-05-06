@@ -108,7 +108,6 @@ in
 
   services.earlyoom = {
     enable = true;
-    useKernelOOMKiller = true;
     freeMemThreshold = 5;
   };
 
@@ -177,6 +176,15 @@ in
 
   services.xserver.autorun = false;
 
+  services.nextcloud = {
+    enable = true;
+    package = pkgs.nextcloud25;
+    hostName = "localhost";
+    config.adminpassFile = "${pkgs.writeText "adminpass" "test123"}";
+  };
+  services.nginx.virtualHosts."localhost".listen = [ { addr = "127.0.0.1"; port = 8081; } ];
+
+
   users.users.downloader = {
     isNormalUser = true;
     home = "/hugehd/downloader";
@@ -237,6 +245,7 @@ in
 
   services.qbittorrent.enable = true;
   users.users.qbittorrent.isSystemUser = true;
+  users.users.qbittorrent.group = "qbittorrent";
 
   # Enable cron service
   services.cron = {
@@ -338,7 +347,7 @@ in
     protocol = "cloudflare";
     verbose = true;
     username = "rafaelcgs10@gmail.com";
-    password = builtins.readFile /home/rafael/cf-api-token;
+    passwordFile = "/home/rafael/cf-api-token";
     zone = "rafaelcgs.com";
     domains = [ "vpn.rafaelcgs.com" "jellyfin.rafaelcgs.com" ];
   };
