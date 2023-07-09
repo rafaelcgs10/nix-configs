@@ -7,7 +7,7 @@ let
 in
 {
   home.packages = [
-    newer_isabelle_pkgs.isabelle
+    pkgs.isabelle
   ];
   home.file.".isabelle/Isabelle2022/jedit/properties".text = builtins.readFile ./properties;
   home.file.".isabelle/afp" = {

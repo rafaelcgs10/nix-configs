@@ -32,6 +32,7 @@ in
     # pkgs.pdfpc
     pkgs.gpicview
     pkgs.pscircle
+    pkgs.inkscape
     # (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
     pkgs.dialect

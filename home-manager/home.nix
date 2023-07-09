@@ -4,7 +4,7 @@ let
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
-  home.stateVersion = "22.11";
+  home.stateVersion = "23.05";
 
   imports = [
     ./imports/default.nix
@@ -35,8 +35,8 @@ in {
     mimeApps = {
       enable = true;
       defaultApplications = {
-        "application/pdf" = [ "org.gnome.Evince.desktop" ];
-        "image/jpeg" = [ "org.gnome.eog.desktop" ];
+        # "application/pdf" = [ "org.gnome.Evince.desktop" ];
+        # "image/jpeg" = [ "org.gnome.eog.desktop" ];
         "x-scheme-handler/http=" = [ "brave-browser.desktop" ];
         "x-scheme-handler/https=" = [ "brave-browser.desktop" ];
         "x-scheme-handler/chrome" = [ "brave-browser.desktop" ];
@@ -116,9 +116,14 @@ in {
     pkgs.font-awesome_4
     pkgs.font-awesome_5
     pkgs.papirus-icon-theme
+    # (pkgs.callPackage ./nuclear.nix {})
+    (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
+
+    pkgs.rawtherapee
+    pkgs.darktable
 
   ];
   # programs.firejail = {

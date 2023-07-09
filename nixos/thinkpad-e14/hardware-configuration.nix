@@ -162,10 +162,10 @@ in
       options = [ "defaults" "discard=async" "subvol=nix" "compress=zstd" "noatime" ];
     };
 
-  swapDevices = [ { priority = 1; device = "/dev/disk/by-label/swap2"; } ];
-  # zramSwap.enable = true;
-  # zramSwap.algorithm = "zstd";
-  # zramSwap.priority = 10;
+  # swapDevices = [ { device = "/dev/disk/by-label/swap2"; } ];
+  zramSwap.enable = true;
+  zramSwap.algorithm = "zstd";
+  zramSwap.priority = 10;
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
