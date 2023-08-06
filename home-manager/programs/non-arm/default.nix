@@ -16,7 +16,7 @@ in
     pkgs.obs-studio
     unstable.lutris
     pkgs.tlaplusToolbox
-    unstable.discord
+    pkgs.discord
     pkgs.bitwarden
     pkgs.steam
     (newer_pkgs.qt6Packages.callPackage ../gpt4all.nix {})
