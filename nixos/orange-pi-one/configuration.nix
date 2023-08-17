@@ -11,7 +11,7 @@
   networking.hostName = "orange-pi-one";
   #networking.hostId = "24ebc6f2";
   # networking.wireless.iwd.enable = true;
-  #
+
   networking.wireless.enable = true;
   networking.wireless.userControlled.enable = true;
   networking.wireless.networks.Itsawonderfulwifi.pskRaw = "9c14b5c4dd05c191fd73fc96f53d28462058e826867813d3b41b1b14a14076fc";
@@ -39,12 +39,9 @@
     vim
     wirelesstools
     wpa_supplicant
-    # sysbench
     syncthing
     pkg-config
 
-    # libnotify
-    # libdbusmenu
   ];
 
   system.stateVersion = "23.05";
@@ -88,4 +85,5 @@
     freeMemThreshold = 2;
   };
 
+  networking.firewall.allowedTCPPorts = [ 8384 22 ];
 }
