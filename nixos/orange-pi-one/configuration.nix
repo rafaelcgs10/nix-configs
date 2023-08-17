@@ -8,22 +8,20 @@
   nix.binaryCaches = lib.mkForce [ "https://cache.armv7l.xyz" ];
   nix.binaryCachePublicKeys = [ "cache.armv7l.xyz-1:kBY/eGnBAYiqYfg0fy0inWhshUo+pGFM3Pj7kIkmlBk=" ];
 
- #  networking.networkmanager = {
- #    enable = true;
- #   # dns = "none";
- #   wifi.powersave = false;
- #   extraConfig = ''
- #      [main]
- #      rc-manager=file
- #   '';
- # };
-
- networking.hostName = "orange-pi-one";
+  networking.hostName = "orange-pi-one";
   #networking.hostId = "24ebc6f2";
-  networking.wireless.enable = true;
   # networking.wireless.iwd.enable = true;
+  #
+  networking.wireless.enable = true;
   networking.wireless.userControlled.enable = true;
+  networking.wireless.networks.Itsawonderfulwifi.pskRaw = "9c14b5c4dd05c191fd73fc96f53d28462058e826867813d3b41b1b14a14076fc";
+  networking.wireless.extraConfig = ''
+    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel
+  '';
 
+  systemd.services.wpa_supplicant = {
+    wantedBy = lib.mkForce ["multi-user.target" "syncthing.service"];
+  };
 
   security.sudo.enable = true;
   services.openssh.enable = true;
@@ -37,6 +35,8 @@
   environment.systemPackages = with pkgs; [
     htop
     git
+    tmux
+    vim
     wirelesstools
     wpa_supplicant
     # sysbench
@@ -47,15 +47,25 @@
     # libdbusmenu
   ];
 
-
-  networking.wireless.networks.Itsawonderfulwifi.pskRaw = "9c14b5c4dd05c191fd73fc96f53d28462058e826867813d3b41b1b14a14076fc";
-
-
   system.stateVersion = "23.05";
 
   boot.kernelPackages = lib.mkForce config.boot.zfs.package.latestCompatibleLinuxPackages;
   boot.extraModulePackages = with config.boot.kernelPackages; [rtw88 rtl8821cu];
 
+  services.syncthing = {
+    user = "rafael";
+    group = "users";
+    dataDir = "/home/rafael";
+    enable = true;
+    relay.enable = true;
+  };
+  systemd.services.syncthing = {
+    serviceConfig = {
+      RestartSec = 10;
+      Restart = lib.mkForce "always";
+      Type = lib.mkForce "simple";
+    };
+  };
 
   users.extraUsers.rafael = {
     isNormalUser = true;
@@ -68,6 +78,14 @@
   virtualisation.docker = {
     enable = true;
     enableOnBoot = false;
+  };
+
+  zramSwap.enable = true;
+  zramSwap.algorithm = "zstd";
+  zramSwap.priority = 10;
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 2;
   };
 
 }
