@@ -55,6 +55,8 @@
     dataDir = "/home/rafael";
     enable = true;
     relay.enable = true;
+    configDir = "/home/rafael/.config/syncthing";
+    guiAddress = "0.0.0.0:8384";
   };
   systemd.services.syncthing = {
     serviceConfig = {
