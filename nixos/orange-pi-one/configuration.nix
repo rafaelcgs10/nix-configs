@@ -82,10 +82,14 @@
   zramSwap.enable = true;
   zramSwap.algorithm = "zstd";
   zramSwap.priority = 10;
+
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 2;
+    freeMemThreshold = 15;
   };
 
   networking.firewall.allowedTCPPorts = [ 8384 22 ];
+  networking.firewall.enable = true;
+  networking.firewall.allowPing = true;
+
 }
