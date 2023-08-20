@@ -41,6 +41,7 @@
     wpa_supplicant
     syncthing
     pkg-config
+    cloudflared
 
   ];
 

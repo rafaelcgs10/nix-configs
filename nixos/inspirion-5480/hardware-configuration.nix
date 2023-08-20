@@ -83,7 +83,7 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
-  services.printing.drivers = [ pkgs.hplipWithPlugin ];
+  services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.cups-drv-rastertosag-gdi ];
 
 
   hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ vaapiIntel ];

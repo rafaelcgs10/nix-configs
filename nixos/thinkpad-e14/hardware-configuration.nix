@@ -8,8 +8,6 @@ let
     url = "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz";
   }) {};
 
-
-  oldBluez = oldpkgs.bluez;
 in
 {
   imports =
@@ -90,7 +88,7 @@ in
 
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 2;
+    freeMemThreshold = 10;
   };
 
   programs.adb.enable = true;
@@ -199,7 +197,8 @@ in
 
   # Printer and scanner stuff
   services.printing.enable = true;
-  services.printing.drivers = [ pkgs.hplipWithPlugin ];
+  services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.gutenprintBin pkgs.foomatic-db-ppds-withNonfreeDb pkgs.cups-drv-rastertosag-gdi ];
+
   hardware.sane.enable = true;
   hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
   users.users.rafael.extraGroups = [ "scanner" "lp" "adbusers" ];
@@ -210,9 +209,9 @@ in
     enableOnBoot = false;
   };
   systemd.services.docker.serviceConfig.KillMode = "mixed";
-  virtualisation.podman = {
-    enable = true;
-  };
+  # virtualisation.podman = {
+  #   enable = true;
+  # };
 
   services.syncthing = {
     user = "rafael";
@@ -274,5 +273,45 @@ in
         onFailure = [ "hibernate.target" ];
         script = "${battery-level-sufficient}/bin/battery-level-sufficient";
       };
+
+  virtualisation.oci-containers.containers.jellyfin = {
+    autoStart = true;
+    environment = {
+      PUID = "1002";
+      PGID = "100";
+    };
+    extraOptions = [
+      "--privileged"
+      "--memory=800m"
+      # "--gpus=all" "--device=/dev/dri:/dev/dri"
+    ];
+
+    image = "lscr.io/linuxserver/jellyfin";
+    ports = [ "8096:8096" "8443:8443" ];
+    volumes = [
+      "/home/rafael/jellyfin/cache:/cache"
+      "/home/rafael/jellyfin/config:/config"
+      "/home/rafael/media:/data/media"
+    ];
+  };
+
+  services.cloudflared = {
+    enable = true;
+    user = "rafael";
+    tunnels.tunnel = {
+      credentialsFile = "/home/rafael/Documents/private_keys/cloudflare_tunne/cloudflare_tunnel.json";
+      default = "http_status:404";
+      ingress = {
+        "jellyfin.rafaelcgs.com" = "http://localhost:8096";
+      };
+    };
+  };
+
+  # virtualisation.oci-containers.containers.cloudflared-tunnel = {
+  #   image = "cloudflare/cloudflared:latest";
+  #   cmd = ["tunnel" "--no-autoupdate" "run"];
+  #   extraOptions = ["--network" "host"];
+  #   environmentFiles = ["/home/rafael/Documents/private_keys/cloudflare_tunne/token"];
+  # };
 
 }

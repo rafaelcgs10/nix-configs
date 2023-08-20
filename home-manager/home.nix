@@ -116,8 +116,9 @@ in {
     pkgs.font-awesome_4
     pkgs.font-awesome_5
     pkgs.papirus-icon-theme
+    pkgs.freetube
     # (pkgs.callPackage ./nuclear.nix {})
-    (pkgs.callPackage ./spotube.nix {})
+    # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })

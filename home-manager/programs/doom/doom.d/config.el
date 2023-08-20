@@ -233,65 +233,65 @@
 (setq haskell-process-type 'cabal-new-repl)
 
 ;; Isabelle setup
-(use-package! isar-mode
-  :mode "\\.thy\\'"
-  :config
-  ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
-  ;; (add-hook 'isar-mode-hook 'flycheck-mode)
-  (add-hook 'isar-mode-hook 'company-mode)
-  (add-hook 'isar-mode-hook
-            (lambda ()
-              (set (make-local-variable 'company-backends)
-                   '((company-dabbrev-code company-yasnippet)))))
-  (add-hook 'isar-mode-hook
-            (lambda ()
-              (set (make-local-variable 'indent-tabs-mode) nil)))
-  (add-hook 'isar-mode-hook
-            (lambda ()
-              (yas-minor-mode)))
+;; (use-package! isar-mode
+;;   :mode "\\.thy\\'"
+;;   :config
+;;   ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
+;;   ;; (add-hook 'isar-mode-hook 'flycheck-mode)
+;;   (add-hook 'isar-mode-hook 'company-mode)
+;;   (add-hook 'isar-mode-hook
+;;             (lambda ()
+;;               (set (make-local-variable 'company-backends)
+;;                    '((company-dabbrev-code company-yasnippet)))))
+;;   (add-hook 'isar-mode-hook
+;;             (lambda ()
+;;               (set (make-local-variable 'indent-tabs-mode) nil)))
+;;   (add-hook 'isar-mode-hook
+;;             (lambda ()
+;;               (yas-minor-mode)))
 
 
-  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-add-help-echo t)))
-  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
-  (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-highlight-unicode t)))
-  (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
-  (add-hook 'isar-goal-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
-  (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
-  (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
-  (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
-  (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t)))
-  )
+;;   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-add-help-echo t)))
+;;   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
+;;   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-highlight-unicode t)))
+;;   ;; (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
+;;   ;; (add-hook 'isar-goal-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
+;;   ;; (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
+;;   ;; (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
+;;   ;; (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
+;;   ;; (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t)))
+;;   )
 
-(setq unicode-tokens-fontsymb-properties ())
+;; (setq unicode-tokens-fontsymb-properties ())
 
-(use-package! lsp-isar-parse-args
-  :custom
-  (lsp-isar-parse-args-nollvm nil))
+;; (use-package! lsp-isar-parse-args
+;;   :custom
+;;   (lsp-isar-parse-args-nollvm nil))
 
 (setq display-line-numbers-mode t)
 
-(use-package! lsp-isar
-  :commands lsp-isar-define-client-and-start
-  :custom
-  (lsp-isar-output-time-before-printing-goal nil)
-  (lsp-isar-output-use-async t)
-  (lsp-isar-experimental t)
-  ;; (lsp-isar-decorations-delayed-printing t)
-  ;; (lsp-isar-progress--request-delay 8)
-  (lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
-  (lsp-isar-decorations-delayed-printing t)
-  :init
-  (add-hook 'lsp-isar-init-hook 'lsp-isar-open-output-and-progress-right-spacemacs)
-  (add-hook 'isar-mode-hook #'lsp-isar-define-client-and-start)
+;; (use-package! lsp-isar
+;;   :commands lsp-isar-define-client-and-start
+;;   :custom
+;;   (lsp-isar-output-time-before-printing-goal nil)
+;;   (lsp-isar-output-use-async t)
+;;   (lsp-isar-experimental t)
+;;   ;; (lsp-isar-decorations-delayed-printing t)
+;;   ;; (lsp-isar-progress--request-delay 8)
+;;   (lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
+;;   (lsp-isar-decorations-delayed-printing t)
+;;   :init
+;;   (add-hook 'lsp-isar-init-hook 'lsp-isar-open-output-and-progress-right-spacemacs)
+;;   (add-hook 'isar-mode-hook #'lsp-isar-define-client-and-start)
 
-  (push (concat "~/isabelle/Isabelle2021/src/Tools/emacs-lsp/yasnippet")
-        yas-snippet-dirs)
+;;   (push (concat "~/isabelle/Isabelle2021/src/Tools/emacs-lsp/yasnippet")
+;;         yas-snippet-dirs)
 
-  )
+;;   )
 
 (setq lsp-isabelle-options (list "-d" "~/Documents/Vespa/" "-R" "Dataplane"))
 
-(setq lsp-isar-path-to-isabelle "/nix/store/8n41f2i68mkj6xjmnyzrd8fcayjlwxib-isabelle-2022")
+;; (setq lsp-isar-path-to-isabelle "/nix/store/8n41f2i68mkj6xjmnyzrd8fcayjlwxib-isabelle-2022")
 ;; (setq lsp-isabelle-options (list "-d" "~/Documents/afp-2022-02-13/thys"))
 
 (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
@@ -405,7 +405,7 @@ With prefix argument (`C-u'), also kill the special buffers."
               (message "Killing buffer %s" buf-name)
               (kill-buffer buf))))))))
 
-(setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
+;; (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
 
 (use-package! nix-mode
   :interpreter ("\\(?:cached-\\)?nix-shell" . +nix-shell-init-mode)
@@ -493,8 +493,8 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;; (custom-set-faces
 ;;  '(lsp-isar-font-background-unprocessed1 ((t (:foreground "blue" :priority 5 :background "blue" :weight bold :height 2.5 :box (:line-width 10 :color "blue"))))))
 
-(custom-set-faces
- '(lsp-isar-font-foreground-quoted ((t (:background nil)))))
+;; (custom-set-faces
+;;  '(lsp-isar-font-foreground-quoted ((t (:background nil)))))
 
 (setq custom-safe-themes t)
 (use-package! cycle-themes
