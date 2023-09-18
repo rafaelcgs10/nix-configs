@@ -86,7 +86,7 @@ in {
 
   services.gvfs = {
     enable = true;
-    package = lib.mkForce pkgs.gnome3.gvfs;
+    # package = lib.mkForce pkgs.gnome3.gvfs;
   };
 
   # Configure keymap in X11
@@ -136,36 +136,36 @@ in {
       libapparmor
     ];
   };
-  programs.firejail = {
-    enable = true;
-    wrappedBinaries = {
-      firefox = {
-        executable = "${pkgs.firefox}/bin/firefox";
-        profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
-        # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
-        # extraArgs = [ "--private" ];
-      };
-      brave = "${lib.getBin pkgs.brave}/bin/brave";
-      # brave = {
-      #   executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
-      #   profile = "${pkgs.firejail}/etc/firejail/brave.profile";
-      # };
-    };
-  };
+  # programs.firejail = {
+  #   enable = true;
+  #   wrappedBinaries = {
+  #     firefox = {
+  #       executable = "${pkgs.firefox}/bin/firefox";
+  #       profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
+  #       # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
+  #       # extraArgs = [ "--private" ];
+  #     };
+  #     brave = "${lib.getBin pkgs.brave}/bin/brave";
+  #     # brave = {
+  #     #   executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
+  #     #   profile = "${pkgs.firejail}/etc/firejail/brave.profile";
+  #     # };
+  #   };
+  # };
 
-  nixpkgs.overlays = [
-    (self: super: {
-      firejail = super.firejail.overrideAttrs (old: {
-        version = "0.9.70";
-        src = super.fetchFromGitHub {
-          owner = "netblue30";
-          repo = "firejail";
-          rev = "0.9.70";
-          sha256  = "sha256-x1txt0uER66bZN6BD6c/31Zu6fPPwC9kl/3bxEE6Ce8=";
-        };
-      });
-    })
-  ];
+  # nixpkgs.overlays = [
+  #   (self: super: {
+  #     firejail = super.firejail.overrideAttrs (old: {
+  #       version = "0.9.70";
+  #       src = super.fetchFromGitHub {
+  #         owner = "netblue30";
+  #         repo = "firejail";
+  #         rev = "0.9.70";
+  #         sha256  = "sha256-x1txt0uER66bZN6BD6c/31Zu6fPPwC9kl/3bxEE6Ce8=";
+  #       };
+  #     });
+  #   })
+  # ];
 
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
@@ -207,22 +207,22 @@ in {
 
   # printing
   services.printing.enable = true;
-  services.avahi.enable = true;
-  services.avahi.nssmdns = true;
-  services.avahi.extraServiceFiles = {
-    ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
-    smb = ''
-    <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
-    <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-    <service-group>
-      <name replace-wildcards="yes">%h</name>
-      <service>
-        <type>_smb._tcp</type>
-        <port>445</port>
-      </service>
-    </service-group>
-  '';
-  };
+  # services.avahi.enable = true;
+  # services.avahi.nssmdns = true;
+  # services.avahi.extraServiceFiles = {
+  #   ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
+  #   smb = ''
+  #   <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+  #   <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+  #   <service-group>
+  #     <name replace-wildcards="yes">%h</name>
+  #     <service>
+  #       <type>_smb._tcp</type>
+  #       <port>445</port>
+  #     </service>
+  #   </service-group>
+  # '';
+  # };
 
   # to wireguard work with networkmanager
   networking.firewall = {

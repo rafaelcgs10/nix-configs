@@ -1,6 +1,6 @@
 { pkgs, lib, ...}:
 let
-  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/387cd526d04b589000b76e83f1c502508e9a8f88.tar.gz") {
+  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/f944f5befe39d7cf27cd0b41960ace172f9241b3.tar.gz") {
     inherit pkgs;
   };
   unstable = import <nixpkgs-unstable> {};
@@ -24,32 +24,32 @@ in
     # pkgs.vlc
     # pkgs.kdenlive
     # pkgs.lxappearance
-    pkgs.redshift
+    # pkgs.redshift
     # pkgs.xfce.xfce4-xkb-plugin
     pkgs.feh
     pkgs.grsync
-    pkgs.gsettings-desktop-schemas
+    # pkgs.gsettings-desktop-schemas
     # pkgs.pdfpc
-    pkgs.gpicview
-    pkgs.pscircle
+    # pkgs.gpicview
+    # pkgs.pscircle
     pkgs.inkscape
     # (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
     pkgs.dialect
-    pkgs.kdeconnect
+    # pkgs.kdeconnect
     # pkgs.remmina
     # pkgs.cinnamon.nemo
-    unstable.cinnamon.nemo-fileroller
-    unstable.cinnamon.nemo-with-extensions
+    # unstable.cinnamon.nemo-fileroller
+    # unstable.cinnamon.nemo-with-extensions
     pkgs.ffmpegthumbnailer
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.gparted
-    pkgs.gnome.gnome-system-monitor
-    pkgs.gnome.gnome-calculator
-    pkgs.gnome.gnome-calendar
-    pkgs.gnomeExtensions.topicons-plus
-    pkgs.gnomeExtensions.appindicator
+    # pkgs.gnome.gnome-system-monitor
+    # pkgs.gnome.gnome-calculator
+    # pkgs.gnome.gnome-calendar
+    # pkgs.gnomeExtensions.topicons-plus
+    # pkgs.gnomeExtensions.appindicator
     unstable.qmplay2
     pkgs.sc-controller
     unstable.zulip
@@ -57,17 +57,21 @@ in
     # pkgs.masterpdfeditor4
     # nur.repos.some-pkgs.llama-cpp
     nur.repos.some-pkgs.alpaca-cpp
+    nur.repos.foolnotion.upscayl
 
-    pkgs.flameshot
+    # pkgs.flameshot
     # pkgs.noisetorch
-    pkgs.networkmanagerapplet
-    pkgs.pa_applet
-    pkgs.xorg.xwininfo
+    # pkgs.networkmanagerapplet
+    # pkgs.pa_applet
+    # pkgs.xorg.xwininfo
     pkgs.xdotool
     pkgs.lxrandr
     pkgs.srandrd
     pkgs.glxinfo
-    pkgs.pavucontrol
+    # pkgs.pavucontrol
+    unstable.freetube
+    unstable.darktable
+    pkgs.element-desktop
 
     pkgs.zotero
     pkgs.simple-scan

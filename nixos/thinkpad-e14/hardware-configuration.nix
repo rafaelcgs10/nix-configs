@@ -12,7 +12,17 @@ in
 {
   imports =
     [ (modulesPath + "/installer/scan/not-detected.nix")
+      ../modules/qbittorrent.nix
     ];
+  services.qbittorrent.enable = true;
+  users.users.qbittorrent.isSystemUser = true;
+  users.users.qbittorrent.group = "qbittorrent";
+
+  services.clamav.daemon.enable = true;
+  services.clamav.updater.enable = true;
+  systemd.services.clamav-daemon.serviceConfig = {
+    StateDirectory = "clamav";
+  };
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
@@ -175,10 +185,10 @@ in
   # boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
   # boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
 
-  boot.kernelPackages = pkgs.linuxPackages_zen;
-  environment.systemPackages = with pkgs; [
-    linuxPackages_zen.perf
-  ];
+  # boot.kernelPackages = pkgs.linuxPackages_zen;
+  # environment.systemPackages = with pkgs; [
+  #   linuxPackages_zen.perf
+  # ];
 
 
   fileSystems."/tmp" = {
@@ -306,6 +316,12 @@ in
       };
     };
   };
+
+  # Wayland for Electon
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
+  # services.xserver.desktopManager.kodi.enable = true;
+  # services.xserver.desktopManager.kodi.package = pkgs.kodi.withPackages (p: with p; [ future osmc-skin jellyfin inputstream-rtmp inputstreamhelper inputstream-adaptive inputstream-ffmpegdirect requests myconnpy dateutil invidious joystick ]);
 
   # virtualisation.oci-containers.containers.cloudflared-tunnel = {
   #   image = "cloudflare/cloudflared:latest";

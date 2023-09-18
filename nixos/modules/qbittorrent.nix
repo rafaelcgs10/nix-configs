@@ -17,7 +17,7 @@ in
 
     dataDir = mkOption {
       type = types.path;
-      default = "/hugehd/downloader/.qbittorrent";
+      default = "/home/rafael/.qbittorrent";
       description = ''
         The directory where qBittorrent will create files.
       '';
@@ -41,7 +41,7 @@ in
 
     user = mkOption {
       type = types.str;
-      default = "downloader";
+      default = "rafael";
       description = ''
         User account under which qBittorrent runs.
       '';
@@ -103,7 +103,7 @@ in
         User = cfg.user;
         Group = cfg.group;
         UMask = "0002";
-        MemoryMax = "800G";
+        MemoryMax = "800M";
         CPUQuota = "75%";
         LimitNOFILE = cfg.openFilesLimit;
       };

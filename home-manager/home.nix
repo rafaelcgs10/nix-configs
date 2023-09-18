@@ -41,11 +41,11 @@ in {
         "x-scheme-handler/https=" = [ "brave-browser.desktop" ];
         "x-scheme-handler/chrome" = [ "brave-browser.desktop" ];
         "text/html" = [ "brave-browser.desktop" ];
-        "application/x-zip" = [ "org.gnome.FileRoller.desktop" ];
-        "application/zip" = "org.gnome.FileRoller.desktop";
-        "application/rar" = "org.gnome.FileRoller.desktop";
-        "application/7z" = "org.gnome.FileRoller.desktop";
-        "application/*tar" = "org.gnome.FileRoller.desktop";
+        # "application/x-zip" = [ "org.gnome.FileRoller.desktop" ];
+        # "application/zip" = "org.gnome.FileRoller.desktop";
+        # "application/rar" = "org.gnome.FileRoller.desktop";
+        # "application/7z" = "org.gnome.FileRoller.desktop";
+        # "application/*tar" = "org.gnome.FileRoller.desktop";
       };
     };
   };
@@ -103,8 +103,8 @@ in {
     pkgs.hdparm
     pkgs.wdisplays
     pkgs.kanshi
-    pkgs.gnome.file-roller
-    pkgs.gnome.eog
+    # pkgs.gnome.file-roller
+    # pkgs.gnome.eog
 
     # Fonts
     pkgs.noto-fonts
@@ -116,15 +116,14 @@ in {
     pkgs.font-awesome_4
     pkgs.font-awesome_5
     pkgs.papirus-icon-theme
-    pkgs.freetube
     # (pkgs.callPackage ./nuclear.nix {})
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
+    pkgs.emacsPackages.nerd-icons
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
     pkgs.rawtherapee
-    pkgs.darktable
 
   ];
   # programs.firejail = {

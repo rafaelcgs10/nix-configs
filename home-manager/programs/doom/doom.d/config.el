@@ -67,29 +67,29 @@
 ;;
 ;; (setq mode-require-final-newline nil)
 
-(global-prettify-symbols-mode -1)
-(prettify-symbols-mode -1)
-(setq rustic-flycheck-clippy-params "--message-format=json")
-(setq rustic-compile-directory-method 'rustic-buffer-workspace)
-(add-hook 'haskell-mode-hook #'lsp)
-(add-hook 'haskell-literate-mode-hook #'lsp)
+;; (global-prettify-symbols-mode -1)
+;; (prettify-symbols-mode -1)
+;; (setq rustic-flycheck-clippy-params "--message-format=json")
+;; (setq rustic-compile-directory-method 'rustic-buffer-workspace)
+;; (add-hook 'haskell-mode-hook #'lsp)
+;; (add-hook 'haskell-literate-mode-hook #'lsp)
 
 ;; Languagetool for working with nix
 ;; (setq langtool-java-bin "java")
-(setq langtool-bin "languagetool-commandline")
-(setq langtool-user-arguments '("--languagemodel" "/home/rafael/Downloads/ngram"))
-(setq langtool-server-user-arguments '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
-(setq langtool-default-language "en-US")
+;; (setq langtool-bin "languagetool-commandline")
+;; (setq langtool-user-arguments '("--languagemodel" "/home/rafael/Downloads/ngram"))
+;; (setq langtool-server-user-arguments '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
+;; (setq langtool-default-language "en-US")
 ;; Long line perfomance tweak
-(setq bidi-inhibit-bpa t)
+;; (setq bidi-inhibit-bpa t)
 ;; (setq global-so-long-mode t)
 
 ;; Flycheck configs
 ;; (use-package! flycheck-golangci-lint :ensure t :hook (go-mode . flycheck-golangci-lint-setup))
 
 ;; Minimap configs
-(setq minimap-update-delay 1)
-(setq minimap-automatically-delete-window t)
+;; (setq minimap-update-delay 1)
+;; (setq minimap-automatically-delete-window t)
 ;; (add-hook 'prog-mode-hook 'minimap-mode)
 
 ;; Ace-window configs
@@ -230,7 +230,7 @@
 ;;   (when (derived-mode-p 'prog-mode)
 ;;     (delete-trailing-whitespace)))
 
-(setq haskell-process-type 'cabal-new-repl)
+;; (setq haskell-process-type 'cabal-new-repl)
 
 ;; Isabelle setup
 ;; (use-package! isar-mode
@@ -289,12 +289,12 @@
 
 ;;   )
 
-(setq lsp-isabelle-options (list "-d" "~/Documents/Vespa/" "-R" "Dataplane"))
+;; (setq lsp-isabelle-options (list "-d" "~/Documents/Vespa/" "-R" "Dataplane"))
 
 ;; (setq lsp-isar-path-to-isabelle "/nix/store/8n41f2i68mkj6xjmnyzrd8fcayjlwxib-isabelle-2022")
 ;; (setq lsp-isabelle-options (list "-d" "~/Documents/afp-2022-02-13/thys"))
 
-(setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
+;; (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
 
 (after! lsp-mode
   (advice-remove #'lsp #'+lsp-dont-prompt-to-install-servers-maybe-a)
@@ -304,14 +304,14 @@
   (add-hook 'focus-out-hook 'garbage-collect)
   (run-with-idle-timer 5 t 'garbage-collect)
   (setq read-process-output-max (* (* 1024 1024) 3))
-  (setq lsp-idle-delay 2.0)
+  (setq lsp-idle-delay 0.7)
   (setq lsp-lens-enable nil)
   (setq lsp-headerline-breadcrumb-enable nil)
   (setq lsp-log-io nil)
   (setq lsp-enable-folding nil)
-  (setq lsp-response-timeout 10)
-  (setq lsp-tcp-connection-timeout 10)
-  (setq lsp-sqls-timeout 10)
+  (setq lsp-response-timeout 5)
+  (setq lsp-tcp-connection-timeout 5)
+  (setq lsp-sqls-timeout 5)
 
   ;; (setq lsp-diagnostics-disabled-modes 'isar-mode)
   ;; (setq lsp-use-plists t)
@@ -345,48 +345,48 @@
 ;; (setq gdb-show-main t
 ;;       gdb-many-windows t)
 
-(after! rustic
-  (setq rustic-format-on-save t)
-  (after! dap-mode
-    (require 'dap-gdb-lldb)
-    (dap-register-debug-template
-     "Timely Dataflow 2 workers"
-     (list :type "gdb"
-           :arguments "-w2"
-           :request "launch"
-           :name "GDB::Run"
-           :gdbpath "rust-gdb"
-           :target nil
-           :cwd nil))
-    (dap-register-debug-template
-     "Rust::GDB Run Configuration"
-     (list :type "gdb"
-           :request "launch"
-           :name "GDB::Run"
-           :gdbpath "rust-gdb"
-           :target nil
-           :cwd nil))
-    )
-  )
+;; (after! rustic
+;;   (setq rustic-format-on-save t)
+;;   (after! dap-mode
+;;     (require 'dap-gdb-lldb)
+;;     (dap-register-debug-template
+;;      "Timely Dataflow 2 workers"
+;;      (list :type "gdb"
+;;            :arguments "-w2"
+;;            :request "launch"
+;;            :name "GDB::Run"
+;;            :gdbpath "rust-gdb"
+;;            :target nil
+;;            :cwd nil))
+;;     (dap-register-debug-template
+;;      "Rust::GDB Run Configuration"
+;;      (list :type "gdb"
+;;            :request "launch"
+;;            :name "GDB::Run"
+;;            :gdbpath "rust-gdb"
+;;            :target nil
+;;            :cwd nil))
+;;     )
+;;   )
 
-(use-package dap-mode
-  :ensure
-  :config
-  (dap-ui-mode)
-  (dap-ui-controls-mode 1)
+;; (use-package dap-mode
+;;   :ensure
+;;   :config
+;;   (dap-ui-mode)
+;;   (dap-ui-controls-mode 1)
 
-  (require 'dap-lldb)
-  (require 'dap-gdb-lldb)
-  ;; installs .extension/vscode
-  (dap-gdb-lldb-setup)
-  (dap-register-debug-template
-   "Rust::LLDB Run Configuration"
-   (list :type "lldb"
-         :request "launch"
-         :name "LLDB::Run"
-         :gdbpath "rust-lldb"
-         :target nil
-         :cwd nil)))
+;;   (require 'dap-lldb)
+;;   (require 'dap-gdb-lldb)
+;;   ;; installs .extension/vscode
+;;   (dap-gdb-lldb-setup)
+;;   (dap-register-debug-template
+;;    "Rust::LLDB Run Configuration"
+;;    (list :type "lldb"
+;;          :request "launch"
+;;          :name "LLDB::Run"
+;;          :gdbpath "rust-lldb"
+;;          :target nil
+;;          :cwd nil)))
 
 (defun modi/kill-non-project-buffers (&optional kill-special)
   "Kill buffers that do not belong to a `projectile' project.
@@ -464,7 +464,7 @@ With prefix argument (`C-u'), also kill the special buffers."
         ".bzr" "_darcs" ".tox" ".svn" ".stack-work"
         "build"))
 
-(use-package! flycheck-languagetool :hook (flycheck-mode . flycheck-languagetool-setup))
+;; (use-package! flycheck-languagetool :hook (flycheck-mode . flycheck-languagetool-setup))
 
 ;; (use-package! company-posframe
 ;;   :ensure
@@ -472,23 +472,23 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;   (company-posframe-mode t)
 ;;   )
 
-(defun toggle-maximize-buffer ()
-  "Maximize buffer."
-  (interactive)
-  (save-excursion
-    (if (and (= 1 (length (cl-remove-if
-                           (lambda (w)
-                             (or (and (fboundp 'treemacs-is-treemacs-window?)
-                                      (treemacs-is-treemacs-window? w))
-                                 (and (bound-and-true-p neo-global--window)
-                                      (eq neo-global--window w))))
-                           (window-list))))
-             (assoc ?_ register-alist))
-        (jump-to-register ?_)
-      (window-configuration-to-register ?_)
-      (delete-other-windows))))
+;; (defun toggle-maximize-buffer ()
+;;   "Maximize buffer."
+;;   (interactive)
+;;   (save-excursion
+;;     (if (and (= 1 (length (cl-remove-if
+;;                            (lambda (w)
+;;                              (or (and (fboundp 'treemacs-is-treemacs-window?)
+;;                                       (treemacs-is-treemacs-window? w))
+;;                                  (and (bound-and-true-p neo-global--window)
+;;                                       (eq neo-global--window w))))
+;;                            (window-list))))
+;;              (assoc ?_ register-alist))
+;;         (jump-to-register ?_)
+;;       (window-configuration-to-register ?_)
+;;       (delete-other-windows))))
 
-(global-set-key "\M-f" 'toggle-maximize-buffer)
+;; (global-set-key "\M-f" 'toggle-maximize-buffer)
 
 ;; (custom-set-faces
 ;;  '(lsp-isar-font-background-unprocessed1 ((t (:foreground "blue" :priority 5 :background "blue" :weight bold :height 2.5 :box (:line-width 10 :color "blue"))))))
@@ -507,25 +507,28 @@ With prefix argument (`C-u'), also kill the special buffers."
   :config
   (cycle-themes-mode))
 
-(after! flycheck
-  (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
-  (setq flycheck-languagetool-server-args '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
-  (setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
-  ;; (setq flycheck-posframe-mode nil)
-  ;; (setq flycheck-golangci-lint-tests t)
-  ;; (setq flycheck-golangci-lint-enable-all t)
-  (setq flycheck-idle-change-delay 1.5)
-  (custom-set-faces '(flycheck-duplicate ((t (:underline '(:style line)))))
-                    '(flycheck-incorrect ((t (:underline '(:style line)))))
-                    '(flycheck-error ((t (:underline '(:style line)))))
-                    '(flycheck-warning ((t (:underline '(:style line)))))
-                    '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
+;; (after! flycheck
+;;   (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
+;;   (setq flycheck-languagetool-server-args '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
+;;   (setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
+;;   ;; (setq flycheck-posframe-mode nil)
+;;   ;; (setq flycheck-golangci-lint-tests t)
+;;   ;; (setq flycheck-golangci-lint-enable-all t)
+;;   (setq flycheck-idle-change-delay 1.5)
+;;   (custom-set-faces '(flycheck-duplicate ((t (:underline '(:style line)))))
+;;                     '(flycheck-incorrect ((t (:underline '(:style line)))))
+;;                     '(flycheck-error ((t (:underline '(:style line)))))
+;;                     '(flycheck-warning ((t (:underline '(:style line)))))
+;;                     '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
 
-  (flycheck-popup-tip-mode -1)
-  (setq flycheck-global-modes '(not isar-mode))
-  )
+;;   (flycheck-popup-tip-mode -1)
+;;   (setq flycheck-global-modes '(not isar-mode))
+;;   )
 
 ;; (with-eval-after-load 'flycheck-languagetool
+
+;; Vsync optimization
+(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
 
 (after! writegood-mode
   (custom-set-faces!

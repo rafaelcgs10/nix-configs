@@ -244,8 +244,10 @@ in
   # };
 
   services.qbittorrent.enable = true;
-  users.users.qbittorrent.isSystemUser = true;
-  users.users.qbittorrent.group = "qbittorrent";
+  services.qbittorrent.dataDir = "/home/rafael/.qbittorrent";
+  services.qbittorrent.user = "rafael";
+  users.users.rafael.isSystemUser = true;
+  users.users.rafael.group = "qbittorrent";
 
   # Enable cron service
   services.cron = {
