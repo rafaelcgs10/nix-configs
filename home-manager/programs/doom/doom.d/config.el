@@ -326,7 +326,7 @@
   ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
   (setq lsp-solargraph-multi-root t)
   (setq company-minimum-prefix-length 2)
-  (setq company-idle-delay 0.7)
+  (setq company-idle-delay 0.3)
   (setq lsp-ui-mode nil)
   (setq lsp-ui-sideline-enable nil)
   (setq lsp-lens-enable nil)
@@ -530,6 +530,8 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;; Vsync optimization
 (add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
 
+(setq ispell-alternate-dictionary (file-truename "/home/rafael/nix-configs/home-manager/programs/doom/american-english-exhaustive.txt"))
+
 (after! writegood-mode
   (custom-set-faces!
     '(writegood-duplicates-face
@@ -542,3 +544,15 @@ With prefix argument (`C-u'), also kill the special buffers."
       :underline '(:style line)
       ))
   )
+
+(set-company-backend! 'text-mode
+  '(:separate company-dabbrev company-yasnippet company-files company-ispell))
+
+(set-company-backend! 'org-mode
+  '(:separate company-dabbrev company-yasnippet company-files company-ispell))
+
+(set-company-backend! 'latex-mode
+  '(:separate +latex--company-backends company-capf company-yasnippet company-dabbrev company-yasnippet company-files company-ispell))
+
+
+(setq ispell-personal-dictionary "/home/rafael/nix-configs/home-manager/programs/doom/ispell.dict")

@@ -128,7 +128,8 @@ in
     pkgs.libllvm
     pkgs.texlab
     pkgs.nodejs
-    (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
+    # (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
+    pkgs.texlive.combined.scheme-full
     pkgs.rust-analyzer
     pkgs.go
     pkgs.cmake
