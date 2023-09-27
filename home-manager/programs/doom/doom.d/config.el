@@ -551,8 +551,19 @@ With prefix argument (`C-u'), also kill the special buffers."
 (set-company-backend! 'org-mode
   '(:separate company-dabbrev company-yasnippet company-files company-ispell))
 
-(set-company-backend! 'latex-mode
-  '(:separate +latex--company-backends company-capf company-yasnippet company-dabbrev company-yasnippet company-files company-ispell))
+(add-to-list '+latex--company-backends #'company-ispell)
+
+;; (setq-hook! 'LaTeX-mode-local-vars-hook
+;;   (set-company-backend! 'latex-mode
+;;   '(:separate +latex--company-backends company-capf company-yasnippet company-dabbrev company-yasnippet company-files company-ispell)))
 
 
 (setq ispell-personal-dictionary "/home/rafael/nix-configs/home-manager/programs/doom/ispell.dict")
+
+;; (use-package! lsp-ltex
+;;   :init
+;;   (setq! lsp-ltex-version "16.0.0")
+;;   :hook
+;;   (text-mode . (lambda () (require 'lsp-ltex) (lsp)))
+;;   :config
+;;   (setq lsp-ltex-check-frequency "edit"))

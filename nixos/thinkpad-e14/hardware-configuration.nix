@@ -40,7 +40,7 @@ in
       };
     };
 
-    videoDrivers = [ "amdgpu" ];
+    # videoDrivers = [ "amdgpu" ];
 
     serverLayoutSection = ''
       Option "BlankTime" "0"
@@ -122,6 +122,11 @@ in
     "mitigations=off"
   ];
 
+  systemd = {
+    extraConfig = "DefaultTimeoutStopSec=10s";
+  };
+
+  programs.xwayland.enable = true;
   services.xserver = {
     layout = "br";
     xkbVariant = "thinkpad";
@@ -185,6 +190,7 @@ in
   # boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
   # boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   # boot.kernelPackages = pkgs.linuxPackages_zen;
   # environment.systemPackages = with pkgs; [
   #   linuxPackages_zen.perf

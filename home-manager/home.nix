@@ -90,6 +90,7 @@ in {
     pkgs.hunspell
     pkgs.hunspellDicts.en_US-large
     pkgs.languagetool
+    pkgs.ltex-ls
     pkgs.progress
     pkgs.ffmpeg
     pkgs.imagemagick

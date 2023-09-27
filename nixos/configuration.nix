@@ -70,6 +70,7 @@ in {
 
 
   # Xserver basic
+  programs.dconf.enable = true;
   services.xserver = {
     enable = true;
 
@@ -79,6 +80,7 @@ in {
     };
 
     displayManager = {
+      defaultSession = "plasmawayland";
         sddm.enable = true;
         # defaultSession = "xfce";
     };

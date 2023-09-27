@@ -41,6 +41,7 @@ let
                 academic-phrases = pkgs.emacsPackages.academic-phrases;
                 cycle-themes = pkgs.emacsPackages.cycle-themes;
                 gitignore-mode = pkgs.emacsPackages.git-modes;
+                lsp-ltex = pkgs.emacsPackages.lsp-ltex;
                 # flycheck-languagetool = pkgs.emacsPackages.flycheck-languagetool;
                 # company-posframe = pkgs.emacsPackages.company-posframe;
 
