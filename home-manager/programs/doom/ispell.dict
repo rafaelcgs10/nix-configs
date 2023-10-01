@@ -1,9 +1,10 @@
-personal_ws-1.1 en 72 
+personal_ws-1.1 en 83 
 Annealings
 BNF
 CCPO
 CPPO
 Consequentiality
+Datatypes
 Edmon
 Fix
 Flink
@@ -26,17 +27,20 @@ Turbopilot
 Wayland
 al
 automata
+booleans
 ccpo
 codatatype
 codatatypes
 coinduction
 coinductive
 combinator
+composable
 compositionality
 copredicate
 corec
 corecursion
 corecursive
+datatypes
 datypes
 denotational
 equalities
@@ -44,9 +48,11 @@ escapeinside
 et
 foundedness
 https
+instantiation
 invariants
 is
 ispell
+keyring
 lSup
 ldropn
 lfilter
@@ -63,6 +69,11 @@ monadic
 monoid
 monoids
 monotonicity
+mset
+multiset
+polymorphism
+remdumps
+remdups
 sors
 stateful
 subgoal
