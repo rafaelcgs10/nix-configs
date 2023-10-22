@@ -497,15 +497,15 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;  '(lsp-isar-font-foreground-quoted ((t (:background nil)))))
 
 (setq custom-safe-themes t)
-(use-package! cycle-themes
-  :ensure t
-  :init
-  (setq custom-safe-themes t)
-  (load-theme 'doom-one-light t nil)
-  (load-theme 'doom-one t nil)
-  (setq cycle-themes-theme-list '(doom-one doom-one-light))
-  :config
-  (cycle-themes-mode))
+;; (use-package! cycle-themes
+;;   :ensure t
+;;   :init
+;;   (setq custom-safe-themes t)
+;;   (load-theme 'doom-one-light t nil)
+;;   (load-theme 'doom-one t nil)
+;;   (setq cycle-themes-theme-list '(doom-one doom-one-light))
+;;   :config
+;;   (cycle-themes-mode))
 
 ;; (after! flycheck
 ;;   (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")

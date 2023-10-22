@@ -54,7 +54,6 @@ in {
   nixpkgs.config.allowUnfree = true;
 
   home.packages = [
-    pkgs.ripgrep
     pkgs.gawk
     pkgs.jq
     pkgs.tree
@@ -94,8 +93,6 @@ in {
     pkgs.ltex-ls
     pkgs.progress
     pkgs.ffmpeg
-    pkgs.imagemagick
-    pkgs.enhanced-ctorrent
     pkgs.gcalcli
     pkgs.conky
     pkgs.netcat-gnu
@@ -105,6 +102,11 @@ in {
     pkgs.hdparm
     pkgs.wdisplays
     pkgs.kanshi
+    pkgs.fd
+    pkgs.imagemagick
+    pkgs.zstd
+    pkgs.sqlite
+    (pkgs.ripgrep.override { withPCRE2 = true; })
     unstable.rclone
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
