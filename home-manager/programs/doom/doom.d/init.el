@@ -42,7 +42,7 @@
        (popup +defaults)   ; tame sudden yet inevitable temporary windows
        ;; pretty-code       ; ligatures or substitute text with pretty symbols
        ;; tabs              ; a tab bar for Emacs
-       (treemacs +lsp)          ; a project drawer, like neotree but cooler
+       (treemacs)          ; a project drawer, like neotree but cooler
        unicode           ; extended unicode support for various languages
        vc-gutter         ; vcs diff in the fringe
        vi-tilde-fringe   ; fringe tildes to mark beyond EOB
@@ -80,11 +80,11 @@
        :checkers
        (syntax) ; tasing you for every semicolon you forget
        (spell +flyspell)  ; tasing you for misspelling mispelling
-       grammar           ; tasing grammar mistake every you make
+       ;; grammar           ; tasing grammar mistake every you make
 
        :tools
        ;;ansible
-       (debugger +lsp)          ; FIXME stepping through code, to help you add bugs
+       ;; (debugger +lsp)          ; FIXME stepping through code, to help you add bugs
        direnv
        docker
        ;;editorconfig      ; let someone else argue about tabs vs spaces
@@ -92,7 +92,7 @@
        (eval +overlay)     ; run code, run (also, repls)
        ;;gist              ; interacting with github gists
        lookup              ; navigate your code and its documentation
-       lsp
+       (lsp +eglot)
        ;;macos             ; MacOS-specific commands
        magit             ; a git porcelain for Emacs
        ;;make              ; run make tasks from Emacs
@@ -125,7 +125,7 @@
        ;;fstar             ; (dependent) types and (monadic) effects and Z3
        ;;gdscript          ; the language you waited for
        (go +lsp)         ; the hipster dialect
-       (haskell +lsp)  ; a language that's lazier than I am
+       ;; (haskell +lsp)  ; a language that's lazier than I am
        ;;hy                ; readability of scheme w/ speed of python
        ;;idris             ;
        json              ; At least it ain't XML

@@ -130,10 +130,10 @@
 (global-set-key (kbd "C-<left>") 'windmove-left)
 (global-unset-key (kbd "C-x C-b"))
 ;; (global-set-key (kbd "C-x b") 'project-switch-to-buffer)
-(global-set-key "\M-d" 'lsp-find-definition)
-(global-set-key "\M-r" 'lsp-ui-peek-find-references)
-(global-set-key "\M-m" 'rinari-find-model)
-(global-set-key "\M-v" 'rinari-find-view)
+;; (global-set-key "\M-d" 'lsp-find-definition)
+;; (global-set-key "\M-r" 'lsp-ui-peek-find-references)
+;; (global-set-key "\M-m" 'rinari-find-model)
+;; (global-set-key "\M-v" 'rinari-find-view)
 ;; (map! :leader (:prefix-map ("l" . "lsp") (:desc "Restart lsp workspace" "r" #'lsp-workspace-restart)))
 (global-set-key "\M-c" 'rinari-find-controller)
 
@@ -296,47 +296,47 @@
 
 ;; (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
 
-(after! lsp-mode
-  (advice-remove #'lsp #'+lsp-dont-prompt-to-install-servers-maybe-a)
-  ;; LSP tweaks
-  (advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
-  (setq gc-cons-threshold 5000000000)
-  (add-hook 'focus-out-hook 'garbage-collect)
-  (run-with-idle-timer 5 t 'garbage-collect)
-  (setq read-process-output-max (* (* 1024 1024) 3))
-  (setq lsp-idle-delay 0.7)
-  (setq lsp-lens-enable nil)
-  (setq lsp-headerline-breadcrumb-enable nil)
-  (setq lsp-log-io nil)
-  (setq lsp-enable-folding nil)
-  (setq lsp-response-timeout 5)
-  (setq lsp-tcp-connection-timeout 5)
-  (setq lsp-sqls-timeout 5)
+;; (after! lsp-mode
+;;   (advice-remove #'lsp #'+lsp-dont-prompt-to-install-servers-maybe-a)
+;;   ;; LSP tweaks
+;;   (advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
+;;   (setq gc-cons-threshold 5000000000)
+;;   (add-hook 'focus-out-hook 'garbage-collect)
+;;   (run-with-idle-timer 5 t 'garbage-collect)
+;;   (setq read-process-output-max (* (* 1024 1024) 3))
+;;   (setq lsp-idle-delay 0.7)
+;;   (setq lsp-lens-enable nil)
+;;   (setq lsp-headerline-breadcrumb-enable nil)
+;;   (setq lsp-log-io nil)
+;;   (setq lsp-enable-folding nil)
+;;   (setq lsp-response-timeout 5)
+;;   (setq lsp-tcp-connection-timeout 5)
+;;   (setq lsp-sqls-timeout 5)
 
-  ;; (setq lsp-diagnostics-disabled-modes 'isar-mode)
-  ;; (setq lsp-use-plists t)
-  (setq lsp-completion-provider :comapany-capf)
-  ;; (setq lsp-enable-completion-at-point t)
-  (setq prettify-symbols-mode t)
-  (setq lsp-completion-show-detail t)
-  (setq lsp-enable-on-type-formatting t)
-  (setq doom-modeline-enable-word-count nil)
-  (setq scroll-conservatively 101)
-  (setq lsp-solargraph-use-bundler nil)
-  ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
-  (setq lsp-solargraph-multi-root t)
-  (setq company-minimum-prefix-length 2)
-  (setq company-idle-delay 0.3)
-  (setq lsp-ui-mode nil)
-  (setq lsp-ui-sideline-enable nil)
-  (setq lsp-lens-enable nil)
-  (setq lsp-headerline-breadcrumb-enable nil)
-  (setq lsp-ui-sideline-enable nil)
-  (setq lsp-modeline-code-actions-enable nil)
-  (setq lsp-signature-auto-activate nil)
-  (setq lsp-signature-render-documentation nil)
-  ;; (setq lsp-prefer-capf t)
-  )
+;;   ;; (setq lsp-diagnostics-disabled-modes 'isar-mode)
+;;   ;; (setq lsp-use-plists t)
+;;   (setq lsp-completion-provider :comapany-capf)
+;;   ;; (setq lsp-enable-completion-at-point t)
+;;   (setq prettify-symbols-mode t)
+;;   (setq lsp-completion-show-detail t)
+;;   (setq lsp-enable-on-type-formatting t)
+;;   (setq doom-modeline-enable-word-count nil)
+;;   (setq scroll-conservatively 101)
+;;   (setq lsp-solargraph-use-bundler nil)
+;;   ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
+;;   (setq lsp-solargraph-multi-root t)
+;;   (setq company-minimum-prefix-length 2)
+;;   (setq company-idle-delay 0.3)
+;;   (setq lsp-ui-mode nil)
+;;   (setq lsp-ui-sideline-enable nil)
+;;   (setq lsp-lens-enable nil)
+;;   (setq lsp-headerline-breadcrumb-enable nil)
+;;   (setq lsp-ui-sideline-enable nil)
+;;   (setq lsp-modeline-code-actions-enable nil)
+;;   (setq lsp-signature-auto-activate nil)
+;;   (setq lsp-signature-render-documentation nil)
+;;   ;; (setq lsp-prefer-capf t)
+;;   )
 
 ;; (require 'dap-cpptools)
 ;; (setq gdb-many-windows t)
@@ -407,62 +407,62 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 ;; (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
 
-(use-package! nix-mode
-  :interpreter ("\\(?:cached-\\)?nix-shell" . +nix-shell-init-mode)
-  :mode "\\.nix\\'"
-  :init
-  (add-to-list 'auto-mode-alist
-               (cons "/flake\\.lock\\'"
-                     (if (featurep! :lang json)
-                         'json-mode
-                       'js-mode)))
-  :config
-  (after! lsp-mode
-    (add-to-list 'lsp-language-id-configuration '(nix-mode . "nix"))
+;; (use-package! nix-mode
+;;   :interpreter ("\\(?:cached-\\)?nix-shell" . +nix-shell-init-mode)
+;;   :mode "\\.nix\\'"
+;;   :init
+;;   (add-to-list 'auto-mode-alist
+;;                (cons "/flake\\.lock\\'"
+;;                      (if (featurep! :lang json)
+;;                          'json-mode
+;;                        'js-mode)))
+;;   :config
+;;   (after! lsp-mode
+;;     (add-to-list 'lsp-language-id-configuration '(nix-mode . "nix"))
 
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection '("rnix-lsp"))
-                      :major-modes '(nix-mode)
-                      :server-id 'nix))
+;;     (lsp-register-client
+;;      (make-lsp-client :new-connection (lsp-stdio-connection '("rnix-lsp"))
+;;                       :major-modes '(nix-mode)
+;;                       :server-id 'nix))
 
-    )
-  (add-hook 'nix-mode-hook #'lsp!)
+;;     )
+;;   (add-hook 'nix-mode-hook #'lsp!)
 
-  (set-popup-rule! "^\\*nixos-options-doc\\*$" :ttl 0 :quit t)
+;;   (set-popup-rule! "^\\*nixos-options-doc\\*$" :ttl 0 :quit t)
 
-  ;; (setq-hook! 'nix-mode-hook company-idle-delay nil)
+;;   ;; (setq-hook! 'nix-mode-hook company-idle-delay nil)
 
-  (map! :localleader
-        :map nix-mode-map
-        "f" #'nix-update-fetch
-        "p" #'nix-format-buffer
-        "r" #'nix-repl-show
-        "s" #'nix-shell
-        "b" #'nix-build
-        "u" #'nix-unpack
-        "o" #'+nix/lookup-option))
+;;   (map! :localleader
+;;         :map nix-mode-map
+;;         "f" #'nix-update-fetch
+;;         "p" #'nix-format-buffer
+;;         "r" #'nix-repl-show
+;;         "s" #'nix-shell
+;;         "b" #'nix-build
+;;         "u" #'nix-unpack
+;;         "o" #'+nix/lookup-option))
 
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")
 
-(setq lsp-java-workspace-cache-dir t
-      lsp-java-format-enabled t
-      lsp-java-format-comments-enabled t
-      lsp-java-save-action-organize-imports t
-      lsp-java-save-action-organize-imports t
-      lsp-java-import-gradle-enabled t
-      lsp-java-import-maven-enabled t
-      lsp-java-auto-build t
-      lsp-java-workspace-dir "/home/rafael/.cache/java-projects"
-      lsp-java-progress-report t
-      lsp-java-completion-guess-arguments t
-      lsp-java-enable-file-watch t
-      lsp-java-jdt-download-url "https://download.eclipse.org/jdtls/milestones/1.9.0/jdt-language-server-1.9.0-202203031534.tar.gz"
-      lsp-file-watch-ignored
-      '(".idea" ".ensime_cache" ".eunit" "node_modules"
-        ".git" ".hg" ".fslckout" "_FOSSIL_"
-        ".bzr" "_darcs" ".tox" ".svn" ".stack-work"
-        "build"))
+;; (setq lsp-java-workspace-cache-dir t
+;;       lsp-java-format-enabled t
+;;       lsp-java-format-comments-enabled t
+;;       lsp-java-save-action-organize-imports t
+;;       lsp-java-save-action-organize-imports t
+;;       lsp-java-import-gradle-enabled t
+;;       lsp-java-import-maven-enabled t
+;;       lsp-java-auto-build t
+;;       lsp-java-workspace-dir "/home/rafael/.cache/java-projects"
+;;       lsp-java-progress-report t
+;;       lsp-java-completion-guess-arguments t
+;;       lsp-java-enable-file-watch t
+;;       lsp-java-jdt-download-url "https://download.eclipse.org/jdtls/milestones/1.9.0/jdt-language-server-1.9.0-202203031534.tar.gz"
+;;       lsp-file-watch-ignored
+;;       '(".idea" ".ensime_cache" ".eunit" "node_modules"
+;;         ".git" ".hg" ".fslckout" "_FOSSIL_"
+;;         ".bzr" "_darcs" ".tox" ".svn" ".stack-work"
+;;         "build"))
 
 ;; (use-package! flycheck-languagetool :hook (flycheck-mode . flycheck-languagetool-setup))
 
@@ -497,15 +497,15 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;  '(lsp-isar-font-foreground-quoted ((t (:background nil)))))
 
 (setq custom-safe-themes t)
-;; (use-package! cycle-themes
-;;   :ensure t
-;;   :init
-;;   (setq custom-safe-themes t)
-;;   (load-theme 'doom-one-light t nil)
-;;   (load-theme 'doom-one t nil)
-;;   (setq cycle-themes-theme-list '(doom-one doom-one-light))
-;;   :config
-;;   (cycle-themes-mode))
+(use-package! cycle-themes
+  :ensure t
+  :init
+  (setq custom-safe-themes t)
+  (load-theme 'doom-one-light t nil)
+  (load-theme 'doom-one t nil)
+  (setq cycle-themes-theme-list '(doom-one doom-one-light))
+  :config
+  (cycle-themes-mode))
 
 ;; (after! flycheck
 ;;   (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
@@ -528,7 +528,7 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;; (with-eval-after-load 'flycheck-languagetool
 
 ;; Vsync optimization
-(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
+;; (add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
 
 (setq ispell-alternate-dictionary (file-truename "/home/rafael/nix-configs/home-manager/programs/doom/american-english-exhaustive.txt"))
 
