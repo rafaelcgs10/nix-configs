@@ -117,6 +117,9 @@ in
     pkgs.satallax
     pkgs.cargo
     pkgs.rustc
+    pkgs.valgrind
+    pkgs.massif-visualizer
+    pkgs.gperftools
     pkgs.rustfmt
     pkgs.clippy
     pkgs.texlab
@@ -125,6 +128,7 @@ in
     pkgs.adoptopenjdk-hotspot-bin-15
     pkgs.ant
     pkgs.gdb
+    pkgs.gdbgui
     pkgs.libllvm
     pkgs.texlab
     pkgs.nodejs

@@ -1,6 +1,7 @@
 { config, pkgs, lib, getBin,... }:
 
 let
+  unstable = import <nixpkgs-unstable> {};
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -104,6 +105,7 @@ in {
     pkgs.hdparm
     pkgs.wdisplays
     pkgs.kanshi
+    unstable.rclone
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 
