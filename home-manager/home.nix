@@ -108,6 +108,7 @@ in {
     pkgs.sqlite
     (pkgs.ripgrep.override { withPCRE2 = true; })
     unstable.rclone
+    pkgs.veracrypt
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 
@@ -157,11 +158,6 @@ in {
     enable = true;
     userName = "rafaelcgs10";
     userEmail = "rafaelcgs10@gmail.com";
-  };
-
-  services.udiskie = {
-    enable = true;
-    tray = "auto";
   };
 
   home.file.".languagetool.cfg".text = ''

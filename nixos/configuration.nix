@@ -22,6 +22,10 @@ in {
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = "nix-command flakes";
 
+  services.udisks2 = {
+    enable = true;
+  };
+
   # networking.wireless.enable = true;
   #  Enables wireless support via wpa_supplicant.
   networking.networkmanager = {
