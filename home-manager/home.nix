@@ -109,6 +109,17 @@ in {
     (pkgs.ripgrep.override { withPCRE2 = true; })
     unstable.rclone
     pkgs.veracrypt
+    pkgs.graphviz
+    pkgs.hcxdumptool
+    pkgs.hcxtools
+    pkgs.hashcat
+    pkgs.hashcat-utils
+    pkgs.wifite2
+    pkgs.iw
+    pkgs.macchanger
+    pkgs.aircrack-ng
+    pkgs.john
+    pkgs.bully
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 
