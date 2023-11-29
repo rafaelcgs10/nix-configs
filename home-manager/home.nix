@@ -5,6 +5,21 @@ let
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
+
+  programs.ssh = {
+    enable = true;
+
+    matchBlocks = {
+      "ssh.rafaelcgs.com" = {
+        hostname = "ssh.rafaelcgs.com";
+        user = "rafael";
+        extraOptions = {
+          proxyCommand = "${pkgs.cloudflared}/bin/cloudflared access ssh --hostname %h";
+        };
+      };
+    };
+  };
+
   home.stateVersion = "23.05";
 
   imports = [
