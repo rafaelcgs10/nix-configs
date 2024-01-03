@@ -135,6 +135,7 @@ in {
     pkgs.aircrack-ng
     pkgs.john
     pkgs.bully
+    unstable.gallery-dl
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 
