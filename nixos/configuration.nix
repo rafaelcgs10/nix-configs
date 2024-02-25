@@ -192,7 +192,6 @@ in {
     wireguard-tools
     cloudflared
     openh264
-
     ecryptfs
     ecryptfs-helper
     utillinux
@@ -210,6 +209,8 @@ in {
     # libnotify
     # libdbusmenu
   ];
+
+  services.teamviewer.enable = true;
 
   # printing
   services.printing.enable = true;

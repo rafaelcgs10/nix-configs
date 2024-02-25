@@ -71,9 +71,12 @@
 ;; (prettify-symbols-mode -1)
 ;; (setq rustic-flycheck-clippy-params "--message-format=json")
 ;; (setq rustic-compile-directory-method 'rustic-buffer-workspace)
+;;
 ;; (add-hook 'haskell-mode-hook #'lsp)
 ;; (add-hook 'haskell-literate-mode-hook #'lsp)
-
+;; (after! lsp-haskell
+;;   (setq lsp-haskell-formatting-provider "brittany"))
+;;
 ;; Languagetool for working with nix
 ;; (setq langtool-java-bin "java")
 ;; (setq langtool-bin "languagetool-commandline")

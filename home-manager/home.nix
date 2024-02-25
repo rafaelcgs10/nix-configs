@@ -136,6 +136,9 @@ in {
     pkgs.john
     pkgs.bully
     unstable.gallery-dl
+    pkgs.youtube-dl
+    pkgs.fuse
+    pkgs.sshfs
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 

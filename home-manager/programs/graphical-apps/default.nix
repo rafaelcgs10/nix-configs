@@ -36,6 +36,7 @@ in
     # (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
     pkgs.dialect
+    pkgs.calibre
     # pkgs.kdeconnect
     # pkgs.remmina
     # pkgs.cinnamon.nemo
@@ -50,8 +51,9 @@ in
     # pkgs.gnome.gnome-calendar
     # pkgs.gnomeExtensions.topicons-plus
     # pkgs.gnomeExtensions.appindicator
-    unstable.qmplay2
+    # unstable.qmplay2
     pkgs.sc-controller
+    pkgs.vlc
     unstable.zulip
     pkgs.evince
     # pkgs.masterpdfeditor4

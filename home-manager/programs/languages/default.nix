@@ -146,6 +146,9 @@ in
     pkgs.haskellPackages.stack
     pkgs.haskellPackages.apply-refact
     pkgs.haskellPackages.hoogle
+    # pkgs.haskellPackages.ghc-mod
+    nixpkgs.haskellPackages.happy
+    nixpkgs.haskellPackages.haskell-src-exts
     pkgs.coq
     # pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken

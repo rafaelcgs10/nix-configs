@@ -14,7 +14,7 @@ in
     [ (modulesPath + "/installer/scan/not-detected.nix")
       ../modules/qbittorrent.nix
     ];
-  services.qbittorrent.enable = true;
+  # services.qbittorrent.enable = true;
   users.users.qbittorrent.isSystemUser = true;
   users.users.qbittorrent.group = "qbittorrent";
 
@@ -98,7 +98,7 @@ in
 
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 10;
+    freeMemThreshold = 5;
   };
 
   programs.adb.enable = true;
@@ -160,25 +160,28 @@ in
   fileSystems."/" =
     { device = "/dev/disk/by-label/nixos2";
       fsType = "btrfs";
-      options = [ "defaults" "discard=async" "subvol=root" "compress=zstd" ];
+      options = [ "discard=async" "subvol=root" "compress=zstd" "datacow" ];
     };
 
   fileSystems."/home" =
     { device = "/dev/disk/by-label/nixos2";
       fsType = "btrfs";
-      options = [ "defaults" "discard=async" "subvol=home" "compress=zstd" ];
+      options = [ "discard=async" "subvol=home" "compress=zstd" "datacow" ];
     };
 
   fileSystems."/nix" =
     { device = "/dev/disk/by-label/nixos2";
       fsType = "btrfs";
-      options = [ "defaults" "discard=async" "subvol=nix" "compress=zstd" "noatime" ];
+      options = [ "discard=async" "subvol=nix" "compress=zstd" "noatime" "datacow" ];
     };
 
   # swapDevices = [ { device = "/dev/disk/by-label/swap2"; } ];
+  swapDevices = lib.mkForce [ ];
   zramSwap.enable = true;
   zramSwap.algorithm = "zstd";
   zramSwap.priority = 10;
+
+  boot.kernel.sysctl = { "vm.swappiness" = 10;};
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
@@ -290,38 +293,38 @@ in
         script = "${battery-level-sufficient}/bin/battery-level-sufficient";
       };
 
-  virtualisation.oci-containers.containers.jellyfin = {
-    autoStart = true;
-    environment = {
-      PUID = "1002";
-      PGID = "100";
-    };
-    extraOptions = [
-      "--privileged"
-      "--memory=800m"
-      # "--gpus=all" "--device=/dev/dri:/dev/dri"
-    ];
+  # virtualisation.oci-containers.containers.jellyfin = {
+  #   autoStart = true;
+  #   environment = {
+  #     PUID = "1002";
+  #     PGID = "100";
+  #   };
+  #   extraOptions = [
+  #     "--privileged"
+  #     "--memory=800m"
+  #     # "--gpus=all" "--device=/dev/dri:/dev/dri"
+  #   ];
 
-    image = "lscr.io/linuxserver/jellyfin";
-    ports = [ "8096:8096" "8443:8443" ];
-    volumes = [
-      "/home/rafael/jellyfin/cache:/cache"
-      "/home/rafael/jellyfin/config:/config"
-      "/home/rafael/media:/data/media"
-    ];
-  };
+  #   image = "lscr.io/linuxserver/jellyfin";
+  #   ports = [ "8096:8096" "8443:8443" ];
+  #   volumes = [
+  #     "/home/rafael/jellyfin/cache:/cache"
+  #     "/home/rafael/jellyfin/config:/config"
+  #     "/home/rafael/media:/data/media"
+  #   ];
+  # };
 
-  services.cloudflared = {
-    enable = true;
-    user = "rafael";
-    tunnels.tunnel = {
-      credentialsFile = "/home/rafael/Documents/private_keys/cloudflare_tunne/cloudflare_tunnel.json";
-      default = "http_status:404";
-      ingress = {
-        "jellyfin.rafaelcgs.com" = "http://localhost:8096";
-      };
-    };
-  };
+  # services.cloudflared = {
+  #   enable = true;
+  #   user = "rafael";
+  #   tunnels.tunnel = {
+  #     credentialsFile = "/home/rafael/Documents/private_keys/cloudflare_tunne/cloudflare_tunnel.json";
+  #     default = "http_status:404";
+  #     ingress = {
+  #       "jellyfin.rafaelcgs.com" = "http://localhost:8096";
+  #     };
+  #   };
+  # };
 
   # Wayland for Electon
   environment.sessionVariables.NIXOS_OZONE_WL = "1";

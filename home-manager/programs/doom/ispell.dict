@@ -1,8 +1,10 @@
-personal_ws-1.1 en 138 
+personal_ws-1.1 en 153 
 Absint
 Agda
 Annealings
+Atemporal
 BNF
+BSc
 CCPO
 CPPO
 CompCert
@@ -27,18 +29,28 @@ LCons
 LLVM
 LNil
 LineageOS
+MFOTL
+MSc
 Mamoura's
 Mamouras
+NEC
 NextCloud
 NixOS
+Peycheva's
 Pythoragoras
+RQ
+Relatedly
 Samza
 TIme
 TLA
 TLAPS
 TODO
+TimelyMon
+TimelyMon's
 Timelymon
 Turbopilot
+VeriMon
+Vittoria
 Wayland
 aboveskip
 al
@@ -68,6 +80,7 @@ dataflows
 dataplane
 datatypes
 datypes
+deanonymize
 denotational
 equalities
 escapeinside
@@ -126,9 +139,11 @@ sequent
 showstringspaces
 sors
 stateful
+subformula
 subgoal
 totalization
 transductions
+understandability
 upquote
 verifications
 verifier
