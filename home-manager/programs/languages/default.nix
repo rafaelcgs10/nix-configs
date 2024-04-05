@@ -134,6 +134,7 @@ in
     pkgs.nodejs
     # (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
     pkgs.texlive.combined.scheme-full
+    pkgs.python311Packages.pygments
     pkgs.rust-analyzer
     pkgs.go
     pkgs.cmake
@@ -147,6 +148,7 @@ in
     pkgs.haskellPackages.apply-refact
     pkgs.haskellPackages.hoogle
     # pkgs.haskellPackages.ghc-mod
+    pkgs.lua
     nixpkgs.haskellPackages.happy
     nixpkgs.haskellPackages.haskell-src-exts
     pkgs.coq

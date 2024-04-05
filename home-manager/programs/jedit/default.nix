@@ -2,11 +2,12 @@
 
 let
   newer_isabelle_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/jvanbruegge/nixpkgs/archive/fa28ed48582cb30afdce232a3313bb6fe32644e4.tar.gz";
+    url = "https://github.com/NixOS/nixpkgs/archive/64891e361bc375a00e2da0b98a07267d17abfa2e.tar.gz";
   }) {};
 in
 {
-  home.packages = with pkgs; [
+  home.packages = with newer_isabelle_pkgs; [
+    # (isabelle)
     (isabelle.withComponents (p: [ p.isabelle-linter ]))
   ];
   home.file.".isabelle/Isabelle2022/jedit/properties".text = builtins.readFile ./properties;

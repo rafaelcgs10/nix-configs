@@ -121,7 +121,8 @@ in {
     pkgs.imagemagick
     pkgs.zstd
     pkgs.sqlite
-    (pkgs.ripgrep.override { withPCRE2 = true; })
+    # (pkgs.ripgrep.override { withPCRE2 = true; })
+    pkgs.ripgrep
     unstable.rclone
     pkgs.veracrypt
     pkgs.graphviz

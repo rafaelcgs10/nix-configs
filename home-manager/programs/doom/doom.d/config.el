@@ -548,13 +548,16 @@ With prefix argument (`C-u'), also kill the special buffers."
       ))
   )
 
-(set-company-backend! 'text-mode
-  '(:separate company-dabbrev company-yasnippet company-files company-ispell))
+(setq company-idle-delay 2)
+(setq company-minimum-prefix-length 2)
 
-(set-company-backend! 'org-mode
-  '(:separate company-dabbrev company-yasnippet company-files company-ispell))
+;; (set-company-backend! 'text-mode
+;;   '(:separate company-dabbrev company-yasnippet company-files company-ispell))
 
-(add-to-list '+latex--company-backends #'company-ispell)
+;; (set-company-backend! 'org-mode
+;;   '(:separate company-dabbrev company-yasnippet company-files company-ispell))
+
+;; (add-to-list '+latex--company-backends #'company-ispell)
 
 ;; (setq-hook! 'LaTeX-mode-local-vars-hook
 ;;   (set-company-backend! 'latex-mode

@@ -73,10 +73,17 @@ in
     # pkgs.pavucontrol
     unstable.freetube
     unstable.darktable
+    pkgs.focus-stack
+    pkgs.hugin
+    pkgs.exiftool
     pkgs.element-desktop
 
     pkgs.zotero
     pkgs.simple-scan
+    #
+    # FIXME: move to kde things
+    pkgs.libsForQt5.kasts
+    pkgs.libsForQt5.plasma-browser-integration
   ];
 
   programs.brave = {

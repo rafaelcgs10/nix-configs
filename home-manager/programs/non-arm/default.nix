@@ -14,7 +14,7 @@ in
     pkgs.tdesktop
     pkgs.caprine-bin
     pkgs.obs-studio
-    unstable.lutris
+    # unstable.lutris
     pkgs.tlaplusToolbox
     pkgs.discord
     pkgs.bitwarden
