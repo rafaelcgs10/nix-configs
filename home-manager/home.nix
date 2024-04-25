@@ -153,6 +153,8 @@ in {
     pkgs.font-awesome_4
     pkgs.font-awesome_5
     pkgs.papirus-icon-theme
+    pkgs.corefonts
+    pkgs.vistafonts
     # (pkgs.callPackage ./nuclear.nix {})
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka

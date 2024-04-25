@@ -115,12 +115,13 @@ in
     pkgs.cvc5
     pkgs.leo3-bin
     pkgs.satallax
-    pkgs.cargo
-    pkgs.rustc
+    unstable.cargo
+    unstable.rustc
+    unstable.rustfmt
+    unstable.rust-analyzer
     pkgs.valgrind
     pkgs.massif-visualizer
     pkgs.gperftools
-    pkgs.rustfmt
     pkgs.clippy
     pkgs.texlab
     # pkgs.llvm_12
@@ -135,7 +136,6 @@ in
     # (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
     pkgs.texlive.combined.scheme-full
     pkgs.python311Packages.pygments
-    pkgs.rust-analyzer
     pkgs.go
     pkgs.cmake
     pkgs.clang

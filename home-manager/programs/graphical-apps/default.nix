@@ -35,6 +35,7 @@ in
     pkgs.inkscape
     # (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
+    pkgs.onlyoffice-bin
     pkgs.dialect
     pkgs.calibre
     # pkgs.kdeconnect
