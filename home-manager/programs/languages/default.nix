@@ -105,11 +105,11 @@ in
     # lldb-mi
     pkgs.z3
     pkgs.vampire
-    pkgs.python310
+    # pkgs.python310
     # pkgs.conda
     # pkgs.python310Packages.conda
     # pkgs.python310Packages.tensorflow
-    pkgs.python310Packages.venvShellHook
+    # pkgs.python310Packages.venvShellHook
     pkgs.veriT
     pkgs.iprover
     pkgs.cvc5
@@ -135,7 +135,7 @@ in
     pkgs.nodejs
     # (pkgs.texlive.combine { inherit (pkgs.texlive) scheme-small wrapfig capt-of; })
     pkgs.texlive.combined.scheme-full
-    pkgs.python311Packages.pygments
+    # pkgs.python311Packages.pygments
     pkgs.go
     pkgs.cmake
     pkgs.clang

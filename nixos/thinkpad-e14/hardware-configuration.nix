@@ -12,11 +12,11 @@ in
 {
   imports =
     [ (modulesPath + "/installer/scan/not-detected.nix")
-      ../modules/qbittorrent.nix
+      # ../modules/qbittorrent.nix
     ];
   # services.qbittorrent.enable = true;
-  users.users.qbittorrent.isSystemUser = true;
-  users.users.qbittorrent.group = "qbittorrent";
+  # users.users.qbittorrent.isSystemUser = true;
+  # users.users.qbittorrent.group = "qbittorrent";
 
   services.clamav.daemon.enable = true;
   services.clamav.updater.enable = true;
@@ -98,7 +98,7 @@ in
 
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 5;
+    freeMemThreshold = 3;
   };
 
   programs.adb.enable = true;

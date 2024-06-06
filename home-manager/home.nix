@@ -20,7 +20,7 @@ in {
     };
   };
 
-  home.stateVersion = "23.05";
+  home.stateVersion = "23.11";
 
   imports = [
     ./imports/default.nix

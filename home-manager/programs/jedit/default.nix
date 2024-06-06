@@ -22,11 +22,8 @@ home.file.".isabelle/afp" = {
     url = "https://www.isa-afp.org/release/afp-current.tar.gz";
     sha256 = "0hsfnxd889igl4addfpdhvvp9jqq5n1l4790a521l2hp8kbii1p6";
   };
-  # onChange =  "${pkgs.writeShellScript "afp-change" ''
-  #   echo "/home/rafael/.isabelle/afp/thys" >  ~/.isabelle/Isabelle2022/etc/components
-  # ''}";
 };
-home.file.".isabelle/Isabelle2022/etc/components".text = ''
+home.file.".isabelle/Isabelle2023/etc/components".text = ''
       /home/rafael/.isabelle/afp/thys
   '';
 }

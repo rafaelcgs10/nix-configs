@@ -5,29 +5,29 @@ let
   };
   unstable = import <nixpkgs-unstable> {};
 
-  createBraveExtensionFor = browserVersion: { id, sha256, version }:
-    {
-      inherit id;
-      crxPath = builtins.fetchurl {
-        url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx";
-        name = "${id}.crx";
-        inherit sha256;
-      };
-      inherit version;
-    };
-  createBraveExtension = createBraveExtensionFor (lib.versions.major pkgs.brave.version);
+  # createBraveExtensionFor = browserVersion: { id, sha256, version }:
+  #   {
+  #     inherit id;
+  #     crxPath = builtins.fetchurl {
+  #       url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx";
+  #       name = "${id}.crx";
+  #       inherit sha256;
+  #     };
+  #     inherit version;
+  #   };
+  # createBraveExtension = createBraveExtensionFor (lib.versions.major pkgs.brave.version);
 in
 {
   home.packages = [
     pkgs.gimp-with-plugins
-    # pkgs.inkscape
-    # pkgs.vlc
+    pkgs.inkscape
+    pkgs.vlc
     # pkgs.kdenlive
     # pkgs.lxappearance
     # pkgs.redshift
     # pkgs.xfce.xfce4-xkb-plugin
     pkgs.feh
-    pkgs.grsync
+    # pkgs.grsync
     # pkgs.gsettings-desktop-schemas
     # pkgs.pdfpc
     # pkgs.gpicview
@@ -56,11 +56,11 @@ in
     pkgs.sc-controller
     pkgs.vlc
     unstable.zulip
-    pkgs.evince
+    # pkgs.evince
     # pkgs.masterpdfeditor4
     # nur.repos.some-pkgs.llama-cpp
-    nur.repos.some-pkgs.alpaca-cpp
-    nur.repos.foolnotion.upscayl
+    # nur.repos.some-pkgs.alpaca-cpp
+    # nur.repos.foolnotion.upscayl
 
     # pkgs.flameshot
     # pkgs.noisetorch
@@ -78,9 +78,11 @@ in
     pkgs.hugin
     pkgs.exiftool
     pkgs.element-desktop
+    pkgs.drawio
 
     pkgs.zotero
     pkgs.simple-scan
+    pkgs.thunderbird
     #
     # FIXME: move to kde things
     pkgs.libsForQt5.kasts
@@ -99,7 +101,7 @@ in
       {id = "oldceeleldhonbafppcapldpdifcinji";} # LanguageTool
       {id = "mdjildafknihdffpkfmmpnpoiajfjnjd";} # Consent-O-Matic
       # ( createBraveExtension {id = "ongajcjccibkomjojhfmjedolopocllf"; version = "2.5.4"; sha256 = "1rc0r2ld17dswj961baz8fj99wvgvzgrhv7myvjw0w8hgg845mmv";} )
-      { version = "2.5.4"; crxPath = pkgs.fetchurl {url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx"; sha256 = "1rc0r2ld17dswj961baz8fj99wvgvzgrhv7myvjw0w8hgg845mmv"; }; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
+      # { version = "2.5.4"; crxPath = pkgs.fetchurl {url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx"; sha256 = "1rc0r2ld17dswj961baz8fj99wvgvzgrhv7myvjw0w8hgg845mmv"; }; id = "ongajcjccibkomjojhfmjedolopocllf"; } # LibRedirect
     ];
   };
 
