@@ -79,6 +79,7 @@ in {
     pkgs.p7zip
     pkgs.zip
     pkgs.zsh
+    pkgs.dig
     pkgs.lazydocker
     pkgs.libgccjit
     pkgs.neofetch
