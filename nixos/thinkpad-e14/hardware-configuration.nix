@@ -330,6 +330,8 @@ in
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   virtualisation.virtualbox.host.enable = true;
+  nixpkgs.config.virtualbox.host.enableExtensionPack = true;
+
   users.extraGroups.vboxusers.members = [ "rafael" ];
 
   # services.xserver.desktopManager.kodi.enable = true;

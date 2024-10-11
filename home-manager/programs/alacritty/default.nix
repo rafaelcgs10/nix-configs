@@ -6,9 +6,9 @@
 
     settings = {
       scrolling.history = 100000;
-      scrolling.auto_scroll = false;
+      # scrolling.auto_scroll = false;
 
-      TERM = "xterm-256color";
+      # TERM = "xterm-256color";
 
       window = {
         padding = {
@@ -17,7 +17,7 @@
         };
       };
 
-      draw_bold_text_with_bright_colors = true;
+      colors.draw_bold_text_with_bright_colors = true;
       font = {
         normal.family = "mononoki";
         normal.style = "Regular";
@@ -25,8 +25,8 @@
         bold.style = "Regular";
         italic.family = "mononoki";
         italic.style = "Regular";
-        blod_italic.family = "mononoki";
-        blod_italic.style = "Regular";
+        # blod_italic.family = "mononoki";
+        # blod_italic.style = "Regular";
         size = 10.0;
       };
 
