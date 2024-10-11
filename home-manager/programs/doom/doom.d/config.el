@@ -221,7 +221,7 @@
   (doom-themes-visual-bell-config)
 
   ;; Enable custom neotree theme (all-the-icons must be installed!)
-  (doom-themes-neotree-config)
+  ;; (doom-themes-neotree-config)
   ;; or for treemacs users
   (setq doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
   (doom-themes-treemacs-config)
@@ -551,13 +551,13 @@ With prefix argument (`C-u'), also kill the special buffers."
 (setq company-idle-delay 2)
 (setq company-minimum-prefix-length 2)
 
-;; (set-company-backend! 'text-mode
-;;   '(:separate company-dabbrev company-yasnippet company-files company-ispell))
+(set-company-backend! 'text-mode
+  '(:separate company-dabbrev company-yasnippet company-files company-ispell))
 
 ;; (set-company-backend! 'org-mode
 ;;   '(:separate company-dabbrev company-yasnippet company-files company-ispell))
 
-;; (add-to-list '+latex--company-backends #'company-ispell)
+(add-to-list '+latex--company-backends #'company-ispell)
 
 ;; (setq-hook! 'LaTeX-mode-local-vars-hook
 ;;   (set-company-backend! 'latex-mode
@@ -566,10 +566,27 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 (setq ispell-personal-dictionary "/home/rafael/nix-configs/home-manager/programs/doom/ispell.dict")
 
-;; (use-package! lsp-ltex
-;;   :init
-;;   (setq! lsp-ltex-version "16.0.0")
-;;   :hook
-;;   (text-mode . (lambda () (require 'lsp-ltex) (lsp)))
-;;   :config
-;;   (setq lsp-ltex-check-frequency "edit"))
+(use-package! eglot-ltex
+  :ensure t
+  :hook (text-mode . (lambda ()
+                       (require 'eglot-ltex)
+                       (eglot-ensure)))
+  :init
+  (setq eglot-ltex-server-path "~/.nix-profile"
+        eglot-ltex-communication-channel 'tcp))         ; 'stdio or 'tcp
+
+(use-package! gptel
+ :config
+)
+(gptel-make-gpt4all "GPT4All"           ;Name of your choosing
+ :protocol "http"
+ :host "localhost:4891"                 ;Where it's running
+ :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf"))
+
+(setq
+ gptel-max-tokens 500
+ gptel-model "Meta-Llama-3-8B-Instruct.Q4_0.gguf"
+ gptel-backend (gptel-make-gpt4all "GPT4All"
+                 :protocol "http"
+                 :host "localhost:4891"
+                 :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf")))

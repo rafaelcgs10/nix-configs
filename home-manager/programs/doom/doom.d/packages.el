@@ -9,3 +9,8 @@
 (package! quail :disable t)
 ;; (package! lsp-ltex)
 ;; (package! company-posframe)
+
+(package! gptel)
+
+(package! eglot-ltex
+  :recipe (:host github :repo "emacs-languagetool/eglot-ltex"))

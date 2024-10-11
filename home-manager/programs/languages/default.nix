@@ -71,6 +71,8 @@ let
   # };
 in
 {
+  programs.opam.enable = true;
+
   home.packages = [
     # (pkgs.callPackage ./isabelle {
     #   polyml = pkgs.polyml.overrideAttrs (_: {
@@ -100,7 +102,6 @@ in
     # newer_isabelle_pkgs.isabelle
     # new_isabelle_pkgs.isabelle
     # unstable.isabelle
-    pkgs.rnix-lsp
     # ruststable
     # lldb-mi
     pkgs.z3
@@ -141,7 +142,10 @@ in
     pkgs.clang
     pkgs.clang-tools
     pkgs.ccls
+    pkgs.python39Full
     ghc
+
+
     pkgs.haskellPackages.haskell-language-server
     pkgs.haskellPackages.hlint
     pkgs.haskellPackages.stack

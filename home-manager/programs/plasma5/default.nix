@@ -2,8 +2,9 @@
 
 let
   flake-compat = builtins.fetchTarball "https://github.com/edolstra/flake-compat/archive/master.tar.gz";
+
   plasma-manager = (import flake-compat {
-    src = builtins.fetchTarball "https://github.com/pjones/plasma-manager/archive/master.tar.gz";
+    src = builtins.fetchTarball "https://github.com/pjones/plasma-manager/archive/552888403867ba9cfd170c1e7edddabe54ef4342.tar.gz";
   }).defaultNix;
 
 in

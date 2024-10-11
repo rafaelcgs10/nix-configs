@@ -1,6 +1,6 @@
 { pkgs, lib, ...}:
 let
-  nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/f944f5befe39d7cf27cd0b41960ace172f9241b3.tar.gz") {
+  nur = import (builtins.fetchTarball "https://github.com/nix-community/nur-combined/archive/fe301d9a7b9346a0d50252696b9a4feeed60f1c4.tar.gz") {
     inherit pkgs;
   };
   unstable = import <nixpkgs-unstable> {};
@@ -59,8 +59,10 @@ in
     # pkgs.evince
     # pkgs.masterpdfeditor4
     # nur.repos.some-pkgs.llama-cpp
-    # nur.repos.some-pkgs.alpaca-cpp
-    # nur.repos.foolnotion.upscayl
+    # nur.repos.xeals.amdgpu-fan
+    # nur.repos.genesis.hdl-batch-installer
+    pkgs.upscayl
+    unstable.gpt4all
 
     # pkgs.flameshot
     # pkgs.noisetorch
@@ -79,6 +81,7 @@ in
     pkgs.exiftool
     pkgs.element-desktop
     pkgs.drawio
+    pkgs.qalculate-qt
 
     pkgs.zotero
     pkgs.simple-scan

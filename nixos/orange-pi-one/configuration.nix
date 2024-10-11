@@ -45,7 +45,7 @@
 
   ];
 
-  system.stateVersion = "23.05";
+  system.stateVersion = "24.05";
 
   boot.kernelPackages = lib.mkForce config.boot.zfs.package.latestCompatibleLinuxPackages;
   boot.extraModulePackages = with config.boot.kernelPackages; [rtw88 rtl8821cu];

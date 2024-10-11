@@ -20,7 +20,7 @@ in {
     };
   };
 
-  home.stateVersion = "23.11";
+  home.stateVersion = "24.05";
 
   imports = [
     ./imports/default.nix
@@ -138,7 +138,7 @@ in {
     pkgs.john
     pkgs.bully
     unstable.gallery-dl
-    pkgs.youtube-dl
+    # pkgs.youtube-dl
     pkgs.fuse
     pkgs.sshfs
     # pkgs.gnome.file-roller
@@ -156,11 +156,14 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     pkgs.vistafonts
-    # (pkgs.callPackage ./nuclear.nix {})
+    pkgs.wine
+    # (pkgs.callPackage ./hdl-batch-installer.nix {})
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
     pkgs.emacsPackages.nerd-icons
+    pkgs.emacsPackages.all-the-icons
+    pkgs.emacsPackages.treemacs-all-the-icons
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
     pkgs.rawtherapee

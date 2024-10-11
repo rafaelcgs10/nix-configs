@@ -8,8 +8,8 @@ let
 in
 {
   home.packages = [
-    pkgs.spotify
-    pkgs.whatsapp-for-linux
+    # pkgs.spotify
+    # pkgs.whatsapp-for-linux
     pkgs.insomnia
     pkgs.tdesktop
     pkgs.caprine-bin
@@ -19,8 +19,9 @@ in
     pkgs.discord
     pkgs.bitwarden
     pkgs.steam
-    (newer_pkgs.qt6Packages.callPackage ../gpt4all.nix {})
+    # (pkgs.callPackage ../iopaint/default.nix {})
+    # (newer_pkgs.qt6Packages.callPackage ../gpt4all.nix {})
 
-    pkgs.google-cloud-sdk
+    # pkgs.google-cloud-sdk
   ];
 }

@@ -15,8 +15,8 @@ in {
       <home-manager/nixos>
     ];
   nixpkgs.config.permittedInsecurePackages = [
-    "python-2.7.18.6"
-    "python-2.7.18.7"
+    # "python-2.7.18.6"
+    # "python-2.7.18.7"
     "nix-2.15.3"
   ];
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
@@ -34,10 +34,10 @@ in {
    enable = true;
    # dns = "none";
    wifi.powersave = false;
-   extraConfig = ''
-      [main]
-      rc-manager=file
-   '';
+   # extraConfig = ''
+   #    [main]
+   #    rc-manager=file
+   # '';
   };
   networking = {
     nameservers = [ "127.0.0.1" "45.90.28.219" ];
@@ -199,7 +199,7 @@ in {
     cloudflared
     openh264
     ecryptfs
-    ecryptfs-helper
+    # ecryptfs-helper
     utillinux
     hicolor-icon-theme
     ripgrep
@@ -262,7 +262,7 @@ in {
   # services.pcscd.enable = true;
   programs.gnupg.agent = {
     enable = true;
-    pinentryFlavor = "curses";
+    # pinentryFlavor = "curses";
     enableSSHSupport = true;
   };
 

@@ -5,6 +5,7 @@
  ;; If there is more than one, they won't work right.
  '(fill-column 120)
  '(org-agenda-files '("~/Documents/rafaelcgs10.github.io/todo.org"))
+ '(package-selected-packages '(eglot))
  '(warning-suppress-log-types '((lsp-mode)))
  '(warning-suppress-types '((doom-init-ui-hook) (defvaralias))))
 (custom-set-faces

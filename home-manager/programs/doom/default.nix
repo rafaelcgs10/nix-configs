@@ -1,7 +1,7 @@
 { lib, pkgs, options, config, specialArgs, modulesPath }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/918199aeaa2c9b9d0f73e304a187a05b99fd9050.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/6d9837126e1be779c8f34ed9fdd609e676a1b891.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
 in {
   home = {
