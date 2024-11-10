@@ -73,6 +73,7 @@ in
     pkgs.lxrandr
     pkgs.srandrd
     pkgs.glxinfo
+    pkgs.zoom-us
     # pkgs.pavucontrol
     unstable.freetube
     unstable.darktable
@@ -108,40 +109,82 @@ in
     ];
   };
 
-  programs.firefox = {
+  # programs.firefox = {
+  #   enable = true;
+  #   package = pkgs.firefox;
+
+  #   profiles = {
+  #     # extensions = with nur.repos.rycee.firefox-addons; [
+  #     #   bitwarden
+  #     #   decentraleyes
+  #     #   privacy-badger
+  #     #   ublock-origin
+  #     #   vimium
+  #     #   darkreader
+  #     #   i-dont-care-about-cookies
+  #     # ];
+  #     default = {
+  #       isDefault = false;
+  #       settings = {
+  #         "browser.quitShortcut.disabled" = true;
+  #         "browser.ctrlTab.recentlyUsedOrder" = false;
+  #         "extensions.pocket.enabled" = false;
+  #         "middlemouse.paste" = false;
+  #         "browser.casting.enabled" = true;
+
+  #         # Hardware acceleration related settings.
+  #         "gfx.webrender.all" = true;
+  #         "media.ffmpeg.vaapi.enabled" = true;
+  #         "media.ffmpeg.vaapi-drm-display.enabled" = true;
+  #         "media.navigator.mediadatadecoder_vpx_enabled" = true;
+  #         "media.rdd-vpx.enabled" = false;
+  #         "media.ffvpx.enabled" = false;
+  #         "browser.sessionstore.restore_on_demand" = false;
+  #       };
+  #     };
+  #   };
+  # };
+
+  programs.librewolf = {
     enable = true;
-    package = pkgs.firefox;
-
-    profiles = {
-      # extensions = with nur.repos.rycee.firefox-addons; [
-      #   bitwarden
-      #   decentraleyes
-      #   privacy-badger
-      #   ublock-origin
-      #   vimium
-      #   darkreader
-      #   i-dont-care-about-cookies
-      # ];
-      default = {
-        isDefault = true;
-        settings = {
-          "browser.quitShortcut.disabled" = true;
-          "browser.ctrlTab.recentlyUsedOrder" = false;
-          "extensions.pocket.enabled" = false;
-          "middlemouse.paste" = false;
-          "browser.casting.enabled" = true;
-
-          # Hardware acceleration related settings.
-          "gfx.webrender.all" = true;
-          "media.ffmpeg.vaapi.enabled" = true;
-          "media.ffmpeg.vaapi-drm-display.enabled" = true;
-          "media.navigator.mediadatadecoder_vpx_enabled" = true;
-          "media.rdd-vpx.enabled" = false;
-          "media.ffvpx.enabled" = false;
-          "browser.sessionstore.restore_on_demand" = false;
-        };
-      };
+    settings = {
+      "webgl.disabled" = false;
+      "privacy.resistFingerprinting" = false;
+      "privacy.clearOnShutdown.history" = false;
+      "privacy.clearOnShutdown.cookies" = false;
+      "network.cookie.lifetimePolicy" = 0;
     };
+
+    # profiles = {
+    #   # extensions = with nur.repos.rycee.firefox-addons; [
+    #   #   bitwarden
+    #   #   decentraleyes
+    #   #   privacy-badger
+    #   #   ublock-origin
+    #   #   vimium
+    #   #   darkreader
+    #   #   i-dont-care-about-cookies
+    #   # ];
+    #   # default = {
+    #   #   isDefault = true;
+    #   #   settings = {
+    #   #     "browser.quitShortcut.disabled" = true;
+    #   #     "browser.ctrlTab.recentlyUsedOrder" = false;
+    #   #     "extensions.pocket.enabled" = false;
+    #   #     "middlemouse.paste" = false;
+    #   #     "browser.casting.enabled" = true;
+
+    #   #     # Hardware acceleration related settings.
+    #   #     "gfx.webrender.all" = true;
+    #   #     "media.ffmpeg.vaapi.enabled" = true;
+    #   #     "media.ffmpeg.vaapi-drm-display.enabled" = true;
+    #   #     "media.navigator.mediadatadecoder_vpx_enabled" = true;
+    #   #     "media.rdd-vpx.enabled" = false;
+    #   #     "media.ffvpx.enabled" = false;
+    #   #     "browser.sessionstore.restore_on_demand" = false;
+    #   #   };
+    #   # };
+    # };
   };
 
 }
