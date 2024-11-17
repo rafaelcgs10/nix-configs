@@ -5,6 +5,10 @@ let
   nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
   ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
 
+  mynixpkgs = import (builtins.fetchTarball {
+    url = "https://github.com/rafaelcgs10/nixpkgs/archive/4ade716721f543b113bf97857e93972b99c927b8.tar.gz";
+  }) {};
+
   new_isabelle_pkgs = import (builtins.fetchTarball {
     url = "https://github.com/NixOS/nixpkgs/archive/c100196b085a72aa453bd3f86e731e77c2666aee.tar.gz";
   }) {};
@@ -127,7 +131,10 @@ in
     pkgs.texlab
     # pkgs.llvm_12
     # pkgs.lldb
-    pkgs.adoptopenjdk-hotspot-bin-15
+    # pkgs.adoptopenjdk-hotspot-bin-15
+    pkgs.jdk17
+    pkgs.jdt-language-server
+
     pkgs.ant
     pkgs.gdb
     pkgs.gdbgui
@@ -155,7 +162,15 @@ in
     pkgs.lua
     nixpkgs.haskellPackages.happy
     nixpkgs.haskellPackages.haskell-src-exts
-    pkgs.coq
+    # pkgs.coq
+    # mynixpkgs.coqPackages_8_15.coqide
+    mynixpkgs.coq_8_15
+    # mynixpkgs.coqPackages_8_15.ITree
+    # mynixpkgs.coqPackages_8_15.coq-ext-lib
+    # mynixpkgs.coqPackages_8_15.coinduction
+    # mynixpkgs.coqPackages_8_15.relation-algebra
+    # mynixpkgs.coqPackages_8_15.equations
+
     # pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken
     pkgs.ruby

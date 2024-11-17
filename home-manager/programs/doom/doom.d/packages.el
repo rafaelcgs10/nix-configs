@@ -12,5 +12,7 @@
 
 (package! gptel)
 
+(package! eglot-java)
+
 (package! eglot-ltex
   :recipe (:host github :repo "emacs-languagetool/eglot-ltex"))

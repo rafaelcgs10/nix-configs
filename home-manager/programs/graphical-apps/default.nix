@@ -74,6 +74,7 @@ in
     pkgs.srandrd
     pkgs.glxinfo
     pkgs.zoom-us
+    pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube
     unstable.darktable

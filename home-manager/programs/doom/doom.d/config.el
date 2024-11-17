@@ -448,6 +448,7 @@ With prefix argument (`C-u'), also kill the special buffers."
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")
 
+
 ;; (setq lsp-java-workspace-cache-dir t
 ;;       lsp-java-format-enabled t
 ;;       lsp-java-format-comments-enabled t
@@ -574,6 +575,31 @@ With prefix argument (`C-u'), also kill the special buffers."
   :init
   (setq eglot-ltex-server-path "~/.nix-profile"
         eglot-ltex-communication-channel 'tcp))         ; 'stdio or 'tcp
+
+;; (use-package! eglot-java
+;;   :custom
+;;   ;; (eglot-java-eclipse-jdt-args '("-Xmx4G"
+;;   ;;                                "--add-modules=ALL-SYSTEM"
+;;   ;;                                "--add-opens"
+;;   ;;                                "java.base/java.util=ALL-UNNAMED"
+;;   ;;                                "--add-opens"
+;;   ;;                                "java.base/java.lang=ALL-UNNAMED"))
+;;   :hook ((java-mode
+;;           java-ts-mode)
+;;          . eglot-java-mode)
+;;   :preface
+;;   :config
+;;   (setq eglot-java-user-init-opts-fn 'beetleman--eglot-java-init-opts))
+(add-hook 'java-ts-mode-hook 'eglot-java-mode)
+
+;; (add-hook 'java-mode-hook 'eglot-java-mode)
+;; (with-eval-after-load 'eglot-java
+;;   (define-key eglot-java-mode-map (kbd "C-c l n") #'eglot-java-file-new)
+;;   (define-key eglot-java-mode-map (kbd "C-c l x") #'eglot-java-run-main)
+;;   (define-key eglot-java-mode-map (kbd "C-c l t") #'eglot-java-run-test)
+;;   (define-key eglot-java-mode-map (kbd "C-c l N") #'eglot-java-project-new)
+;;   (define-key eglot-java-mode-map (kbd "C-c l T") #'eglot-java-project-build-task)
+;;   (define-key eglot-java-mode-map (kbd "C-c l R") #'eglot-java-project-build-refresh))
 
 (use-package! gptel
  :config
