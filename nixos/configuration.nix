@@ -211,6 +211,7 @@ in {
     lxqt.lxqt-policykit
     libv4l
     v4l-utils
+    rclone
 
     # libnotify
     # libdbusmenu
@@ -220,7 +221,7 @@ in {
 
   # printing
   services.printing.enable = true;
-  # services.avahi.enable = true;
+  services.avahi.enable = true;
   # services.avahi.nssmdns = true;
   # services.avahi.extraServiceFiles = {
   #   ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";

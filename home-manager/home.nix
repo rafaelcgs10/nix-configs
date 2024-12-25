@@ -156,7 +156,10 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     pkgs.vistafonts
-    pkgs.wine
+    pkgs.wine64
+    pkgs.wineWow64Packages.full
+    # pkgs.wineWowPackages.stable
+    pkgs.phockup
     # (pkgs.callPackage ./hdl-batch-installer.nix {})
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
@@ -164,6 +167,8 @@ in {
     pkgs.emacsPackages.nerd-icons
     pkgs.emacsPackages.all-the-icons
     pkgs.emacsPackages.treemacs-all-the-icons
+    pkgs.emacsPackages.all-the-icons-nerd-fonts
+    pkgs.emacsPackages.all-the-icons-completion
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
     pkgs.rawtherapee

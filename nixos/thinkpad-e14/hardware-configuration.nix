@@ -216,7 +216,8 @@ in
 
   # Printer and scanner stuff
   services.printing.enable = true;
-  services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.gutenprintBin pkgs.foomatic-db-ppds-withNonfreeDb pkgs.cups-drv-rastertosag-gdi ];
+  services.printing.browsing = true;
+  services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.gutenprintBin pkgs.foomatic-db-ppds-withNonfreeDb pkgs.cups-drv-rastertosag-gdi pkgs.canon-cups-ufr2 ];
 
   hardware.sane.enable = true;
   hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
@@ -246,6 +247,19 @@ in
       Type = lib.mkForce "simple";
     };
   };
+
+  # fileSystems."/proton_drive" = {
+  #   device = "proton_drive:/";
+  #   fsType = "rclone";
+  #   options = [
+  #     "nodev"
+  #     "nofail"
+  #     "allow_other"
+  #     "args2env"
+  #     "config=/home/rafael/.config/rclone/rclone.conf"
+  #   ];
+  # };
+
 
   # Enable cron service
   services.cron = {
