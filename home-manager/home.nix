@@ -156,8 +156,8 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     pkgs.vistafonts
-    pkgs.wine64
-    pkgs.wineWow64Packages.full
+    # pkgs.wine64
+    # pkgs.wineWow64Packages.full
     # pkgs.wineWowPackages.stable
     pkgs.phockup
     # (pkgs.callPackage ./hdl-batch-installer.nix {})

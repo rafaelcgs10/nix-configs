@@ -139,7 +139,17 @@ in
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
   };
+  # For mount.cifs, required unless domain name resolution is not needed.
+  environment.systemPackages = [ pkgs.cifs-utils ];
+  fileSystems."/rafael_mounts" = {
+    device = "//192.168.0.104/hdd";
+    fsType = "cifs";
+    options = let
+      # this line prevents hanging on network split
+      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
 
+    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev"];
+  };
 
   # fileSystems."/" =
   #   { device = "/dev/disk/by-uuid/d8954d69-692d-4c52-8eaa-e4a1784d0b14";
