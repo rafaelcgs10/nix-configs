@@ -75,7 +75,7 @@ let
   # };
 in
 {
-  programs.opam.enable = true;
+  # programs.opam.enable = true;
 
   home.packages = [
     # (pkgs.callPackage ./isabelle {

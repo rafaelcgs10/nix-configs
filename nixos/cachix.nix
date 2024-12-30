@@ -12,10 +12,10 @@ in {
   nix.settings = {
     substituters = [
       "https://cache.nixos.org/"
-      "https://cache.armv7l.xyz"
+      # "https://cache.armv7l.xyz"
     ];
-    trusted-public-keys = [
-      "cache.armv7l.xyz-1:kBY/eGnBAYiqYfg0fy0inWhshUo+pGFM3Pj7kIkmlBk="
-    ];
+    # trusted-public-keys = [
+    #   "cache.armv7l.xyz-1:kBY/eGnBAYiqYfg0fy0inWhshUo+pGFM3Pj7kIkmlBk="
+    # ];
   };
 }
