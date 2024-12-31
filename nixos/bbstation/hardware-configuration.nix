@@ -20,6 +20,7 @@
   hardware.bluetooth.enable = true;
   boot.kernelParams = [
     "mitigations=off"
+    "nvidia.NVreg_EnableGpuFirmware=0" # Disable GSP (GPU offloading) to fix Wayland performance
   ];
 
 
@@ -43,10 +44,17 @@
     extraConfig = "DefaultTimeoutStopSec=10s";
   };
 
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 3;
+  };
+
   swapDevices = [ ];
 
+  programs.xwayland.enable = true;
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = ["nvidia"];
+  programs.steam.enable = true;
 
   hardware.nvidia = {
 
@@ -77,8 +85,23 @@
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
+  powerManagement = {
+    cpuFreqGovernor = "performance";
+  };
+
+  # Docker config
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
+  };
+  systemd.services.docker.serviceConfig.KillMode = "mixed";
+
+  virtualisation.virtualbox.host.enable = true;
+  nixpkgs.config.virtualbox.host.enableExtensionPack = true;
+
+  users.extraGroups.vboxusers.members = [ "rafael" ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
@@ -87,6 +110,7 @@
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.enp2s0f0u7.useDHCP = lib.mkDefault true;
   # networking.interfaces.enp5s0.useDHCP = lib.mkDefault true;
+  networking.hostName = "bbstation";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

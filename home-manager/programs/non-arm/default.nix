@@ -18,7 +18,6 @@ in
     pkgs.tlaplusToolbox
     pkgs.discord
     pkgs.bitwarden
-    pkgs.steam
     # (pkgs.callPackage ../iopaint/default.nix {})
     # (newer_pkgs.qt6Packages.callPackage ../gpt4all.nix {})
 

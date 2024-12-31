@@ -272,13 +272,13 @@ in
 
 
   # Enable cron service
-  services.cron = {
-    enable = true;
-    systemCronJobs = [
-      "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
-      "5 * * * *     rafael    rm /home/rafael/Downloads/*.torrent"
-    ];
-  };
+  # services.cron = {
+  #   enable = true;
+  #   systemCronJobs = [
+  #     "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
+  #     "5 * * * *     rafael    rm /home/rafael/Downloads/*.torrent"
+  #   ];
+  # };
 
   services = {
     udev.extraRules = ''
