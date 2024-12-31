@@ -14,6 +14,7 @@ in
     pkgs.tdesktop
     pkgs.caprine-bin
     pkgs.obs-studio
+    pkgs.synology-drive-client
     # unstable.lutris
     pkgs.tlaplusToolbox
     pkgs.discord

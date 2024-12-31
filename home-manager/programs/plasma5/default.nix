@@ -25,6 +25,18 @@ in
     Version=1.4
   '';
 
+  home.file.".config/autostart/synology-drive.desktop".text = ''
+    [Desktop Entry]
+    Categories=Network;FileTransfer;
+    Comment=Synology Drive Client
+    Exec=synology-drive start
+    Icon=synology-drive
+    Name=Synology Drive Client
+    Terminal=false
+    Type=Application
+  '';
+
+
   programs.plasma = {
     enable = true;
     workspace.clickItemTo = "select";
