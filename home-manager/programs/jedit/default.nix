@@ -20,7 +20,7 @@ in
 home.file.".isabelle/afp" = {
   source =  builtins.fetchTarball {
     url = "https://www.isa-afp.org/release/afp-current.tar.gz";
-    sha256 = "0hsfnxd889igl4addfpdhvvp9jqq5n1l4790a521l2hp8kbii1p6";
+    sha256 = "0k5a9w2gqzlp5cxm71dj4xddbni7p063x7pdxwyn86jdrbwqm1b4";
   };
 };
 home.file.".isabelle/Isabelle2024/etc/components".text = ''

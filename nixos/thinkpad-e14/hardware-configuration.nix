@@ -142,7 +142,7 @@ in
   # For mount.cifs, required unless domain name resolution is not needed.
   environment.systemPackages = [ pkgs.cifs-utils ];
   fileSystems."/rafael_mounts" = {
-    device = "//192.168.0.104/hdd";
+    device = "//192.168.0.104";
     fsType = "cifs";
     options = let
       # this line prevents hanging on network split
@@ -272,13 +272,13 @@ in
 
 
   # Enable cron service
-  services.cron = {
-    enable = true;
-    systemCronJobs = [
-      "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
-      "5 * * * *     rafael    rm /home/rafael/Downloads/*.torrent"
-    ];
-  };
+  # services.cron = {
+  #   enable = true;
+  #   systemCronJobs = [
+  #     "* * * * *     rafael    cd /home/rafael/zsh_history; for c in zsh_history.sync-conflict-*; do git merge-file zsh_history empty.history $c;done; rm zsh_history.sync-conflict-*"
+  #     "5 * * * *     rafael    rm /home/rafael/Downloads/*.torrent"
+  #   ];
+  # };
 
   services = {
     udev.extraRules = ''

@@ -4,7 +4,7 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    enableAutosuggestions = true;
+    autosuggestion.enable = true;
     history = {
       path = "$HOME/zsh_history/zsh_history";
       save = 1000000;

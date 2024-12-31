@@ -20,7 +20,7 @@ in {
     };
   };
 
-  home.stateVersion = "24.05";
+  home.stateVersion = "24.11";
 
   imports = [
     ./imports/default.nix
@@ -146,7 +146,7 @@ in {
 
     # Fonts
     pkgs.noto-fonts
-    pkgs.noto-fonts-cjk
+    # pkgs.noto-fonts-cjk
     pkgs.noto-fonts-emoji
     pkgs.liberation_ttf
     pkgs.dina-font
