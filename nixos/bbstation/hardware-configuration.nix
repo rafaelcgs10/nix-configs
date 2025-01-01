@@ -12,6 +12,7 @@
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usb_storage" "usbhid" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
+  boot.supportedFilesystems = [ "nfs" ];
 
   boot.blacklistedKernelModules = [ "rtl8821cu" "rtw88_8821cu" ];
   boot.extraModulePackages = with config.boot.kernelPackages; [ rtl88xxau-aircrack ];
@@ -35,9 +36,9 @@
     fsType = "cifs";
     options = let
       # this line prevents hanging on network split
-      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=2s,x-systemd.mount-timeout=2s";
+      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
 
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev"];
+    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "rsize=16777216" "cache=loose"];
   };
 
   systemd = {
