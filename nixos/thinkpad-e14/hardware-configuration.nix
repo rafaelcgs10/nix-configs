@@ -82,16 +82,16 @@ in
 
   hardware.opengl.extraPackages = with pkgs; [
     amdvlk
-    rocm-opencl-icd
-    rocm-opencl-runtime
+    # rocm-opencl-icd
+    # rocm-opencl-runtime
   ];
 
   hardware.opengl.extraPackages32 = with pkgs; [
     driversi686Linux.amdvlk
   ];
 
-  hardware.opengl.driSupport = true;
-  hardware.opengl.driSupport32Bit = true;
+  # hardware.opengl.driSupport = true;
+  # hardware.opengl.driSupport32Bit = true;
 
   # wifi fix
   # boot.extraModulePackages = with config.boot.kernelPackages; [ rtw89 ];
@@ -142,7 +142,7 @@ in
   # For mount.cifs, required unless domain name resolution is not needed.
   environment.systemPackages = [ pkgs.cifs-utils ];
   fileSystems."/rafael_mounts" = {
-    device = "//192.168.0.104";
+    device = "//192.168.0.104/hdd";
     fsType = "cifs";
     options = let
       # this line prevents hanging on network split
