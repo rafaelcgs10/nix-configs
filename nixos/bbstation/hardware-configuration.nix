@@ -16,6 +16,7 @@
 
   boot.blacklistedKernelModules = [ "rtl8821cu" "rtw88_8821cu" ];
   boot.extraModulePackages = with config.boot.kernelPackages; [ rtl88xxau-aircrack ];
+  # boot.extraModulePackages = with config.boot.kernelPackages; [ rtl8821au ];
   # boot.extraModulePackages = with config.boot.kernelPackages; [ rtl8821cu ];
   hardware.wirelessRegulatoryDatabase = true;
   hardware.bluetooth.enable = true;
@@ -38,7 +39,7 @@
       # this line prevents hanging on network split
       automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
 
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "rsize=16777216" "cache=loose"];
+    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose"];
   };
 
   systemd = {
