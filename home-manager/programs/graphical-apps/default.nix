@@ -1,4 +1,4 @@
-{ pkgs, lib, ...}:
+{ pkgs, lib, config, ...}:
 let
   nur = import (builtins.fetchTarball "https://github.com/nix-community/nur-combined/archive/fe301d9a7b9346a0d50252696b9a4feeed60f1c4.tar.gz") {
     inherit pkgs;
@@ -93,6 +93,10 @@ in
     pkgs.libsForQt5.kasts
     pkgs.libsForQt5.plasma-browser-integration
   ];
+
+  home.file = {
+    ".config/darktable/library.db".source = config.lib.file.mkOutOfStoreSymlink "/home/rafael/darktable/library.db";
+  };
 
   programs.brave = {
     enable = true;

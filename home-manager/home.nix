@@ -53,10 +53,10 @@ in {
       defaultApplications = {
         # "application/pdf" = [ "org.gnome.Evince.desktop" ];
         # "image/jpeg" = [ "org.gnome.eog.desktop" ];
-        "x-scheme-handler/http=" = [ "brave-browser.desktop" ];
-        "x-scheme-handler/https=" = [ "brave-browser.desktop" ];
-        "x-scheme-handler/chrome" = [ "brave-browser.desktop" ];
-        "text/html" = [ "brave-browser.desktop" ];
+        # "x-scheme-handler/http=" = [ "brave-browser.desktop" ];
+        # "x-scheme-handler/https=" = [ "brave-browser.desktop" ];
+        # "x-scheme-handler/chrome" = [ "brave-browser.desktop" ];
+        # "text/html" = [ "brave-browser.desktop" ];
         # "application/x-zip" = [ "org.gnome.FileRoller.desktop" ];
         # "application/zip" = "org.gnome.FileRoller.desktop";
         # "application/rar" = "org.gnome.FileRoller.desktop";
