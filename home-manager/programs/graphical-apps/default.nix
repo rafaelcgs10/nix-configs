@@ -88,6 +88,7 @@ in
     pkgs.zotero
     pkgs.simple-scan
     pkgs.thunderbird
+    pkgs.kdePackages.kalk
     #
     # FIXME: move to kde things
     pkgs.libsForQt5.kasts

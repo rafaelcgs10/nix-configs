@@ -122,6 +122,7 @@ in {
     pkgs.imagemagick
     pkgs.zstd
     pkgs.sqlite
+    pkgs.android-tools
     # (pkgs.ripgrep.override { withPCRE2 = true; })
     pkgs.ripgrep
     unstable.rclone

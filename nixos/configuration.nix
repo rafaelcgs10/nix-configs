@@ -85,7 +85,8 @@ in {
     enable = true;
 
     desktopManager = {
-      plasma5.enable = true;
+      # plasma5.enable = true;
+      plasma6.enable = true;
       xterm.enable = false;
     };
 
@@ -93,7 +94,8 @@ in {
 
   services = {
     displayManager = {
-      defaultSession = "plasmawayland";
+      # defaultSession = "plasmawayland";
+      defaultSession = "plasma";
         sddm.enable = true;
         # defaultSession = "xfce";
     };
