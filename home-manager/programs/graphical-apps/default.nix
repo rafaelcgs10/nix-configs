@@ -93,6 +93,8 @@ in
     # FIXME: move to kde things
     pkgs.libsForQt5.kasts
     pkgs.libsForQt5.plasma-browser-integration
+    pkgs.protonvpn-gui
+    pkgs.deluge
   ];
 
   home.file = {

@@ -193,6 +193,8 @@ in {
     htop
     parted
     ntfs3g
+    nfs-utils
+    busybox
     terminator
     zsh
     vim

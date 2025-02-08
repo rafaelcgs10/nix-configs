@@ -27,6 +27,7 @@ in
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.kernelModules = [ "kvm-amd" ];
+  boot.supportedFilesystems = [ "nfs" ];
   # boot.blacklistedKernelModules = [ "rtw88_8821ce" ];
 
   services.xserver = {
@@ -220,9 +221,6 @@ in
 
   # Wireguard fix
   networking.firewall.checkReversePath = false;
-
-  # virtualisation.virtualbox.host.enable = true;
-  # users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
 
   # Printer and scanner stuff
   services.printing.enable = true;
