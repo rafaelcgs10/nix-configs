@@ -157,6 +157,8 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     pkgs.vistafonts
+    pkgs.wineWowPackages.staging
+    pkgs.winetricks
     # pkgs.wine64
     # pkgs.wineWow64Packages.full
     # pkgs.wineWowPackages.stable

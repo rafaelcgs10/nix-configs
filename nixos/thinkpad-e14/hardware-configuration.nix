@@ -121,6 +121,7 @@ in
     # This allows the backlight save/load systemd service to work.
     "acpi_backlight=native"
     "mitigations=off"
+    "kvm.enable_virt_at_load=0"
   ];
 
   systemd = {
