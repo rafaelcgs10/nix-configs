@@ -27,6 +27,7 @@ in
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.kernelModules = [ "kvm-amd" ];
+  boot.supportedFilesystems = [ "nfs" ];
   # boot.blacklistedKernelModules = [ "rtw88_8821ce" ];
 
   services.xserver = {
@@ -120,6 +121,7 @@ in
     # This allows the backlight save/load systemd service to work.
     "acpi_backlight=native"
     "mitigations=off"
+    "kvm.enable_virt_at_load=0"
   ];
 
   systemd = {
@@ -220,9 +222,6 @@ in
 
   # Wireguard fix
   networking.firewall.checkReversePath = false;
-
-  # virtualisation.virtualbox.host.enable = true;
-  # users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
 
   # Printer and scanner stuff
   services.printing.enable = true;

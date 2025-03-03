@@ -101,9 +101,11 @@
   systemd.services.docker.serviceConfig.KillMode = "mixed";
 
   virtualisation.virtualbox.host.enable = true;
-  nixpkgs.config.virtualbox.host.enableExtensionPack = true;
+  virtualisation.virtualbox.host.enableExtensionPack = true;
+  virtualisation.virtualbox.guest.dragAndDrop = true;
+  # nixpkgs.config.virtualbox.host.enableExtensionPack = true;
 
-  users.extraGroups.vboxusers.members = [ "rafael" ];
+  users.extraGroups.vboxusers.members = [ "rafael" "kv" ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's

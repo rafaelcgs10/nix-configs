@@ -40,12 +40,16 @@ in {
    # '';
   };
   networking = {
-    nameservers = [ "127.0.0.1" "45.90.28.219" ];
+    nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" ];
   };
-  services.nextdns = {
+  services.resolved = {
     enable = true;
-    arguments = [ "-config" "7de4a9" "-cache-size" "20MB" ];
+    dnssec = "true";
+    domains = [ "~." ];
+    fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
+    dnsovertls = "true";
   };
+
   # Set your time zone.
   time.timeZone = "Europe/Copenhagen";
 
@@ -193,6 +197,8 @@ in {
     htop
     parted
     ntfs3g
+    nfs-utils
+    busybox
     terminator
     zsh
     vim
