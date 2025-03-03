@@ -48,7 +48,7 @@
 
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 3;
+    freeMemThreshold = 1;
   };
 
   swapDevices = [ ];
@@ -87,7 +87,7 @@
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
   powerManagement = {
     cpuFreqGovernor = "performance";
