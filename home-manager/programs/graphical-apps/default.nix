@@ -16,6 +16,17 @@ let
   #     inherit version;
   #   };
   # createBraveExtension = createBraveExtensionFor (lib.versions.major pkgs.brave.version);
+  pinnedZoomPkgs =
+    import
+      (builtins.fetchTarball {
+        url = "https://github.com/NixOS/nixpkgs/archive/0c19708cf035f50d28eb4b2b8e7a79d4dc52f6bb.tar.gz";
+        sha256 = "0ngw2shvl24swam5pzhcs9hvbwrgzsbcdlhpvzqc7nfk8lc28sp3";
+      })
+      {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+      };
+    pinnedZoom = pinnedZoomPkgs.zoom-us;
 in
 {
   home.packages = [
@@ -73,7 +84,8 @@ in
     pkgs.lxrandr
     pkgs.srandrd
     pkgs.glxinfo
-    pkgs.zoom-us
+    # pkgs.zoom-us
+    pinnedZoom
     pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube
