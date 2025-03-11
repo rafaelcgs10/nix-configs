@@ -567,14 +567,14 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 (setq ispell-personal-dictionary "/home/rafael/nix-configs/home-manager/programs/doom/ispell.dict")
 
-(use-package! eglot-ltex
-  :ensure t
-  :hook (text-mode . (lambda ()
-                       (require 'eglot-ltex)
-                       (eglot-ensure)))
-  :init
-  (setq eglot-ltex-server-path "~/.nix-profile"
-        eglot-ltex-communication-channel 'tcp))         ; 'stdio or 'tcp
+;; (use-package! eglot-ltex
+;;   :ensure t
+;;   :hook (text-mode . (lambda ()
+;;                        (require 'eglot-ltex)
+;;                        (eglot-ensure)))
+;;   :init
+;;   (setq eglot-ltex-server-path "~/.nix-profile"
+;;         eglot-ltex-communication-channel 'tcp))         ; 'stdio or 'tcp
 
 ;; (use-package! eglot-java
 ;;   :custom
@@ -601,18 +601,18 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;   (define-key eglot-java-mode-map (kbd "C-c l T") #'eglot-java-project-build-task)
 ;;   (define-key eglot-java-mode-map (kbd "C-c l R") #'eglot-java-project-build-refresh))
 
-(use-package! gptel
- :config
-)
-(gptel-make-gpt4all "GPT4All"           ;Name of your choosing
- :protocol "http"
- :host "localhost:4891"                 ;Where it's running
- :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf"))
+;; (use-package! gptel
+;;  :config
+;; )
+;; (gptel-make-gpt4all "GPT4All"           ;Name of your choosing
+;;  :protocol "http"
+;;  :host "localhost:4891"                 ;Where it's running
+;;  :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf"))
 
-(setq
- gptel-max-tokens 500
- gptel-model "Meta-Llama-3-8B-Instruct.Q4_0.gguf"
- gptel-backend (gptel-make-gpt4all "GPT4All"
-                 :protocol "http"
-                 :host "localhost:4891"
-                 :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf")))
+;; (setq
+;;  gptel-max-tokens 500
+;;  gptel-model "Meta-Llama-3-8B-Instruct.Q4_0.gguf"
+;;  gptel-backend (gptel-make-gpt4all "GPT4All"
+;;                  :protocol "http"
+;;                  :host "localhost:4891"
+;;                  :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf")))
