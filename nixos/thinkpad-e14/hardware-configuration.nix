@@ -225,10 +225,10 @@ in
   # Printer and scanner stuff
   services.printing.enable = true;
   services.printing.browsing = true;
-  services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.gutenprintBin pkgs.foomatic-db-ppds-withNonfreeDb pkgs.cups-drv-rastertosag-gdi pkgs.canon-cups-ufr2 ];
+  # services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.gutenprintBin pkgs.foomatic-db-ppds-withNonfreeDb pkgs.cups-drv-rastertosag-gdi pkgs.canon-cups-ufr2 ];
 
   hardware.sane.enable = true;
-  hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
+  # hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
   users.users.rafael.extraGroups = [ "scanner" "lp" "adbusers" ];
 
   # Docker config
