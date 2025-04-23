@@ -289,12 +289,14 @@ in {
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
 
-  networking.firewall.allowedTCPPorts = [ 8080 8384 8096 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 22000 63786 43686 ];
-  networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 22000 63786 43686  ];
+  networking.firewall.allowedTCPPorts = [ 8080 8384 8096 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 22000 63786 43686 47849 33976 53277 51372];
+  networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 22000 63786 43686 47849 33976 53277 51372];
   networking.firewall = {
     allowedTCPPortRanges = [ { from = 1714; to = 1764; }  ];
     allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
   };
+
+  nix.settings.download-buffer-size = 524288000;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

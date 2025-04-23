@@ -1,7 +1,7 @@
 { pkgs, lib, options, stdenv, fetchhg, config, specialArgs, modulesPath }:
 let
   unstable = import <nixpkgs-unstable> {};
-  moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz);
+  moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/2292d4b35aa854e312ad2e95c4bb5c293656f21a.tar.gz);
   nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
   ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
 
@@ -108,8 +108,8 @@ in
     # unstable.isabelle
     # ruststable
     # lldb-mi
-    pkgs.z3
-    pkgs.vampire
+    # pkgs.z3
+    # pkgs.vampire
     # pkgs.python310
     # pkgs.conda
     # pkgs.python310Packages.conda
@@ -159,13 +159,14 @@ in
     pkgs.haskellPackages.apply-refact
     pkgs.haskellPackages.hoogle
     # pkgs.haskellPackages.ghc-mod
-    pkgs.lua
+    # pkgs.lua
     nixpkgs.haskellPackages.happy
     nixpkgs.haskellPackages.haskell-src-exts
     # pkgs.coq
     # mynixpkgs.coqPackages_8_15.coqide
-    mynixpkgs.coq_8_15
-    # mynixpkgs.coqPackages_8_15.ITree
+    mynixpkgs.coq_8_5
+    mynixpkgs.coqPackages_8_5.mathcomp-ssreflect
+    mynixpkgs.coqPackages_8_5.mathcomp
     # mynixpkgs.coqPackages_8_15.coq-ext-lib
     # mynixpkgs.coqPackages_8_15.coinduction
     # mynixpkgs.coqPackages_8_15.relation-algebra
@@ -173,9 +174,9 @@ in
 
     # pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken
-    pkgs.ruby
-    pkgs.solargraph
-    pkgs.rubyPackages.yard
-    pkgs.rubocop
+    # pkgs.ruby
+    # pkgs.solargraph
+    # pkgs.rubyPackages.yard
+    # pkgs.rubocop
   ];
 }
