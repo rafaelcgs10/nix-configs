@@ -164,9 +164,9 @@ in
     nixpkgs.haskellPackages.haskell-src-exts
     # pkgs.coq
     # mynixpkgs.coqPackages_8_15.coqide
-    mynixpkgs.coq_8_5
-    mynixpkgs.coqPackages_8_5.mathcomp-ssreflect
-    mynixpkgs.coqPackages_8_5.mathcomp
+    pkgs.coq_8_5
+    pkgs.coqPackages_8_5.mathcomp-ssreflect
+    pkgs.coqPackages_8_5.mathcomp
     # mynixpkgs.coqPackages_8_15.coq-ext-lib
     # mynixpkgs.coqPackages_8_15.coinduction
     # mynixpkgs.coqPackages_8_15.relation-algebra
