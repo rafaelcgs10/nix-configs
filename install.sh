@@ -1,5 +1,5 @@
-sudo nix-channel --add https://github.com/NixOS/nixpkgs/archive/b706aae81110d9fe2027bf4b552d27e1491d5e99.tar.gz nixpkgs-unstable
-sudo nix-channel --add https://nixos.org/channels/nixos-24.11 nixos
+sudo nix-channel --add https://github.com/NixOS/nixpkgs/archive/5461b7fa65f3ca74cef60be837fd559a8918eaa0.tar.gz nixpkgs-unstable
+sudo nix-channel --add https://github.com/NixOS/nixpkgs/archive/26245db0cb552047418cfcef9a25da91b222d6c7.tar.gz nixos
 sudo nix-channel --add https://github.com/nix-community/home-manager/archive/613691f285dad87694c2ba1c9e6298d04736292d.tar.gz home-manager
 sudo nix-channel --update
 cachix use nix-community

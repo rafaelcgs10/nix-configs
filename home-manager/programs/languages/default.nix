@@ -1,17 +1,17 @@
-{ pkgs, lib, options, stdenv, fetchhg, config, specialArgs, modulesPath }:
+{ config, lib, pkgs, ... }:
 let
-  unstable = import <nixpkgs-unstable> {};
+  # unstable = import <nixpkgs-unstable> {};
   moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/2292d4b35aa854e312ad2e95c4bb5c293656f21a.tar.gz);
   nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
-  ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
+  # ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
 
-  mynixpkgs = import (builtins.fetchTarball {
-    url = "https://github.com/rafaelcgs10/nixpkgs/archive/4ade716721f543b113bf97857e93972b99c927b8.tar.gz";
-  }) {};
+  # mynixpkgs = import (builtins.fetchTarball {
+  #   url = "https://github.com/rafaelcgs10/nixpkgs/archive/4ade716721f543b113bf97857e93972b99c927b8.tar.gz";
+  # }) {};
 
-  new_isabelle_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/c100196b085a72aa453bd3f86e731e77c2666aee.tar.gz";
-  }) {};
+  # new_isabelle_pkgs = import (builtins.fetchTarball {
+  #   url = "https://github.com/NixOS/nixpkgs/archive/c100196b085a72aa453bd3f86e731e77c2666aee.tar.gz";
+  # }) {};
 
   # isabelle2022 = pkgs.isabelle.overrideAttrs (prev: {
   #   version = "2022-RC0";
@@ -120,10 +120,10 @@ in
     pkgs.cvc5
     pkgs.leo3-bin
     pkgs.satallax
-    unstable.cargo
-    unstable.rustc
-    unstable.rustfmt
-    unstable.rust-analyzer
+    pkgs.cargo
+    pkgs.rustc
+    pkgs.rustfmt
+    pkgs.rust-analyzer
     pkgs.valgrind
     pkgs.massif-visualizer
     pkgs.gperftools
@@ -160,13 +160,13 @@ in
     pkgs.haskellPackages.hoogle
     # pkgs.haskellPackages.ghc-mod
     # pkgs.lua
-    nixpkgs.haskellPackages.happy
-    nixpkgs.haskellPackages.haskell-src-exts
+    pkgs.haskellPackages.happy
+    pkgs.haskellPackages.haskell-src-exts
     # pkgs.coq
     # mynixpkgs.coqPackages_8_15.coqide
     pkgs.coq_8_5
-    pkgs.coqPackages_8_5.mathcomp-ssreflect
-    pkgs.coqPackages_8_5.mathcomp
+    # pkgs.coqPackages_8_5.mathcomp-ssreflect
+    # pkgs.coqPackages_8_5.mathcomp
     # mynixpkgs.coqPackages_8_15.coq-ext-lib
     # mynixpkgs.coqPackages_8_15.coinduction
     # mynixpkgs.coqPackages_8_15.relation-algebra

@@ -1,4 +1,4 @@
-{ lib, pkgs, options, config, specialArgs, modulesPath }:
+{ config, lib, pkgs, ... }:
 
 let
   emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/6d9837126e1be779c8f34ed9fdd609e676a1b891.tar.gz;};

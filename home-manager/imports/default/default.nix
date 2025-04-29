@@ -4,8 +4,8 @@
   imports = [
     # ../../programs/xmonad/default.nix
     # ../../programs/hyprland/default.nix
-    ../../programs/plasma5/default.nix
     ../../programs/languages/default.nix
+    ../../programs/plasma5/default.nix
     ../../programs/doom/default.nix
     ../../programs/zsh/default.nix
     ../../programs/nvim/default.nix

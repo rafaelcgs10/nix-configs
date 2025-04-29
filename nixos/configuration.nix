@@ -298,6 +298,21 @@ in {
 
   nix.settings.download-buffer-size = 524288000;
 
+  programs.nix-ld.enable = true;
+
+  programs.nix-ld.libraries = with pkgs; [
+    libdrm
+    mesa
+    libxkbcommon
+    glibc
+    gtk3
+    libGL
+    # Add any missing dynamic libraries for unpackaged programs
+
+    # here, NOT in environment.systemPackages
+
+  ];
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
