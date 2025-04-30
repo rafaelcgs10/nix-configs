@@ -223,6 +223,7 @@ in {
     libv4l
     v4l-utils
     rclone
+    nix-index
 
     # libnotify
     # libdbusmenu
@@ -307,9 +308,27 @@ in {
     glibc
     gtk3
     libGL
-    # Add any missing dynamic libraries for unpackaged programs
-
-    # here, NOT in environment.systemPackages
+    glib
+    glibc
+    libnss-mysql
+    nss
+    nspr
+    at-spi2-atk
+    remarkable-toolchain
+    cups
+    dbus
+    pango
+    cairo
+    nx-libs
+    xorg.libX11
+    xorg.libXcomposite
+    xorg.libXdamage
+    xorg.libXext
+    xorg.libXfixes
+    xorg.libXrandr
+    expat
+    xorg.libxcb
+    alsa-lib
 
   ];
 
