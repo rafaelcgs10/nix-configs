@@ -353,6 +353,7 @@ in
 
   virtualisation.virtualbox.host.enable = true;
   nixpkgs.config.virtualbox.host.enableExtensionPack = true;
+  boot.extraModprobeConfig = "options kvm_intel nested=1";
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
 
