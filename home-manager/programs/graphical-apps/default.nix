@@ -67,6 +67,7 @@ in
     pkgs.sc-controller
     pkgs.vlc
     unstable.zulip
+    pkgs.pgadmin4-desktopmode
     # pkgs.evince
     # pkgs.masterpdfeditor4
     # nur.repos.some-pkgs.llama-cpp

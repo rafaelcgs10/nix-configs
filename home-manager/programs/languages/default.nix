@@ -149,7 +149,9 @@ in
     pkgs.clang
     pkgs.clang-tools
     pkgs.ccls
-    pkgs.python39Full
+    pkgs.python310Full
+    pkgs.python310Packages.psycopg2
+    pkgs.postgresql
     ghc
     pkgs.pandoc
 
