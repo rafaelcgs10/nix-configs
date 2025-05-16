@@ -357,6 +357,16 @@ in
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
 
+  services.postgresql = {
+    enable = true;
+    port = 5432;
+    enableTCPIP = true;
+    authentication = pkgs.lib.mkOverride 10 ''
+      #type database  DBuser  auth-method
+      local all       all     trust
+    '';
+  };
+
   # services.xserver.desktopManager.kodi.enable = true;
   # services.xserver.desktopManager.kodi.package = pkgs.kodi.withPackages (p: with p; [ future osmc-skin jellyfin inputstream-rtmp inputstreamhelper inputstream-adaptive inputstream-ffmpegdirect requests myconnpy dateutil invidious joystick ]);
 
