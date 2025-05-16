@@ -151,6 +151,7 @@ in
     pkgs.ccls
     pkgs.python39Full
     ghc
+    pkgs.pandoc
 
 
     pkgs.haskellPackages.haskell-language-server
