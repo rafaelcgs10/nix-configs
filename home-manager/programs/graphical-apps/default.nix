@@ -33,6 +33,7 @@ in
     pkgs.gimp-with-plugins
     pkgs.inkscape
     pkgs.vlc
+    pkgs.qmplay2
     # pkgs.kdenlive
     # pkgs.lxappearance
     # pkgs.redshift
@@ -65,7 +66,6 @@ in
     # pkgs.gnomeExtensions.appindicator
     # unstable.qmplay2
     pkgs.sc-controller
-    pkgs.vlc
     unstable.zulip
     pkgs.pgadmin4-desktopmode
     pkgs.handbrake # ghb
