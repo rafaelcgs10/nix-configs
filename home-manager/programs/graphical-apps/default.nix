@@ -97,6 +97,7 @@ in
     pkgs.element-desktop
     pkgs.drawio
     pkgs.qalculate-qt
+    pkgs.chromium
 
     pkgs.zotero
     pkgs.simple-scan
