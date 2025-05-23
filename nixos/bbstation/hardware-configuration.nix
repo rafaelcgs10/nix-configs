@@ -45,6 +45,7 @@ in
     "mitigations=off"
     "nvidia.NVreg_EnableGpuFirmware=0" # Disable GSP (GPU offloading) to fix Wayland performance
     "kvm.enable_virt_at_load=0"
+    "btusb.enable_autosuspend=n"
   ];
 
 
