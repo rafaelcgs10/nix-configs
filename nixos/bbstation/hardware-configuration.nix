@@ -33,6 +33,12 @@ in
         UserspaceHID = true;
       };
     };
+    settings = {
+      General = {
+        Experimental = true;
+        # ControllerMode = "bredr";
+      };
+    };
   };
 
   boot.kernelParams = [
