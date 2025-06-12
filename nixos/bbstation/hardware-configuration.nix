@@ -75,6 +75,9 @@ in
   };
 
   swapDevices = [ ];
+  zramSwap.enable = true;
+  zramSwap.algorithm = "zstd";
+  zramSwap.priority = 10;
 
   programs.xwayland.enable = true;
   # Load nvidia driver for Xorg and Wayland

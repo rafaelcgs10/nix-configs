@@ -98,6 +98,8 @@ in {
     # pkgs.perf-tools
     pkgs.git-lfs
     pkgs.kubectl
+    pkgs.kubernetes
+    pkgs.podman
     pkgs.lazygit
     pkgs.k9s
     pkgs.xclip

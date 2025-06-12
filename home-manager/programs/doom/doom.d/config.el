@@ -592,6 +592,9 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;   (setq eglot-java-user-init-opts-fn 'beetleman--eglot-java-init-opts))
 (add-hook 'java-ts-mode-hook 'eglot-java-mode)
 
+(add-hook 'eglot-managed-mode-hook
+          (lambda () (eglot-inlay-hints-mode -1)))
+
 ;; (add-hook 'java-mode-hook 'eglot-java-mode)
 ;; (with-eval-after-load 'eglot-java
 ;;   (define-key eglot-java-mode-map (kbd "C-c l n") #'eglot-java-file-new)
