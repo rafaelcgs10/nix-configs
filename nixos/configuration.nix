@@ -2,17 +2,19 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, lib, ... }:
+{ config, lib, nixpkgs, home-manager, inputs, ... }:
 
 let
   homemanager = import <home-manager> {};
 in {
+
   imports =
     [ # Include the results of the hardware scan.
       ./cachix.nix
       ./boot-loader.nix
-      ./hardware-configuration.nix
+      ./hardware-configuration.nix {specialArgs = { inherit inputs; }; }
       <home-manager/nixos>
+      # home-manager.nixosModules.default
     ];
   nixpkgs.config.permittedInsecurePackages = [
     # "python-2.7.18.6"
@@ -22,7 +24,7 @@ in {
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw
 
   nix.settings.auto-optimise-store = true;
-  nix.settings.experimental-features = "nix-command flakes";
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   services.udisks2 = {
     enable = true;
@@ -69,7 +71,7 @@ in {
     enable = true;
     port = 5432;
     enableTCPIP = true;
-    authentication = pkgs.lib.mkOverride 10 ''
+    authentication = nixpkgs.lib.mkOverride 10 ''
       #...
       #type database DBuser origin-address auth-method
       local all       all     trust
@@ -88,7 +90,7 @@ in {
 
     dbus = {
       enable = true;
-      packages = [ pkgs.dconf ];
+      packages = [ nixpkgs.dconf ];
     };
   };
 
@@ -123,7 +125,7 @@ in {
 
   services.gvfs = {
     enable = true;
-    # package = lib.mkForce pkgs.gnome3.gvfs;
+    # package = lib.mkForce nixpkgs.gnome3.gvfs;
   };
 
   # Configure keymap in X11
@@ -156,7 +158,7 @@ in {
   nix.settings.trusted-users = [ "root" "rafael" ];
 
   users.extraUsers.rafael = {
-    shell = pkgs.zsh;
+    shell = nixpkgs.zsh;
   };
   programs.zsh.enable = true;
 
@@ -166,7 +168,7 @@ in {
   security.apparmor = {
     enable = true;
     killUnconfinedConfinables = true;
-    packages = with pkgs; [
+    packages = with nixpkgs; [
       apparmor-profiles
       apparmor-utils
       apparmor-parser
@@ -177,15 +179,15 @@ in {
   #   enable = true;
   #   wrappedBinaries = {
   #     firefox = {
-  #       executable = "${pkgs.firefox}/bin/firefox";
-  #       profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
-  #       # desktop = "''${pkgs.firefox}/share/applications/firefox.desktop";
+  #       executable = "${nixpkgs.firefox}/bin/firefox";
+  #       profile = "${nixpkgs.firejail}/etc/firejail/firefox.profile";
+  #       # desktop = "''${nixpkgs.firefox}/share/applications/firefox.desktop";
   #       # extraArgs = [ "--private" ];
   #     };
-  #     brave = "${lib.getBin pkgs.brave}/bin/brave";
+  #     brave = "${lib.getBin nixpkgs.brave}/bin/brave";
   #     # brave = {
-  #     #   executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
-  #     #   profile = "${pkgs.firejail}/etc/firejail/brave.profile";
+  #     #   executable = "${nixpkgs.lib.getBin nixpkgs.brave}/bin/brave";
+  #     #   profile = "${nixpkgs.firejail}/etc/firejail/brave.profile";
   #     # };
   #   };
   # };
@@ -207,7 +209,7 @@ in {
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = with nixpkgs; [
     wget
     git
     htop
@@ -252,7 +254,7 @@ in {
   services.avahi.enable = true;
   # services.avahi.nssmdns = true;
   # services.avahi.extraServiceFiles = {
-  #   ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
+  #   ssh = "${nixpkgs.avahi}/etc/avahi/services/ssh.service";
   #   smb = ''
   #   <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
   #   <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
@@ -317,7 +319,7 @@ in {
 
   programs.nix-ld.enable = true;
 
-  programs.nix-ld.libraries = with pkgs; [
+  programs.nix-ld.libraries = with nixpkgs; [
     libdrm
     mesa
     libxkbcommon

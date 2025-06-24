@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, nixpkgs, ... }:
 
 {
   # Use the systemd-boot EFI boot loader.

@@ -8,6 +8,7 @@ sudo mv /etc/nixos/configuration.nix ./nixos/configuration.nix_bk
 sudo mv /etc/nixos/hardware-configuration.nix ./nixos/hardware-configuration.nix_bk
 
 sudo ln -s ~/nix-configs/nixos/configuration.nix /etc/nixos
+sudo ln -s ~/nix-configs/nixos/flake.nix /etc/nixos
 
 sudo nixos-rebuild switch
 
