@@ -40,8 +40,8 @@ in {
    # '';
   };
   networking = {
-    # nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" "1.1.1.1" ];
-    nameservers = [  "1.1.1.1" ];
+    nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" "1.1.1.1" ];
+    # nameservers = [  "1.1.1.1" ];
   };
   services.resolved = {
     enable = true;

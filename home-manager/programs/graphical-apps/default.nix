@@ -76,7 +76,7 @@ in
     # nur.repos.xeals.amdgpu-fan
     # nur.repos.genesis.hdl-batch-installer
     pkgs.upscayl
-    unstable.gpt4all
+    pkgs.gpt4all
 
     # pkgs.flameshot
     # pkgs.noisetorch
