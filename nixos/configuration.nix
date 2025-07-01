@@ -40,7 +40,7 @@ in {
    # '';
   };
   networking = {
-    nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" "1.1.1.1" ];
+    nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" ];
     # nameservers = [  "1.1.1.1" ];
   };
   services.resolved = {
@@ -65,20 +65,20 @@ in {
   #   font = "Lat2-Terminus16";
   #   keyMap = "us";
   # };
-  services.postgresql = {
-    enable = true;
-    port = 5432;
-    enableTCPIP = true;
-    authentication = pkgs.lib.mkOverride 10 ''
-      #...
-      #type database DBuser origin-address auth-method
-      local all       all     trust
-      # ipv4
-      host  all      all     127.0.0.1/32   trust
-      # ipv6
-      host all       all     ::1/128        trust
-    '';
-  };
+  # services.postgresql = {
+  #   enable = true;
+  #   port = 5432;
+  #   enableTCPIP = true;
+  #   authentication = pkgs.lib.mkOverride 10 ''
+  #     #...
+  #     #type database DBuser origin-address auth-method
+  #     local all       all     trust
+  #     # ipv4
+  #     host  all      all     127.0.0.1/32   trust
+  #     # ipv6
+  #     host all       all     ::1/128        trust
+  #   '';
+  # };
 
 
 
