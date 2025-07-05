@@ -89,6 +89,7 @@ in
     pkgs.glxinfo
     # pkgs.zoom-us
     pinnedZoom
+    pkgs.signal-desktop
     pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube
