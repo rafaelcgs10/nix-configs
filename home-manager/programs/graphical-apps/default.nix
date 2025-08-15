@@ -30,7 +30,7 @@ let
 in
 {
   home.packages = [
-    pkgs.gimp-with-plugins
+    unstable.gimp3-with-plugins
     pkgs.inkscape
     pkgs.vlc
     pkgs.qmplay2

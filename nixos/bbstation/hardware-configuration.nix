@@ -111,6 +111,7 @@ in
     # Enable the Nvidia settings menu,
     # accessible via `nvidia-settings`.
     nvidiaSettings = true;
+    forceFullCompositionPipeline = false;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = unstable.linuxPackages.nvidiaPackages.beta;

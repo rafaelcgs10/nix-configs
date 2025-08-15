@@ -1,4 +1,4 @@
-sudo nix-channel --add https://github.com/NixOS/nixpkgs/archive/2795c506fe8fb7b03c36ccb51f75b6df0ab2553f.tar.gz nixpkgs-unstable
+sudo nix-channel --add https://github.com/NixOS/nixpkgs/archive/5a0711127cd8b916c3d3128f473388c8c79df0da.tar.gz nixpkgs-unstable
 sudo nix-channel --add https://github.com/NixOS/nixpkgs/archive/2baa12ff69913392faf0ace833bc54bba297ea95.tar.gz nixos
 sudo nix-channel --add https://github.com/nix-community/home-manager/archive/613691f285dad87694c2ba1c9e6298d04736292d.tar.gz home-manager
 sudo nix-channel --update
