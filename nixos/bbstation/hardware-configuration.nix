@@ -119,6 +119,10 @@ in
   powerManagement = {
     cpuFreqGovernor = "performance";
   };
+  # Printer and scanner stuff
+  services.printing.enable = true;
+  services.printing.browsing = true;
+  services.printing.drivers = [ pkgs.carps-cups ];
 
 
   # Docker config
