@@ -315,38 +315,38 @@ in {
 
   nix.settings.download-buffer-size = 524288000;
 
-  programs.nix-ld.enable = true;
+  # programs.nix-ld.enable = true;
 
-  programs.nix-ld.libraries = with pkgs; [
-    libdrm
-    mesa
-    libxkbcommon
-    glibc
-    gtk3
-    libGL
-    glib
-    glibc
-    libnss-mysql
-    nss
-    nspr
-    at-spi2-atk
-    remarkable-toolchain
-    cups
-    dbus
-    pango
-    cairo
-    nx-libs
-    xorg.libX11
-    xorg.libXcomposite
-    xorg.libXdamage
-    xorg.libXext
-    xorg.libXfixes
-    xorg.libXrandr
-    expat
-    xorg.libxcb
-    alsa-lib
+  # programs.nix-ld.libraries = with pkgs; [
+  #   libdrm
+  #   mesa
+  #   libxkbcommon
+  #   glibc
+  #   gtk3
+  #   libGL
+  #   glib
+  #   glibc
+  #   libnss-mysql
+  #   nss
+  #   nspr
+  #   at-spi2-atk
+  #   remarkable-toolchain
+  #   cups
+  #   dbus
+  #   pango
+  #   cairo
+  #   nx-libs
+  #   xorg.libX11
+  #   xorg.libXcomposite
+  #   xorg.libXdamage
+  #   xorg.libXext
+  #   xorg.libXfixes
+  #   xorg.libXrandr
+  #   expat
+  #   xorg.libxcb
+  #   alsa-lib
 
-  ];
+  # ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
