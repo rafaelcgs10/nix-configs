@@ -149,8 +149,8 @@ in
     pkgs.clang
     pkgs.clang-tools
     pkgs.ccls
-    pkgs.python310Full
-    pkgs.python310Packages.psycopg2
+    # pkgs.python310Full
+    # pkgs.python310Packages.psycopg2
     # pkgs.python312Packages.pygls
     # pkgs.python312Packages.python-lsp-server
     pkgs.pyright
