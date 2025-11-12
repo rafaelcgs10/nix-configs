@@ -40,8 +40,8 @@ in {
    # '';
   };
   networking = {
-    # nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" ];
-    nameservers = [  "1.1.1.1" ];
+    nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" ];
+    # nameservers = [  "1.1.1.1" ];
   };
   services.resolved = {
     enable = true;
@@ -101,16 +101,6 @@ in {
     enable = true;
     xwayland.enable = true;
   };
-  services.xserver = {
-    enable = true;
-
-    desktopManager = {
-      # plasma5.enable = true;
-      plasma6.enable = true;
-      xterm.enable = false;
-    };
-
-  };
 
   services = {
     displayManager = {
@@ -118,6 +108,11 @@ in {
       defaultSession = "plasma";
         sddm.enable = true;
         # defaultSession = "xfce";
+    };
+    desktopManager = {
+      # plasma5.enable = true;
+      plasma6.enable = true;
+      # xterm.enable = false;
     };
   };
 
@@ -354,5 +349,5 @@ in {
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.11"; # Did you read the comment?
+  system.stateVersion = "25.05"; # Did you read the comment?
 }

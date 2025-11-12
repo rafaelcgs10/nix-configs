@@ -20,7 +20,7 @@ in {
     };
   };
 
-  home.stateVersion = "24.11";
+  home.stateVersion = "25.05";
 
   imports = [
     ./imports/default.nix
@@ -174,7 +174,7 @@ in {
     pkgs.emacsPackages.treemacs-all-the-icons
     pkgs.emacsPackages.all-the-icons-nerd-fonts
     pkgs.emacsPackages.all-the-icons-completion
-    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
+    # (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
     pkgs.rawtherapee
 

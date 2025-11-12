@@ -33,7 +33,7 @@ in
     unstable.gimp3-with-plugins
     pkgs.inkscape
     pkgs.vlc
-    pkgs.qmplay2
+    # pkgs.qmplay2
     # pkgs.kdenlive
     # pkgs.lxappearance
     # pkgs.redshift
@@ -89,7 +89,7 @@ in
     pkgs.glxinfo
     # pkgs.zoom-us
     pinnedZoom
-    pkgs.signal-desktop
+    unstable.signal-desktop
     pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube
