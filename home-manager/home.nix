@@ -171,7 +171,7 @@ in {
     pkgs.emacs-all-the-icons-fonts
     pkgs.emacsPackages.nerd-icons
     pkgs.emacsPackages.all-the-icons
-    pkgs.emacsPackages.treemacs-all-the-icons
+    # pkgs.emacsPackages.treemacs-all-the-icons
     pkgs.emacsPackages.all-the-icons-nerd-fonts
     pkgs.emacsPackages.all-the-icons-completion
     # (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
@@ -179,6 +179,8 @@ in {
     pkgs.rawtherapee
 
   ];
+
+  home.enableNixpkgsReleaseCheck = false;
   # programs.firejail = {
   #   wrappedBinaries = {
   #     firefox = {

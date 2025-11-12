@@ -51,7 +51,7 @@ in
     pkgs.dialect
     pkgs.calibre
     # pkgs.kdeconnect
-    # pkgs.remmina
+    pkgs.remmina
     # pkgs.cinnamon.nemo
     # unstable.cinnamon.nemo-fileroller
     # unstable.cinnamon.nemo-with-extensions
@@ -89,7 +89,7 @@ in
     pkgs.glxinfo
     # pkgs.zoom-us
     pinnedZoom
-    unstable.signal-desktop
+    pkgs.signal-desktop
     pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube
@@ -112,6 +112,9 @@ in
     pkgs.libsForQt5.plasma-browser-integration
     pkgs.protonvpn-gui
     pkgs.deluge
+    (pkgs.kodi.withPackages (kodiPkgs: with kodiPkgs; [
+      youtube
+    ]))
   ];
 
   home.file = {
