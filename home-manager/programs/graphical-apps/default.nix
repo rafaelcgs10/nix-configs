@@ -1,8 +1,8 @@
 { pkgs, lib, config, ...}:
 let
-  nur = import (builtins.fetchTarball "https://github.com/nix-community/nur-combined/archive/fe301d9a7b9346a0d50252696b9a4feeed60f1c4.tar.gz") {
-    inherit pkgs;
-  };
+  # nur = import (builtins.fetchTarball "https://github.com/nix-community/nur-combined/archive/fe301d9a7b9346a0d50252696b9a4feeed60f1c4.tar.gz") {
+  #   inherit pkgs;
+  # };
   unstable = import <nixpkgs-unstable> {};
 
   # createBraveExtensionFor = browserVersion: { id, sha256, version }:
@@ -89,7 +89,7 @@ in
     pkgs.glxinfo
     # pkgs.zoom-us
     pinnedZoom
-    pkgs.signal-desktop
+    # pkgs.signal-desktop
     pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube

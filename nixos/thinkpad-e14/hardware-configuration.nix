@@ -30,31 +30,31 @@ in
   boot.supportedFilesystems = [ "nfs" ];
   # boot.blacklistedKernelModules = [ "rtw88_8821ce" ];
 
-  services.xserver = {
-    libinput = {
-      enable = true;
+  # services.xserver = {
+  #   libinput = {
+  #     enable = true;
 
-      mouse = {
-        disableWhileTyping = true;
-        accelProfile = "flat";
-        accelSpeed = "0";
-      };
-    };
+  #     mouse = {
+  #       disableWhileTyping = true;
+  #       accelProfile = "flat";
+  #       accelSpeed = "0";
+  #     };
+  #   };
 
     # videoDrivers = [ "amdgpu" ];
 
-    serverLayoutSection = ''
-      Option "BlankTime" "0"
-      Option "StandbyTime" "0"
-      Option "SuspendTime" "0"
-      Option "OffTime" "0"
-    '';
+  #   serverLayoutSection = ''
+  #     Option "BlankTime" "0"
+  #     Option "StandbyTime" "0"
+  #     Option "SuspendTime" "0"
+  #     Option "OffTime" "0"
+  #   '';
 
-    deviceSection = ''
-      Option "DRI" "3"
-      Option "TearFree" "True"
-    '';
-  };
+  #   deviceSection = ''
+  #     Option "DRI" "3"
+  #     Option "TearFree" "True"
+  #   '';
+  # };
 
   services.autorandr.enable = true;
   systemd.services.autorandr = {
@@ -65,9 +65,9 @@ in
       Type = lib.mkForce "simple";
     };
   };
-  services.xserver.libinput.touchpad.tappingDragLock = false;
-  services.xserver.libinput.touchpad.tapping = false;
-  services.xserver.libinput.mouse.tapping = false;
+  # services.xserver.libinput.touchpad.tappingDragLock = false;
+  # services.xserver.libinput.touchpad.tapping = false;
+  # services.xserver.libinput.mouse.tapping = false;
 
   systemd.sleep.extraConfig = ''
       HibernateDelaySec=3m
@@ -81,13 +81,13 @@ in
   '';
   # services.tlp.enable = true;
 
-  hardware.opengl.extraPackages = with pkgs; [
+  hardware.graphics.extraPackages = with pkgs; [
     amdvlk
     # rocm-opencl-icd
     # rocm-opencl-runtime
   ];
 
-  hardware.opengl.extraPackages32 = with pkgs; [
+  hardware.graphics.extraPackages32 = with pkgs; [
     driversi686Linux.amdvlk
   ];
 
@@ -129,10 +129,10 @@ in
   };
 
   programs.xwayland.enable = true;
-  services.xserver = {
-    layout = "br";
-    xkbVariant = "thinkpad";
-  };
+  # services.xserver = {
+  #   layout = "br";
+  #   xkbVariant = "thinkpad";
+  # };
   systemd.user.services.xmodmap = {
     serviceConfig.PassEnvironment = "DISPLAY";
     script = ''
