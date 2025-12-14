@@ -357,6 +357,7 @@ in
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
 
+
   # services.xserver.desktopManager.kodi.enable = true;
   # services.xserver.desktopManager.kodi.package = pkgs.kodi.withPackages (p: with p; [ future osmc-skin jellyfin inputstream-rtmp inputstreamhelper inputstream-adaptive inputstream-ffmpegdirect requests myconnpy dateutil invidious joystick ]);
 

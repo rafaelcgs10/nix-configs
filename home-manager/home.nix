@@ -154,13 +154,14 @@ in {
     pkgs.liberation_ttf
     pkgs.dina-font
     pkgs.mononoki
-    pkgs.font-awesome_4
-    pkgs.font-awesome_5
+    # pkgs.font-awesome_4
+    # pkgs.font-awesome_5
     pkgs.papirus-icon-theme
     pkgs.corefonts
     pkgs.vistafonts
     pkgs.wineWowPackages.staging
     pkgs.winetricks
+    pkgs.fira-code
     # pkgs.wine64
     # pkgs.wineWow64Packages.full
     # pkgs.wineWowPackages.stable
@@ -176,7 +177,7 @@ in {
     pkgs.emacsPackages.all-the-icons-completion
     # (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
-    pkgs.rawtherapee
+    # pkgs.rawtherapee
 
   ];
 

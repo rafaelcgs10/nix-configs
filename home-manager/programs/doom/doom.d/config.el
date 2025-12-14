@@ -7,7 +7,7 @@
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
 ;; clients, file templates and snippets.
 (setq user-full-name "Rafael Castro Gonçalves Silva"
-      user-mail-address "rafaelcgs10@gmail.com")
+      user-mail-address "me@rafaelcgs.com")
 
 ;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
 ;; are the three important ones:
@@ -21,6 +21,9 @@
 ;; font string. You generally only need these two:
 ;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
 ;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
+;; (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
+(setq doom-font (font-spec :family "Fira Code" :size 12))
+;; {}}}{{{{{}
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
@@ -408,7 +411,6 @@ With prefix argument (`C-u'), also kill the special buffers."
               (message "Killing buffer %s" buf-name)
               (kill-buffer buf))))))))
 
-;; (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
 
 ;; (use-package! nix-mode
 ;;   :interpreter ("\\(?:cached-\\)?nix-shell" . +nix-shell-init-mode)
@@ -499,17 +501,6 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 ;; (custom-set-faces
 ;;  '(lsp-isar-font-foreground-quoted ((t (:background nil)))))
-
-(setq custom-safe-themes t)
-(use-package! cycle-themes
-  :ensure t
-  :init
-  (setq custom-safe-themes t)
-  (load-theme 'doom-one-light t nil)
-  (load-theme 'doom-one t nil)
-  (setq cycle-themes-theme-list '(doom-one doom-one-light))
-  :config
-  (cycle-themes-mode))
 
 ;; (after! flycheck
 ;;   (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
@@ -619,3 +610,20 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;                  :protocol "http"
 ;;                  :host "localhost:4891"
 ;;                  :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf")))
+;;
+
+(setq custom-safe-themes t)
+(use-package! cycle-themes
+  :ensure t
+  :init
+  (setq custom-safe-themes t)
+  (load-theme 'doom-one-light t nil)
+  (load-theme 'doom-one t nil)
+  (setq cycle-themes-theme-list '(doom-one doom-one-light))
+  :config
+  (cycle-themes-mode))
+
+
+
+(setq-default fill-column 80)
+(setq major-mode-remap-alist major-mode-remap-defaults)

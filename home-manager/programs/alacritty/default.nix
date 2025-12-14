@@ -19,11 +19,11 @@
 
       colors.draw_bold_text_with_bright_colors = true;
       font = {
-        normal.family = "mononoki";
+        normal.family = "Fira Code";
         normal.style = "Regular";
-        bold.family = "mononoki";
+        bold.family = "Fira Code";
         bold.style = "Regular";
-        italic.family = "mononoki";
+        italic.family = "Fira Code";
         italic.style = "Regular";
         # blod_italic.family = "mononoki";
         # blod_italic.style = "Regular";
