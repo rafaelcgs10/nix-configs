@@ -19,15 +19,15 @@
 
       colors.draw_bold_text_with_bright_colors = true;
       font = {
-        normal.family = "Fira Code";
+        normal.family = "Hack";
         normal.style = "Regular";
-        bold.family = "Fira Code";
+        bold.family = "Hack";
         bold.style = "Regular";
-        italic.family = "Fira Code";
+        italic.family = "Hack";
         italic.style = "Regular";
         # blod_italic.family = "mononoki";
         # blod_italic.style = "Regular";
-        size = 10.0;
+        size = 12.0;
       };
 
       colors = {
