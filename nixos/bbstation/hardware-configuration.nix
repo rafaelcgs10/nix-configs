@@ -65,9 +65,9 @@ in
     in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
   };
 
-  # systemd = {
-  #   extraConfig = "DefaultTimeoutStopSec=10s";
-  # };
+  systemd = {
+    extraConfig = "DefaultTimeoutStopSec=10s";
+  };
 
   services.earlyoom = {
     enable = true;
@@ -132,12 +132,12 @@ in
   };
   systemd.services.docker.serviceConfig.KillMode = "mixed";
 
-  # virtualisation.virtualbox.host.enable = true;
-  # virtualisation.virtualbox.host.enableExtensionPack = true;
-  # virtualisation.virtualbox.guest.dragAndDrop = true;
+  virtualisation.virtualbox.host.enable = true;
+  virtualisation.virtualbox.host.enableExtensionPack = true;
+  virtualisation.virtualbox.guest.dragAndDrop = true;
   # nixpkgs.config.virtualbox.host.enableExtensionPack = true;
 
-  # users.extraGroups.vboxusers.members = [ "rafael" "kv" ];
+  users.extraGroups.vboxusers.members = [ "rafael" "kv" ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's

@@ -47,7 +47,7 @@ in
     pkgs.inkscape
     # (pkgs.calibre.override { unrarSupport = true; })
     pkgs.libreoffice
-    pkgs.onlyoffice-desktopeditors
+    pkgs.onlyoffice-bin
     pkgs.dialect
     pkgs.calibre
     # pkgs.kdeconnect
@@ -76,7 +76,7 @@ in
     # nur.repos.xeals.amdgpu-fan
     # nur.repos.genesis.hdl-batch-installer
     pkgs.upscayl
-    # pkgs.gpt4all
+    pkgs.gpt4all
 
     # pkgs.flameshot
     # pkgs.noisetorch
@@ -86,7 +86,7 @@ in
     pkgs.xdotool
     pkgs.lxrandr
     pkgs.srandrd
-    pkgs.mesa-demos
+    pkgs.glxinfo
     # pkgs.zoom-us
     pinnedZoom
     pkgs.signal-desktop
@@ -108,8 +108,8 @@ in
     pkgs.kdePackages.kalk
     #
     # FIXME: move to kde things
-    # pkgs.libsForQt5.kasts
-    # pkgs.libsForQt5.plasma-browser-integration
+    pkgs.libsForQt5.kasts
+    pkgs.libsForQt5.plasma-browser-integration
     pkgs.protonvpn-gui
     pkgs.deluge
     (pkgs.kodi.withPackages (kodiPkgs: with kodiPkgs; [
