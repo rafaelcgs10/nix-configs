@@ -69,9 +69,9 @@ in
   # services.xserver.libinput.touchpad.tapping = false;
   # services.xserver.libinput.mouse.tapping = false;
 
-  systemd.sleep.extraConfig = ''
-      HibernateDelaySec=3m
-    '';
+  # systemd.sleep.extraConfig = ''
+  #     HibernateDelaySec=3m
+  #   '';
 
   services.logind.lidSwitchExternalPower = "suspend";
   services.logind.lidSwitch = "suspend";
