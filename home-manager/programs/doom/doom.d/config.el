@@ -25,7 +25,6 @@
 ;; (setq doom-font (font-spec :family "Fira Code" :height 180 :weight'normal :width 'normal))
 (setq doom-font (font-spec :family "Hack" :height 120))
 ;; {}}}{{{{{}
-;; (setq global-prettify-symbols-mode t)
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the

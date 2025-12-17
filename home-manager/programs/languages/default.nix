@@ -90,7 +90,6 @@ in
     pkgs.texlive.combined.scheme-full
     # pkgs.python311Packages.pygments
     pkgs.go
-    pkgs.python3
     pkgs.cmake
     pkgs.clang
     pkgs.clang-tools
