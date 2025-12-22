@@ -34,6 +34,7 @@ in {
     _JAVA_OPTIONS = "-Dawt.useSystemAAFontSettings=on";
     JAVA_OPTS = "-Xverify:none";
     PAGER = "less";
+    GTK_USE_PORTAL = "1";
     EDITOR = "vim";
     # LSP_USE_PLISTS = "true";
 
