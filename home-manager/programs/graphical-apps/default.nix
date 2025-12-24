@@ -4,6 +4,9 @@ let
   #   inherit pkgs;
   # };
   unstable = import <nixpkgs-unstable> {};
+  new_darktable = import (builtins.fetchTarball {
+        url = "https://github.com/NixOS/nixpkgs/archive/7eea86e9c4edb957d3fa952f7454e6cbdf1721e5.tar.gz";
+    }) {};
 
   # createBraveExtensionFor = browserVersion: { id, sha256, version }:
   #   {
@@ -93,7 +96,7 @@ in
     pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube
-    unstable.darktable
+    new_darktable.darktable
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
