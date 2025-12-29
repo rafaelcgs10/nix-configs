@@ -162,7 +162,7 @@ in
     pkgs.haskellPackages.haskell-language-server
     pkgs.haskellPackages.hlint
     pkgs.haskellPackages.stack
-    pkgs.haskellPackages.apply-refact
+    # pkgs.haskellPackages.apply-refact
     pkgs.haskellPackages.hoogle
     # pkgs.haskellPackages.ghc-mod
     # pkgs.lua
@@ -170,7 +170,7 @@ in
     pkgs.haskellPackages.haskell-src-exts
     # pkgs.coq
     # mynixpkgs.coqPackages_8_15.coqide
-    pkgs.coq_8_5
+    # pkgs.coq_8_5
     # pkgs.coqPackages_8_5.mathcomp-ssreflect
     # pkgs.coqPackages_8_5.mathcomp
     # mynixpkgs.coqPackages_8_15.coq-ext-lib

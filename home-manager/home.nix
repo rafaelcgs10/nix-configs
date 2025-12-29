@@ -20,7 +20,7 @@ in {
     };
   };
 
-  home.stateVersion = "25.05";
+  home.stateVersion = "25.11";
 
   imports = [
     ./imports/default.nix
@@ -151,7 +151,7 @@ in {
     # Fonts
     pkgs.noto-fonts
     # pkgs.noto-fonts-cjk
-    pkgs.noto-fonts-emoji
+    # pkgs.noto-fonts-emoji
     pkgs.liberation_ttf
     pkgs.dina-font
     pkgs.mononoki
@@ -159,7 +159,7 @@ in {
     # pkgs.font-awesome_5
     pkgs.papirus-icon-theme
     pkgs.corefonts
-    pkgs.vistafonts
+    # pkgs.vistafonts
     pkgs.wineWowPackages.staging
     pkgs.winetricks
     pkgs.fira-code
