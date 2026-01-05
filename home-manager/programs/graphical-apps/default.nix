@@ -105,6 +105,7 @@ in
     pkgs.qalculate-qt
     pkgs.chromium
 
+    pkgs.koreader
     pkgs.zotero
     pkgs.simple-scan
     pkgs.thunderbird
