@@ -132,9 +132,9 @@ in
   };
   systemd.services.docker.serviceConfig.KillMode = "mixed";
 
-  virtualisation.virtualbox.host.enable = true;
-  virtualisation.virtualbox.host.enableExtensionPack = true;
-  virtualisation.virtualbox.guest.dragAndDrop = true;
+  # virtualisation.virtualbox.host.enable = true;
+  # virtualisation.virtualbox.host.enableExtensionPack = true;
+  # virtualisation.virtualbox.guest.dragAndDrop = true;
   # nixpkgs.config.virtualbox.host.enableExtensionPack = true;
 
   users.extraGroups.vboxusers.members = [ "rafael" "kv" ];

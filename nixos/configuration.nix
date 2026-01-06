@@ -235,6 +235,10 @@ in {
     v4l-utils
     rclone
     nix-index
+    gphoto2
+    gphoto2fs
+    libgphoto2
+    kdePackages.kamera
 
     # libnotify
     # libdbusmenu
