@@ -114,7 +114,7 @@ in
     forceFullCompositionPipeline = false;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = unstable.linuxPackages.nvidiaPackages.beta;
+    package = pkgs.linuxPackages.nvidiaPackages.beta;
   };
   powerManagement = {
     cpuFreqGovernor = "performance";
@@ -124,6 +124,13 @@ in
   services.printing.browsing = true;
   services.printing.drivers = [ pkgs.carps-cups ];
 
+  services.syncthing = {
+    user = "rafael";
+    group = "users";
+    dataDir = "/home/rafael";
+    enable = true;
+    relay.enable = true;
+  };
 
   # Docker config
   virtualisation.docker = {
