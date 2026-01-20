@@ -114,7 +114,7 @@ in
     forceFullCompositionPipeline = false;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = unstable.linuxPackages.nvidiaPackages.beta;
+    package = pkgs.linuxPackages.nvidiaPackages.beta;
   };
   powerManagement = {
     cpuFreqGovernor = "performance";

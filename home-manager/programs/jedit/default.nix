@@ -6,7 +6,7 @@ let
   }) {};
 in
 {
-  home.packages = with newer_isabelle_pkgs; [
+  home.packages = with pkgs; [
     (isabelle)
     # (isabelle.withComponents (p: [ p.isabelle-linter ]))
   ];
