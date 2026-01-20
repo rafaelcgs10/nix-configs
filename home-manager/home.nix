@@ -145,6 +145,7 @@ in {
     # pkgs.youtube-dl
     pkgs.fuse
     pkgs.sshfs
+    pkgs.syncthing
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 
