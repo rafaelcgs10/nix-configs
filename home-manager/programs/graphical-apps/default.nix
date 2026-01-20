@@ -73,6 +73,7 @@ in
     pkgs.pgadmin4-desktopmode
     pkgs.handbrake # ghb
     pkgs.lshw-gui
+    pkgs.freerdp
     # pkgs.evince
     # pkgs.masterpdfeditor4
     # nur.repos.some-pkgs.llama-cpp
