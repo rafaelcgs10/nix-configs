@@ -240,6 +240,7 @@ in {
     gphoto2fs
     libgphoto2
     kdePackages.kamera
+    waypipe
 
     # libnotify
     # libdbusmenu
