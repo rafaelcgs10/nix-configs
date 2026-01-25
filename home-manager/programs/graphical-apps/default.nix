@@ -37,6 +37,8 @@ in
     pkgs.inkscape
     pkgs.lutris
     pkgs.hydralauncher
+    pkgs.ludusavi
+    pkgs.protonplus
     pkgs.vlc
     # pkgs.qmplay2
     # pkgs.kdenlive
