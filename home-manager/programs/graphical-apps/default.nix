@@ -35,6 +35,10 @@ in
   home.packages = [
     unstable.gimp3-with-plugins
     pkgs.inkscape
+    pkgs.lutris
+    pkgs.hydralauncher
+    pkgs.ludusavi
+    pkgs.protonup-qt
     pkgs.vlc
     # pkgs.qmplay2
     # pkgs.kdenlive

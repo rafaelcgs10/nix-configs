@@ -76,16 +76,16 @@ in
   services.logind.lidSwitchExternalPower = "suspend";
   services.logind.lidSwitch = "suspend";
   services.logind.killUserProcesses = true;
-  services.logind.extraConfig = ''
-    HandlePowerKey=suspend
-  '';
+  # services.logind.extraConfig = ''
+  #   HandlePowerKey=suspend
+  # '';
   # services.tlp.enable = true;
 
-  hardware.graphics.extraPackages = with pkgs; [
-    amdvlk
-    # rocm-opencl-icd
-    # rocm-opencl-runtime
-  ];
+  # hardware.graphics.extraPackages = with pkgs; [
+  #   amdvlk
+  #   # rocm-opencl-icd
+  #   # rocm-opencl-runtime
+  # ];
 
   hardware.graphics.extraPackages32 = with pkgs; [
     driversi686Linux.amdvlk
@@ -124,9 +124,9 @@ in
     "kvm.enable_virt_at_load=0"
   ];
 
-  systemd = {
-    extraConfig = "DefaultTimeoutStopSec=10s";
-  };
+  # systemd = {
+  #   extraConfig = "DefaultTimeoutStopSec=10s";
+  # };
 
   programs.xwayland.enable = true;
   # services.xserver = {
@@ -356,6 +356,12 @@ in
   boot.extraModprobeConfig = "options kvm_intel nested=1";
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
+  services.cron = {
+    enable = true;
+    systemCronJobs = [
+      "0 * * * * ludusavi backup --force"
+    ];
+  };
 
 
   # services.xserver.desktopManager.kodi.enable = true;

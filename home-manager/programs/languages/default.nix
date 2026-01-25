@@ -110,7 +110,7 @@ in
     # lldb-mi
     # pkgs.z3
     # pkgs.vampire
-    # pkgs.python310
+    pkgs.python3
     # pkgs.conda
     # pkgs.python310Packages.conda
     # pkgs.python310Packages.tensorflow
