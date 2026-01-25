@@ -356,6 +356,12 @@ in
   boot.extraModprobeConfig = "options kvm_intel nested=1";
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
+  services.cron = {
+    enable = true;
+    systemCronJobs = [
+      "0 * * * * ludusavi backup --force"
+    ];
+  };
 
 
   # services.xserver.desktopManager.kodi.enable = true;
