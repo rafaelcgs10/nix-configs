@@ -38,7 +38,7 @@ in
     pkgs.lutris
     pkgs.hydralauncher
     pkgs.ludusavi
-    pkgs.protonup-qt
+    pkgs.protonplus
     pkgs.vlc
     # pkgs.qmplay2
     # pkgs.kdenlive
