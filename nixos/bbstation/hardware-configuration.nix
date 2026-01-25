@@ -166,6 +166,17 @@ in
   # virtualisation.virtualbox.guest.dragAndDrop = true;
   # nixpkgs.config.virtualbox.host.enableExtensionPack = true;
 
+  services.cloudflared = {
+    enable = true;
+    tunnels = {
+      "d25ffd7d-c129-4ad6-9053-bed47e3f4543" = {
+        credentialsFile = "/home/rafael/.cloudflared/d25ffd7d-c129-4ad6-9053-bed47e3f4543.json";
+        default = "http_status:404";
+      };
+    };
+  };
+
+
   users.extraGroups.vboxusers.members = [ "rafael" "kv" ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking

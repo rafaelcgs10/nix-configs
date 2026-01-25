@@ -297,8 +297,16 @@ in {
   };
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
-  services.sshguard.enable = true;
+  services.openssh = {
+    enable = true;
+    ports = [ 22 ];
+    settings = {
+      PermitRootLogin = "no";
+      AllowUsers = [ "rafael" ];
+    };
+  };
+  # services.sshguard.enable = true;
+  # services.fail2ban.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
@@ -307,8 +315,8 @@ in {
   networking.firewall.enable = true;
   networking.firewall.allowPing = true;
 
-  networking.firewall.allowedTCPPorts = [ 8080 8384 8096 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 22000 63786 43686 47849 33976 53277 51372 3389 ];
-  networking.firewall.allowedUDPPorts = [ 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 22000 63786 43686 47849 33976 53277 51372 3389 ];
+  networking.firewall.allowedTCPPorts = [ 5432 8080 8384 8096 53 137 136 139 445 3080 80 5357 631 8443 8265 8181 8266 8267 22000 63786 43686 47849 33976 53277 51372 3389 ];
+  networking.firewall.allowedUDPPorts = [ 5432 9091 53 49152 3080 3702 631 8443 8265 8266 8267 8181 22000 63786 43686 47849 33976 53277 51372 3389 ];
   networking.firewall = {
     allowedTCPPortRanges = [ { from = 1714; to = 1764; }  ];
     allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
