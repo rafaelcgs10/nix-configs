@@ -35,10 +35,16 @@ in
   home.packages = [
     unstable.gimp3-with-plugins
     pkgs.inkscape
-    pkgs.lutris
+    (pkgs.lutris.override {
+        extraPkgs = pkgs: [
+          # List package dependencies here
+          pkgs.wineWowPackages.stable
+          pkgs.winetricks
+        ];
+    })
     pkgs.hydralauncher
     pkgs.ludusavi
-    pkgs.protonplus
+    pkgs.protonup-qt 
     pkgs.vlc
     # pkgs.qmplay2
     # pkgs.kdenlive

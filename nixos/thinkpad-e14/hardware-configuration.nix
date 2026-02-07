@@ -18,6 +18,8 @@ in
   # users.users.qbittorrent.isSystemUser = true;
   # users.users.qbittorrent.group = "qbittorrent";
 
+  programs.steam.enable = true;
+
   services.clamav.daemon.enable = true;
   services.clamav.updater.enable = true;
   systemd.services.clamav-daemon.serviceConfig = {
@@ -87,9 +89,9 @@ in
   #   # rocm-opencl-runtime
   # ];
 
-  hardware.graphics.extraPackages32 = with pkgs; [
-    driversi686Linux.amdvlk
-  ];
+  # hardware.graphics.extraPackages32 = with pkgs; [
+  #   driversi686Linux.amdvlk
+  # ];
 
   # hardware.opengl.driSupport = true;
   # hardware.opengl.driSupport32Bit = true;
@@ -362,6 +364,14 @@ in
       "0 * * * * ludusavi backup --force"
     ];
   };
+  services.incron = {
+    enable = true;
+    systab =
+      ''
+      /home/rafael/test/ IN_CREATE,IN_MOVED_TO,IN_MODIFY [[ $# == *.@(CR3|cr3)  ]] && echo '$@$#' >> /home/rafael/test/log.txt 
+     '';
+  };
+
 
 
   # services.xserver.desktopManager.kodi.enable = true;

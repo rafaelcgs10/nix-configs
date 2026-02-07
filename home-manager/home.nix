@@ -161,7 +161,7 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     # pkgs.vistafonts
-    pkgs.wineWowPackages.staging
+    pkgs.wineWowPackages.waylandFull
     pkgs.winetricks
     pkgs.fira-code
     # pkgs.wine64
