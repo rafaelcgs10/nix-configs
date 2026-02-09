@@ -151,7 +151,7 @@ in
     options = let
       # this line prevents hanging on network split
       automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
+    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" "noserverino" ];
   };
 
   # fileSystems."/" =
@@ -364,13 +364,13 @@ in
       "0 * * * * ludusavi backup --force"
     ];
   };
-  services.incron = {
-    enable = true;
-    systab =
-      ''
-      /home/rafael/test/ IN_CREATE,IN_MOVED_TO,IN_MODIFY [[ $# == *.@(CR3|cr3)  ]] && echo '$@$#' >> /home/rafael/test/log.txt 
-     '';
-  };
+  # services.incron = {
+  #   enable = true;
+  #   systab =
+  #     ''
+  #     /rafael_mounts/photos_from_rpi/08-02-2026/ IN_CREATE,IN_MOVED_TO ${pkgs.bash}/bin/bash /home/rafael/Documents/pi_photo_sync/darktable.sh $@ $# 
+  #    '';
+  # };
 
 
 
