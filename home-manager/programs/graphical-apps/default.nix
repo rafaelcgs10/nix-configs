@@ -36,6 +36,8 @@ in
     unstable.gimp3-with-plugins
     pkgs.inkscape
     pkgs.lutris
+    pkgs.gamescope
+    pkgs.mangohud
     pkgs.hydralauncher
     pkgs.ludusavi
     pkgs.protonplus
