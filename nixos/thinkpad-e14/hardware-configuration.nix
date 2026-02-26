@@ -18,6 +18,8 @@ in
   # users.users.qbittorrent.isSystemUser = true;
   # users.users.qbittorrent.group = "qbittorrent";
 
+  programs.steam.enable = true;
+
   services.clamav.daemon.enable = true;
   services.clamav.updater.enable = true;
   systemd.services.clamav-daemon.serviceConfig = {
@@ -87,9 +89,9 @@ in
   #   # rocm-opencl-runtime
   # ];
 
-  hardware.graphics.extraPackages32 = with pkgs; [
-    driversi686Linux.amdvlk
-  ];
+  # hardware.graphics.extraPackages32 = with pkgs; [
+  #   driversi686Linux.amdvlk
+  # ];
 
   # hardware.opengl.driSupport = true;
   # hardware.opengl.driSupport32Bit = true;
@@ -149,7 +151,7 @@ in
     options = let
       # this line prevents hanging on network split
       automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
+    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" "noserverino" ];
   };
 
   # fileSystems."/" =
@@ -367,6 +369,14 @@ in
       "0 * * * * ludusavi backup --force"
     ];
   };
+  # services.incron = {
+  #   enable = true;
+  #   systab =
+  #     ''
+  #     /rafael_mounts/photos_from_rpi/08-02-2026/ IN_CREATE,IN_MOVED_TO ${pkgs.bash}/bin/bash /home/rafael/Documents/pi_photo_sync/darktable.sh $@ $# 
+  #    '';
+  # };
+
 
 
   # services.xserver.desktopManager.kodi.enable = true;
