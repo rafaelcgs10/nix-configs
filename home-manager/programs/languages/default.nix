@@ -73,6 +73,39 @@ let
 
   #   phases = [ "unpackPhase" "buildPhase" "installPhase" ];
   # };
+  #
+
+  # We currently take all libraries from systemd and nix as the default
+  
+  # https://github.com/NixOS/nixpkgs/blob/c339c066b893e5683830ba870b1ccd3bbea88ece/nixos/modules/programs/nix-ld.nix#L44
+  
+  pythonldlibpath = lib.makeLibraryPath (with pkgs; [
+    zlib zstd stdenv.cc.cc curl openssl attr libssh bzip2 libxml2 acl libsodium util-linux xz systemd
+    mesa
+    fontconfig   
+    libgbm
+    libGLU
+    libGL
+    libglibutil
+  ]);
+  
+  # Darwin requires a different library path prefix
+  
+  wrapPrefix = if (!pkgs.stdenv.isDarwin) then "LD_LIBRARY_PATH" else "DYLD_LIBRARY_PATH";
+  
+  patchedpython = (pkgs.symlinkJoin {
+    
+    name = "python";
+    
+    paths = [ pkgs.python311 ];
+    
+    buildInputs = [ pkgs.makeWrapper ];
+    
+    postBuild = ''
+      wrapProgram "$out/bin/python3.11" --prefix ${wrapPrefix} : "${pythonldlibpath}"
+    '';
+    
+  }); 
 in
 {
   # programs.opam.enable = true;
@@ -110,8 +143,16 @@ in
     # lldb-mi
     # pkgs.z3
     # pkgs.vampire
-    pkgs.python3
+    patchedpython
+    pkgs.python311Packages.pip
+    pkgs.python311Packages.pyqt5
+    # (pkgs.buildFHSEnv {
+    #   name = "pixi";
+    #   runScript = "pixi";
+    #   targetPkgs = pkgs: with pkgs; [ pixi ];
+    # })
     # pkgs.conda
+    pkgs.micromamba
     # pkgs.python310Packages.conda
     # pkgs.python310Packages.tensorflow
     # pkgs.python310Packages.venvShellHook
