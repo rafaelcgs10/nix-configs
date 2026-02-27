@@ -1,6 +1,6 @@
 services:
-  rdesktop:
-    image: lscr.io/linuxserver/rdesktop:ubuntu-xfce
+  ubuntu:
+    image: lscr.io/linuxserver/rdesktop:ubuntu-mate
     container_name: rdesktop
     security_opt:
       - seccomp:unconfined #optional
@@ -10,9 +10,9 @@ services:
       - TZ=Etc/UTC
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock #optional
-      - /path/to/rdesktop/data:/config #optional
+      - /home/rafael/:/config/out/ #optional
     ports:
-      - 3389:3389
+      - 3392:3389
     devices:
       - /dev/dri:/dev/dri #optional
     shm_size: "1gb" #optional
