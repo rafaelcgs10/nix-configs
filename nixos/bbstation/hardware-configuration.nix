@@ -124,9 +124,15 @@ in
     cpuFreqGovernor = "performance";
   };
   # Printer and scanner stuff
-  services.printing.enable = true;
-  services.printing.browsing = true;
-  services.printing.drivers = [ pkgs.carps-cups ];
+  services.printing = {
+    listenAddresses = [ "*:631" ];
+    allowFrom = [ "all" ];
+    browsing = true;
+    defaultShared = true;
+    openFirewall = true;
+  };
+  services.printing.drivers = [ pkgs.carps-cups pkgs.gutenprint pkgs.gutenprintBin pkgs.hplip pkgs.hplipWithPlugin pkgs.cnijfilter2];
+
 
   services.syncthing = {
     user = "rafael";

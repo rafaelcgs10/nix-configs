@@ -225,8 +225,13 @@ in
   networking.firewall.checkReversePath = false;
 
   # Printer and scanner stuff
-  services.printing.enable = true;
-  services.printing.browsing = true;
+  services.printing = {
+    listenAddresses = [ "*:631" ];
+    allowFrom = [ "all" ];
+    browsing = true;
+    defaultShared = true;
+    openFirewall = true;
+  };
   # services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.gutenprintBin pkgs.foomatic-db-ppds-withNonfreeDb pkgs.cups-drv-rastertosag-gdi pkgs.canon-cups-ufr2 ];
 
   hardware.sane.enable = true;

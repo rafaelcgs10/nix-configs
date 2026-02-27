@@ -39,16 +39,43 @@ in {
    #    rc-manager=file
    # '';
   };
-  networking = {
-    nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" ];
-    # nameservers = [  "1.1.1.1" ];
-  };
-  services.resolved = {
+  # networking = {
+  #   nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" ];
+  #   # nameservers = [  "localhost" ];
+  # };
+  # services.resolved = {
+  #   enable = true;
+  #   dnssec = "true";
+  #   domains = [ "~." ];
+  #   fallbackDns = [ "1.1.1.1#one.one.one.one" ];
+  #   dnsovertls = "true";
+  # };
+  services.pihole-ftl = {
     enable = true;
-    dnssec = "true";
-    domains = [ "~." ];
-    fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
-    dnsovertls = "true";
+    openFirewallDNS = true;              # To open port 53 for DNS traffic
+    openFirewallDHCP = true;
+    openFirewallWebserver = true;
+
+    # Settings documented at <https://docs.pi-hole.net/ftldns/configfile/>
+    settings = {
+      dns.upstreams = [ "1.1.1.1" "8.8.8.8" ];   # To use Cloudflare's DNS Servers
+    };
+
+    # Lists can be added via URL
+    lists = [
+      {
+        url = "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt";
+        type = "block";
+        enabled = true;
+        description = "Sample blocklist by hagezi";
+      }
+    ];
+  };
+  services.pihole-web = {
+    enable = true;
+    ports = [
+      "9090"
+    ];
   };
 
   # Set your time zone.
@@ -305,6 +332,11 @@ in {
       AllowUsers = [ "rafael" ];
     };
   };
+
+
+
+  services.flatpak.enable = true;
+
   # services.sshguard.enable = true;
   # services.fail2ban.enable = true;
 
@@ -329,6 +361,7 @@ in {
       flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     '';
   };
+
 
   nix.settings.download-buffer-size = 524288000;
 
