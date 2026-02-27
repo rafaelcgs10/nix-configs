@@ -143,9 +143,12 @@ in
     # lldb-mi
     # pkgs.z3
     # pkgs.vampire
-    patchedpython
+    # patchedpython
+    pkgs.python311
+    pkgs.fontconfig
     pkgs.python311Packages.pip
     pkgs.python311Packages.pyqt5
+    pkgs.conda
     # (pkgs.buildFHSEnv {
     #   name = "pixi";
     #   runScript = "pixi";

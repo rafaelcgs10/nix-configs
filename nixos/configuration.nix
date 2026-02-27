@@ -269,6 +269,10 @@ in {
     kdePackages.kamera
     waypipe
 
+    # (pkgs.writeShellScriptBin "python" ''
+    #   export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
+    #   exec ${pkgs.python311}/bin/python "$@"
+    # '')
     # libnotify
     # libdbusmenu
   ];
@@ -335,8 +339,6 @@ in {
 
 
 
-  services.flatpak.enable = true;
-
   # services.sshguard.enable = true;
   # services.fail2ban.enable = true;
 
@@ -369,9 +371,14 @@ in {
  #    enable = true;
  #    libraries = with pkgs; [
  #      zlib zstd stdenv.cc.cc curl openssl attr libssh bzip2 libxml2 acl libsodium util-linux xz systemd
+ #      mesa
+ #      fontconfig   
+ #      libgbm
+ #      libGLU
+ #      libGL
+ #      libglibutil
  #    ];
  #  };
-
   # programs.nix-ld.libraries = with pkgs; [
   #   libdrm
   #   mesa
