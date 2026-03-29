@@ -4,20 +4,19 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rawrefinary
-    security_opt:
-      - seccomp:unconfined
+    # security_opt:
+    #   - seccomp:unconfined
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock #optional
-      - /home/rafael/rdesktop/:/config/out/ #optional
+      - ~/:/out/
     ports:
-      - 3392:3389
-    devices:
-      - /dev/dri:/dev/dri #optional
-    shm_size: "1gb" #optional
-    restart: unless-stopped
+      - 14500:14500
+    # devices:
+    #   - /dev/dri:/dev/dri #optional
+    # shm_size: "1gb" #optional
+    # restart: unless-stopped
 
     # default user/password: abc

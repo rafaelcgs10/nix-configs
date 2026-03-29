@@ -1,7 +1,9 @@
-FROM lscr.io/linuxserver/rdesktop:ubuntu-mate
+FROM ubuntu:latest
 
-RUN sudo apt update
-RUN sudo apt install -y git python3 python3-pip python3-venv build-essential python3-dev libxcb-cursor0 libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0
+RUN apt update
+RUN apt install -y xterm git python3 python3-pip python3-venv
+    build-essential python3-dev xpra dbus-x11
+    libxkbcommon-x11-0 libxcb-*
 
 RUN git clone https://github.com/rymuelle/RawRefinery.git
 
@@ -17,3 +19,6 @@ RUN pip install torch~=2.8
 
 RUN python -m pip install rawrefinery
 
+COPY entrypoint.sh entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
