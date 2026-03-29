@@ -1,5 +1,5 @@
 services:
-  ubuntu:
+  ubuntu-mate:
     image: lscr.io/linuxserver/rdesktop:ubuntu-mate
     container_name: rdesktop
     security_opt:
@@ -10,7 +10,7 @@ services:
       - TZ=Etc/UTC
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock #optional
-      - /home/rafael/:/config/out/ #optional
+      - /home/rafael/rdesktop/:/config/out/ #optional
     ports:
       - 3392:3389
     devices:
