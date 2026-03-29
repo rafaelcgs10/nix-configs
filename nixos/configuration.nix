@@ -250,7 +250,7 @@ in {
     openh264
     ecryptfs
     # ecryptfs-helper
-    utillinux
+    util-linux
     hicolor-icon-theme
     ripgrep
     coreutils

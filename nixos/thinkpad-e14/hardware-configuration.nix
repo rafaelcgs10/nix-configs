@@ -75,9 +75,9 @@ in
       HibernateDelaySec=3m
     '';
 
-  services.logind.lidSwitchExternalPower = "suspend";
-  services.logind.lidSwitch = "suspend";
-  services.logind.killUserProcesses = true;
+  services.logind.settings.Login.HandleLidSwitchExternalPower = "suspend";
+  services.logind.settings.Login.HandleLidSwitch = "suspend";
+  services.logind.settings.Login.KillUserProcesses = true;
   # services.logind.extraConfig = ''
   #   HandlePowerKey=suspend
   # '';
@@ -358,8 +358,8 @@ in
   # Wayland for Electon
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-  virtualisation.virtualbox.host.enable = true;
-  nixpkgs.config.virtualbox.host.enableExtensionPack = true;
+  # virtualisation.virtualbox.host.enable = true;
+  # nixpkgs.config.virtualbox.host.enableExtensionPack = true;
   boot.extraModprobeConfig = "options kvm_intel nested=1";
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
