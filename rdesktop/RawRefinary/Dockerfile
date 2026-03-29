@@ -1,9 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt update
-RUN apt install -y xterm git python3 python3-pip python3-venv
-    build-essential python3-dev xpra dbus-x11
-    libxkbcommon-x11-0 libxcb-*
+RUN apt install -y git python3 python3-pip python3-venv build-essential python3-dev xpra dbus-x11 libxkbcommon-x11-0 libxcb-*
 
 RUN git clone https://github.com/rymuelle/RawRefinery.git
 

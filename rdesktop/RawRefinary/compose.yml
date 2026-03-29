@@ -1,9 +1,9 @@
 services:
-  ubuntu-rawrefinary:
+  ubuntu-rawrefinery:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rawrefinary
+    container_name: rawrefinery
     # security_opt:
     #   - seccomp:unconfined
     environment:
