@@ -106,7 +106,7 @@ in
     # pkgs.glxinfo
     # pkgs.zoom-us
     pkgs.zoom-us
-    pkgs.signal-desktop
+    unstable.signal-desktop
     # pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     unstable.freetube
@@ -135,9 +135,9 @@ in
     ]))
   ];
 
-  home.file = {
-    ".config/darktable/library.db".source = config.lib.file.mkOutOfStoreSymlink "/home/rafael/darktable/library.db";
-  };
+  # home.file = {
+  #   ".config/darktable/library.db".source = config.lib.file.mkoutofstoresymlink "/home/rafael/darktable/library.db";
+  # };
 
   programs.brave = {
     enable = true;
