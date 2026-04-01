@@ -65,9 +65,6 @@ pkgs.python3Packages.buildPythonPackage rec {
   dontWrapQtApps = true;
   dontUseCmakeConfigure = true;
 
-  cmakeFlags = [
-    "-DUSE_Nuke=OFF"
-    # "-DUSE_Robinmap=OFF"
-    "-DOpenImageIO_BUILD_MISSING_DEPS=required"
-  ];
+  # Pass CMake args through scikit-build-core's environment variable
+  env.SKBUILD_CMAKE_ARGS = "-DUSE_Nuke=OFF;-DOpenImageIO_BUILD_MISSING_DEPS=none";
 }
