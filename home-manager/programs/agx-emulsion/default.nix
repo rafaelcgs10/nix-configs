@@ -59,8 +59,8 @@ pkgs.python3Packages.buildPythonApplication rec {
 
   postFixup = ''
     wrapProgram $out/bin/agx-emulsion \
-      --prefix QT_PLUGIN_PATH : "${qt5.qtbase.bin}/${qt5.qtbase.qtPluginPrefix}" \
-      --prefix QT_PLUGIN_PATH : "${qt5.qtwayland.bin}/${qt5.qtbase.qtPluginPrefix}" \
+      --set QT_PLUGIN_PATH "${qt5.qtbase.bin}/${qt5.qtbase.qtPluginPrefix}:${qt5.qtwayland.bin}/${qt5.qtbase.qtPluginPrefix}" \
+      --set QT_QPA_PLATFORM xcb \
       --prefix LD_LIBRARY_PATH : "/run/opengl-driver/lib" \
       --set LIBGL_DRIVERS_PATH "/run/opengl-driver/lib/dri" \
       --set __EGL_VENDOR_LIBRARY_DIRS "/run/opengl-driver/share/glvnd/egl_vendor.d"
