@@ -1,5 +1,5 @@
 { pkgs ? import (fetchTarball {
-  url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
+  url = "https://github.com/NixOS/nixpkgs/archive/25.11.tar.gz";
 }) { 
   overlays = [
     (final: prev: {
@@ -14,7 +14,7 @@
 }
 }:
 
-pkgs.python312Packages.buildPythonApplication rec {
+pkgs.python3Packages.buildPythonApplication rec {
   pname = "agx-emulsion";
   version = "0.1.0-alpha";
   pyproject = true;
@@ -29,23 +29,23 @@ pkgs.python312Packages.buildPythonApplication rec {
 	  hash = "sha256-9N9ozvw7/XGHWX1AjblZbR7GI9dbHAwFUuV/C2HGZjI=";
   };
 
-  build-system = with pkgs.python312Packages; [ setuptools ];
+  build-system = with pkgs.python3Packages; [ setuptools ];
 
   dependencies = with pkgs; [
-   python312Packages.napari
-   python312Packages.numpy
-   python312Packages.matplotlib
-   python312Packages.scipy
-   python312Packages.scikit-image
-   python312Packages.dotmap
-   python312Packages.opt-einsum
-   python312Packages.magicgui
-   python312Packages.lmfit
-   python312Packages.pyqt5
-   python312Packages.numba
-   python312Packages.cython
-   python312Packages.colour-science
-   python312Packages.pyfftw
+   python3Packages.napari
+   python3Packages.numpy
+   python3Packages.matplotlib
+   python3Packages.scipy
+   python3Packages.scikit-image
+   python3Packages.dotmap
+   python3Packages.opt-einsum
+   python3Packages.magicgui
+   python3Packages.lmfit
+   python3Packages.pyqt5
+   python3Packages.numba
+   python3Packages.cython
+   python3Packages.colour-science
+   python3Packages.pyfftw
    openimageio
   ]; 
   

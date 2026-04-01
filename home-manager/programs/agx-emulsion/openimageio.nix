@@ -4,7 +4,7 @@
 
 pkgs.python3Packages.buildPythonPackage rec {
   pname = "OpenImageIO";
-  version = "3.1.8.0";
+  version = "3.1.10.0";
   pyproject = true;
 
   src = pkgs.python3Packages.fetchPypi {
@@ -20,21 +20,20 @@ pkgs.python3Packages.buildPythonPackage rec {
   ];
 
   dependencies = with pkgs; [
-	  python3Packages.numpy
-	  python3Packages.scipy
+    python3Packages.numpy
+    python3Packages.scipy
   ];
 
   nativeBuildInputs = with pkgs; [
-	  fftw
+    fftw
     cmake
     ninja
-    git
   ];
   buildInputs = with pkgs; [
     zlib
     imath
     openexr
-    libjpeg 
+    libjpeg
     libtiff
     libpng
     openimageio
@@ -52,14 +51,23 @@ pkgs.python3Packages.buildPythonPackage rec {
     ffmpeg
     openjph
     libwebp
+    robin-map
   ] ++ (with pkgs.python3Packages; [
     pybind11
   ]);
 
+  # The PyPI tarball doesn't ship testsuite/, but CMake references it
+  postUnpack = ''
+    mkdir -p $sourceRoot/testsuite/common
+    touch $sourceRoot/testsuite/runtest.py
+  '';
+
   dontWrapQtApps = true;
-cmakeFlags = [
-  "-DUSE_Nuke=OFF"
-  # "-DUSE_Robinmap=OFF"
+  dontUseCmakeConfigure = true;
+
+  cmakeFlags = [
+    "-DUSE_Nuke=OFF"
+    # "-DUSE_Robinmap=OFF"
     "-DOpenImageIO_BUILD_MISSING_DEPS=required"
-];
+  ];
 }
