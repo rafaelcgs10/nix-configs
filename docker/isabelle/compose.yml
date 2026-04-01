@@ -1,0 +1,14 @@
+services:
+  isabelle-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: isabelle-agent
+    # volumes:
+    #   - .:/home/isabelle/project
+    environment:
+      - PROJECT_DIR='/home/ubuntu/project'
+      - ISABELLE_HOME='/home/ubuntu/Isabelle2025-2'
+      - IQ_AUTH_TOKEN='MY_TOKEN'
+    ports:
+      - 14500:14500

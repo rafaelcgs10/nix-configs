@@ -1,0 +1,9 @@
+{
+  "mcp": {
+    "isabelle": {
+      "type": "local",
+      "command": ["python3", "/home/ubuntu/AutoCorrode/iq/iq_bridge.py"],
+      "enabled": true
+    }
+  }
+}
