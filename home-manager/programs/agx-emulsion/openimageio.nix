@@ -1,0 +1,70 @@
+{
+  pkgs ? import <nixpkgs> {},
+}:
+
+pkgs.python3Packages.buildPythonPackage rec {
+  pname = "OpenImageIO";
+  version = "3.1.10.0";
+  pyproject = true;
+
+  src = pkgs.python3Packages.fetchPypi {
+    pname = "openimageio";   # must be lowercase
+    version = "3.1.10.0";    # use a version that actually exists
+    sha256 = "sha256-XYA5S5YtwPg8FO/Ov8SBw9HtOr5mABsvYCJhzbHJBYo=";
+  };
+
+  build-system = with pkgs.python3Packages; [
+    setuptools
+    setuptools-scm
+    scikit-build-core
+  ];
+
+  dependencies = with pkgs; [
+    python3Packages.numpy
+    python3Packages.scipy
+  ];
+
+  nativeBuildInputs = with pkgs; [
+    fftw
+    cmake
+    ninja
+  ];
+  buildInputs = with pkgs; [
+    zlib
+    imath
+    openexr
+    libjpeg
+    libtiff
+    libpng
+    openimageio
+    freetype
+    opencolorio
+    opencv
+    libraw
+    libheif
+    mesa
+    libgbm
+    libglvnd
+    qt6.qtbase
+    qt6.qttools
+    giflib
+    ffmpeg
+    openjph
+    libwebp
+    robin-map
+  ] ++ (with pkgs.python3Packages; [
+    pybind11
+  ]);
+
+  # The PyPI tarball doesn't ship testsuite/, but CMake references it
+  postUnpack = ''
+    mkdir -p $sourceRoot/testsuite/common
+    touch $sourceRoot/testsuite/runtest.py
+  '';
+
+  dontWrapQtApps = true;
+  dontUseCmakeConfigure = true;
+
+  # Pass CMake args through scikit-build-core's environment variable
+  env.SKBUILD_CMAKE_ARGS = "-DUSE_Nuke=OFF;-DOpenImageIO_BUILD_MISSING_DEPS=none";
+}

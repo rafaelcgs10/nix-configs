@@ -128,15 +128,16 @@ in
     pkgs.simple-scan
     pkgs.thunderbird
     pkgs.kdePackages.kalk
+    pkgs.xpra
     #
     # FIXME: move to kde things
     # pkgs.libsForQt5.kasts
     # pkgs.libsForQt5.plasma-browser-integration
     pkgs.protonvpn-gui
     pkgs.deluge
-    (pkgs.kodi.withPackages (kodiPkgs: with kodiPkgs; [
-      youtube
-    ]))
+    # (pkgs.kodi.withPackages (kodiPkgs: with kodiPkgs; [
+    #   youtube
+    # ]))
   ];
 
   # home.file = {
