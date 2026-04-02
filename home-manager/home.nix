@@ -44,6 +44,7 @@ in {
     IPROVER_HOME = "~/.nix-profile/bin";
     SATALLAX_HOME = "~/.nix-profile/bin";
     LEO3_HOME = "~/.nix-profile/bin";
+    IQ_AUTH_TOKEN = "MY_TOKEN";
   };
 
   xdg = {
