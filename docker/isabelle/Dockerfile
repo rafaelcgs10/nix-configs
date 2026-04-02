@@ -12,7 +12,6 @@ RUN tar xvf Isabelle2025-2_linux.tar.gz
 
 ENV ISABELLE_HOME=$HOME/Isabelle2025-2
 ENV PROJECT_DIR=$HOME/project
-ENV IQ_AUTH_TOKEN="MY_TOKEN"
 
 RUN mkdir -p $PROJECT_DIR
 
@@ -29,16 +28,8 @@ WORKDIR $HOME/AutoCorrode/iq/
 RUN make 
 RUN make install
 
-WORKDIR $PROJECT_DIR
-
-RUN git clone https://github.com/rafaelcgs10/verified_stream_processing.git
-
-WORKDIR $PROJECT_DIR/verified_stream_processing
-
-RUN git checkout dataplane
-
-COPY  "entrypoint.sh" "entrypoint.sh"
-
 RUN curl -fsSL https://opencode.ai/install | bash
+
+WORKDIR $PROJECT_DIR
 
 ENTRYPOINT ["./entrypoint.sh"]

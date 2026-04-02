@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: isabelle-agent
-    # volumes:
-    #   - .:/home/isabelle/project
+    volumes:
+      - .:/home/ubuntu/project
     environment:
       - PROJECT_DIR='/home/ubuntu/project'
       - ISABELLE_HOME='/home/ubuntu/Isabelle2025-2'
