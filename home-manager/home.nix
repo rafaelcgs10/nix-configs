@@ -184,7 +184,7 @@ in {
     # (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
     # pkgs.rawtherapee
-    (import ./programs/agx-emulsion/default.nix {})
+    (import ./programs/spektrafilm/spektrafilm.nix {})
   ];
 
   home.enableNixpkgsReleaseCheck = false;

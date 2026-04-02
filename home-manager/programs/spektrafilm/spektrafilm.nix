@@ -19,8 +19,8 @@ let
   qt5 = pkgs.libsForQt5.qt5;
 in
 pkgs.python3Packages.buildPythonApplication rec {
-  pname = "agx-emulsion";
-  version = "0.1.0-alpha";
+  pname = "spektrafilm";
+  version = "0.1.0-dev";
   pyproject = true;
   doCheck = false;
   doInstallCheck = false;
@@ -28,9 +28,9 @@ pkgs.python3Packages.buildPythonApplication rec {
 
   src = pkgs.fetchFromGitHub {
     owner = "andreavolpato";
-    repo = "agx-emulsion";
-    rev = "0e0baf2e3dd51032e89df92c8bb281f05e3ce977";
-    hash = "sha256-9N9ozvw7/XGHWX1AjblZbR7GI9dbHAwFUuV/C2HGZjI=";
+    repo = "spektrafilm";
+    rev = "3d3b7daae2d41df325dae04eb108beb3f0e19423";
+    hash = "sha256-5mq59/bzqVInVAF+bsdMNJJp+Enx/GYTxUpexXIHjAg=";
   };
 
   build-system = with pkgs.python3Packages; [ setuptools ];
@@ -46,6 +46,8 @@ pkgs.python3Packages.buildPythonApplication rec {
     magicgui
     lmfit
     pyqt5
+    rawpy
+    # pyconify
     numba
     cython
     colour-science
@@ -58,7 +60,7 @@ pkgs.python3Packages.buildPythonApplication rec {
   ];
 
   postFixup = ''
-    wrapProgram $out/bin/agx-emulsion \
+    wrapProgram $out/bin/spektrafilm \
       --set QT_PLUGIN_PATH "${qt5.qtbase.bin}/${qt5.qtbase.qtPluginPrefix}:${qt5.qtwayland.bin}/${qt5.qtbase.qtPluginPrefix}" \
       --set QT_QPA_PLATFORM xcb \
       --prefix LD_LIBRARY_PATH : "/run/opengl-driver/lib" \

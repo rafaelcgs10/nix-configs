@@ -7,7 +7,7 @@ let
   new_darktable = import (builtins.fetchTarball {
         url = "https://github.com/NixOS/nixpkgs/archive/7eea86e9c4edb957d3fa952f7454e6cbdf1721e5.tar.gz";
     }) {};
-  new_lmstudio = import (builtins.fetchTarball {
+  newer_channel = import (builtins.fetchTarball {
         url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
     }) {};
 
@@ -97,7 +97,7 @@ in
     # nur.repos.genesis.hdl-batch-installer
     pkgs.upscayl
     # pkgs.gpt4all
-    new_lmstudio.lmstudio
+    newer_channel.lmstudio
 
     # pkgs.flameshot
     # pkgs.noisetorch
@@ -115,6 +115,7 @@ in
     # pkgs.pavucontrol
     unstable.freetube
     new_darktable.darktable
+    newer_channel.art
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
