@@ -47,6 +47,8 @@ in {
     IQ_AUTH_TOKEN = "MY_TOKEN";
   };
 
+  home.file.".config/winapps/compose.yaml".text = builtins.readFile ../winapps/compose.yaml;
+
   xdg = {
     enable = true;
     mime.enable = true;
