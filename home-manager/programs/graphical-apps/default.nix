@@ -11,6 +11,16 @@ let
         url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
     }) {};
 
+  art-newer = pkgs.art.overrideAttrs (oldAttrs: {
+    version = "1.25.11-unstable-2026-04-01";
+    src = pkgs.fetchFromGitHub {
+      owner = "artraweditor";
+      repo = "ART";
+      rev = "27554bbeab0adcd98335b0470b37c7bd3db1ae80";
+      hash = "sha256-lCn/qBQ9PEx4pf+0y0fnWHZ2b68Lu6eLKHgcDzNAYio=";
+    };
+  });
+
   # createBraveExtensionFor = browserVersion: { id, sha256, version }:
   #   {
   #     inherit id;
@@ -115,7 +125,7 @@ in
     # pkgs.pavucontrol
     unstable.freetube
     new_darktable.darktable
-    pkgs.art
+    art-newer
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
