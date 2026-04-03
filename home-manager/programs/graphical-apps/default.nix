@@ -115,7 +115,7 @@ in
     # pkgs.pavucontrol
     unstable.freetube
     new_darktable.darktable
-    newer_channel.art
+    pkgs.art
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
