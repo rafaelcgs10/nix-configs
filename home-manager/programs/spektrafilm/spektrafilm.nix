@@ -18,7 +18,7 @@
 let
   qt5 = pkgs.libsForQt5.qt5;
 in
-pkgs.python3Packages.buildPythonApplication rec {
+pkgs.python3Packages.buildPythonPackage rec {
   pname = "spektrafilm";
   version = "0.1.0-dev";
   pyproject = true;

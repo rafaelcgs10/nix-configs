@@ -39,73 +39,30 @@ let
     base
     QuickCheck
   ];
+  spektrafilm-pkgs = import (fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
+  }) {
+    config.allowBroken = true;
+    overlays = [
+      (final: prev: {
+        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+          (python-final: python-prev: {
+            colour-science = import ../spektrafilm/colour-science.nix { pkgs = final; };
+            pyfftw = import ../spektrafilm/pyfftw.nix { pkgs = final; };
+            openimageio = import ../spektrafilm/openimageio.nix { pkgs = final; };
+            spektrafilm = import ../spektrafilm/spektrafilm.nix { pkgs = final; };
+          })
+        ];
+      })
+    ];
+  };
+  python = spektrafilm-pkgs.python3.withPackages
+    (ps: with ps; [ numpy scipy spektrafilm ]);
 
   ghc = haskellPackages.ghcWithPackages haskellDeps;
-
-  # lldb-mi = pkgs.stdenv.mkDerivation {
-  #   pname = "lldb-mi";
-  #   name = "lldb-mi";
-
-  #   src = pkgs.fetchFromGitHub {
-  #     owner = "lldb-tools";
-  #     repo = "lldb-mi";
-  #     rev = "2388bd74133bc21eac59b2e2bf97f2a30770a315";
-  #     sha256 = "1ag7dvdg5hxyzh3ngawxlb84x9n44mix96qa6q4zlrjqccwsc6x8";
-  #   };
-
-  #   buildInputs = [
-  #     pkgs.cmake
-  #     pkgs.llvm_12
-  #     pkgs.lldb
-  #     pkgs.libllvm
-  #     pkgs.clang
-  #   ];
-
-  #   buildPhase = ''
-  #     cmake .
-  #     cmake --build .
-  #   '';
-
-  #   installPhase = ''
-  #     mkdir -p "$out/bin"
-  #     cp src/lldb-mi "$out/bin"
-  #   '';
-
-  #   phases = [ "unpackPhase" "buildPhase" "installPhase" ];
-  # };
-  #
-
-  # We currently take all libraries from systemd and nix as the default
-  
-  # https://github.com/NixOS/nixpkgs/blob/c339c066b893e5683830ba870b1ccd3bbea88ece/nixos/modules/programs/nix-ld.nix#L44
-  
-  pythonldlibpath = lib.makeLibraryPath (with pkgs; [
-    zlib zstd stdenv.cc.cc curl openssl attr libssh bzip2 libxml2 acl libsodium util-linux xz systemd
-    mesa
-    fontconfig   
-    libgbm
-    libGLU
-    libGL
-    libglibutil
-  ]);
   
   # Darwin requires a different library path prefix
   
-  wrapPrefix = if (!pkgs.stdenv.isDarwin) then "LD_LIBRARY_PATH" else "DYLD_LIBRARY_PATH";
-  
-  patchedpython = (pkgs.symlinkJoin {
-    
-    name = "python";
-    
-    paths = [ pkgs.python311 ];
-    
-    buildInputs = [ pkgs.makeWrapper ];
-    
-    postBuild = ''
-      wrapProgram "$out/bin/python3.11" --prefix ${wrapPrefix} : "${pythonldlibpath}"
-    '';
-    
-  }); 
 in
 {
   # programs.opam.enable = true;
@@ -144,11 +101,8 @@ in
     # pkgs.z3
     # pkgs.vampire
     # patchedpython
-    pkgs.python311
+    python
     pkgs.fontconfig
-    pkgs.python311Packages.pip
-    pkgs.python311Packages.pyqt5
-    pkgs.conda
     # (pkgs.buildFHSEnv {
     #   name = "pixi";
     #   runScript = "pixi";
