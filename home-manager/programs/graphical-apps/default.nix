@@ -11,7 +11,9 @@ let
         url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
     }) {};
 
-  art-newer = pkgs.art.overrideAttrs (oldAttrs: {
+  spektrafilm-python = import ../spektrafilm/python.nix;
+
+  art-newer = (pkgs.art.overrideAttrs (oldAttrs: {
     version = "1.25.11-unstable-2026-04-01";
     src = pkgs.fetchFromGitHub {
       owner = "artraweditor";
@@ -19,7 +21,14 @@ let
       rev = "27554bbeab0adcd98335b0470b37c7bd3db1ae80";
       hash = "sha256-lCn/qBQ9PEx4pf+0y0fnWHZ2b68Lu6eLKHgcDzNAYio=";
     };
-  });
+    nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
+    postFixup = (oldAttrs.postFixup or "") + ''
+      wrapProgram $out/bin/ART \
+        --prefix PATH : "${spektrafilm-python}/bin"
+      wrapProgram $out/bin/ART-cli \
+        --prefix PATH : "${spektrafilm-python}/bin"
+    '';
+  }));
 
   # createBraveExtensionFor = browserVersion: { id, sha256, version }:
   #   {

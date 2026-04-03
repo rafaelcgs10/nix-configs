@@ -39,25 +39,7 @@ let
     base
     QuickCheck
   ];
-  spektrafilm-pkgs = import (fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
-  }) {
-    config.allowBroken = true;
-    overlays = [
-      (final: prev: {
-        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-          (python-final: python-prev: {
-            colour-science = import ../spektrafilm/colour-science.nix { pkgs = final; };
-            pyfftw = import ../spektrafilm/pyfftw.nix { pkgs = final; };
-            openimageio = import ../spektrafilm/openimageio.nix { pkgs = final; };
-            spektrafilm = import ../spektrafilm/spektrafilm.nix { pkgs = final; };
-          })
-        ];
-      })
-    ];
-  };
-  python = spektrafilm-pkgs.python3.withPackages
-    (ps: with ps; [ numpy scipy spektrafilm ]);
+  python = import ../spektrafilm/python.nix;
 
   ghc = haskellPackages.ghcWithPackages haskellDeps;
   
