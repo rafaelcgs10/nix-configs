@@ -21,6 +21,10 @@ let
       rev = "27554bbeab0adcd98335b0470b37c7bd3db1ae80";
       hash = "sha256-lCn/qBQ9PEx4pf+0y0fnWHZ2b68Lu6eLKHgcDzNAYio=";
     };
+    postInstall = (oldAttrs.postInstall or "") + ''
+      mkdir -p $out/share/ART/extlut
+      cp -r $src/tools/extlut/* $out/share/ART/extlut/
+    '';
     nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
     postFixup = (oldAttrs.postFixup or "") + ''
       wrapProgram $out/bin/ART \
