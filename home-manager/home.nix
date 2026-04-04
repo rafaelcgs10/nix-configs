@@ -183,8 +183,6 @@ in {
     pkgs.emacsPackages.all-the-icons-completion
     # (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
 
-    # pkgs.rawtherapee
-    # spektrafilm is included via programs/languages/default.nix
   ];
 
   home.enableNixpkgsReleaseCheck = false;
