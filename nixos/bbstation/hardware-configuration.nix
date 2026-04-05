@@ -58,6 +58,12 @@ in
     };
 
 
+  fileSystems."/hdd" =
+    { device = "/dev/disk/by-label/hdd";
+      fsType = "btrfs";
+      options = [ "discard=async" "compress=zstd" "noatime" "datacow" ];
+    };
+
   fileSystems."/rafael_mounts" = {
     device = "//192.168.0.104/hdd";
     fsType = "cifs";
