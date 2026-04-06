@@ -12,7 +12,7 @@ let
     }) {};
 
   spektrafilm-python = import ../spektrafilm/python-runtime.nix;
-  spektrafilm = import (fetchTarball {
+  spektrafilm-pkgs = import (builtins.fetchTarball {
     url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
   }) {
     config.allowBroken = true;
@@ -20,15 +20,16 @@ let
       (final: prev: {
         pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
           (python-final: python-prev: {
-            colour-science = import ./colour-science.nix { pkgs = final; };
-            pyfftw = import ./pyfftw.nix { pkgs = final; };
-            openimageio = import ./openimageio.nix { pkgs = final; };
-            spektrafilm = import ./spektrafilm.nix { pkgs = final; };
+            colour-science = import ../spektrafilm/colour-science.nix { pkgs = final; };
+            pyfftw = import ../spektrafilm/pyfftw.nix { pkgs = final; };
+            openimageio = import ../spektrafilm/openimageio.nix { pkgs = final; };
+            spektrafilm = import ../spektrafilm/spektrafilm.nix { pkgs = final; };
           })
         ];
       })
     ];
   };
+  spektrafilm = spektrafilm-pkgs.python3Packages.spektrafilm;
 
   art-newer = (pkgs.art.overrideAttrs (oldAttrs: {
     version = "1.25.11-unstable-2026-04-01";
