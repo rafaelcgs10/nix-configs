@@ -11,7 +11,24 @@ let
         url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
     }) {};
 
-  spektrafilm-python = import ../spektrafilm/python.nix;
+  spektrafilm-python = import ../spektrafilm/python-runtime.nix;
+  spektrafilm = import (fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
+  }) {
+    config.allowBroken = true;
+    overlays = [
+      (final: prev: {
+        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+          (python-final: python-prev: {
+            colour-science = import ./colour-science.nix { pkgs = final; };
+            pyfftw = import ./pyfftw.nix { pkgs = final; };
+            openimageio = import ./openimageio.nix { pkgs = final; };
+            spektrafilm = import ./spektrafilm.nix { pkgs = final; };
+          })
+        ];
+      })
+    ];
+  };
 
   art-newer = (pkgs.art.overrideAttrs (oldAttrs: {
     version = "1.25.11-unstable-2026-04-01";
@@ -139,6 +156,7 @@ in
     unstable.freetube
     new_darktable.darktable
     art-newer
+    spektrafilm
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool

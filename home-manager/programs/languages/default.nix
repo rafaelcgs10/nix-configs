@@ -39,7 +39,7 @@ let
     base
     QuickCheck
   ];
-  python = import ../spektrafilm/python.nix;
+  # python = import ../spektrafilm/python.nix;
 
   ghc = haskellPackages.ghcWithPackages haskellDeps;
   
@@ -83,7 +83,7 @@ in
     # pkgs.z3
     # pkgs.vampire
     # patchedpython
-    python
+    # python
     pkgs.fontconfig
     # (pkgs.buildFHSEnv {
     #   name = "pixi";

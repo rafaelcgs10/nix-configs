@@ -1,5 +1,3 @@
-# Shared Python environment with spektrafilm and its dependencies.
-# Import this from any module that needs python + spektrafilm.
 let
   spektrafilm-pkgs = import (fetchTarball {
     url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
