@@ -628,3 +628,10 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 (setq-default fill-column 80)
 (setq major-mode-remap-alist major-mode-remap-defaults)
+
+;; Wayland/pgtk optimizations for Nvidia
+(when (eq window-system 'pgtk)
+  ;; Use native GTK input method support under pgtk
+  (setq x-gtk-use-native-input t)
+  ;; Reduce event loop latency (default is too high on Nvidia/Wayland)
+  (setq pgtk-wait-for-event-timeout 0.001))

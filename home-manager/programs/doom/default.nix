@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 let
-  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/6d9837126e1be779c8f34ed9fdd609e676a1b891.tar.gz;};
+  emacs-overlay = builtins.fetchTarball {url = https://github.com/nix-community/emacs-overlay/archive/9714d18e3b55f61531a42795779a941365cb2588.tar.gz;};
   pkgs = import <nixpkgs> { overlays = [ (import emacs-overlay) ]; };
 in {
   home = {
@@ -9,6 +9,7 @@ in {
     sessionVariables = {
       DOOMDIR = ~/nix-configs/home-manager/programs/doom/doom.d;
       DOOMLOCALDIR = ~/.doom-local;
+      OZONE_PLATFORM = "wayland";
     };
   };
   # xdg = {
@@ -19,5 +20,5 @@ in {
   #     };
   #   };
   # };
-  home.packages = [ pkgs.emacs ];
+  home.packages = [ pkgs.emacs-pgtk ];
 }
