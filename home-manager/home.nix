@@ -38,6 +38,14 @@ in {
     EDITOR = "vim";
     # LSP_USE_PLISTS = "true";
 
+    # Wayland native rendering for Qt/GTK apps (performance at 4K scaling)
+    QT_QPA_PLATFORM = "wayland;xcb";
+    GDK_BACKEND = "wayland,x11";
+    SDL_VIDEODRIVER = "wayland";
+    CLUTTER_BACKEND = "wayland";
+    # Improve XWayland app rendering (apps that can't use Wayland)
+    XCURSOR_SIZE = "32";
+
     USER_HOME = "/home/rafael";
     DIRENV_ALLOW_NIX = 1;
     CVC5_SOLVER = "/nix/store/wn18dx41k7b81naxgb3bv3qmkllaprsc-home-manager-path/bin/cvc5";

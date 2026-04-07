@@ -49,6 +49,8 @@ in
     "mitigations=off"
     "kvm.enable_virt_at_load=0"
     "btusb.enable_autosuspend=n"
+    "nvidia-drm.modeset=1"
+    "nvidia-drm.fbdev=1"
   ];
 
 
@@ -91,6 +93,18 @@ in
   programs.xwayland.enable = true;
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = ["nvidia"];
+
+  # NVIDIA + Wayland environment variables
+  environment.sessionVariables = {
+    # Required for Wayland compositors with NVIDIA
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    # Electron / Chromium apps: use Wayland natively instead of XWayland
+    NIXOS_OZONE_WL = "1";
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    # Cursor rendering fix for NVIDIA on Wayland
+    WLR_NO_HARDWARE_CURSORS = "1";
+  };
   programs.steam.enable = true;
 
   hardware.nvidia = {

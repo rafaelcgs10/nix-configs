@@ -131,10 +131,12 @@ in {
 
   services = {
     displayManager = {
-      # defaultSession = "plasmawayland";
       defaultSession = "plasma";
-        sddm.enable = true;
-        # defaultSession = "xfce";
+      sddm = {
+        enable = true;
+        wayland.enable = true;
+      };
+      # defaultSession = "xfce";
     };
     desktopManager = {
       # plasma5.enable = true;
