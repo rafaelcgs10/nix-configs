@@ -1,8 +1,5 @@
 { pkgs, lib, config, ...}:
 let
-  # nur = import (builtins.fetchTarball "https://github.com/nix-community/nur-combined/archive/fe301d9a7b9346a0d50252696b9a4feeed60f1c4.tar.gz") {
-  #   inherit pkgs;
-  # };
   unstable = import <nixpkgs-unstable> {};
   new_darktable = import (builtins.fetchTarball {
         url = "https://github.com/NixOS/nixpkgs/archive/7eea86e9c4edb957d3fa952f7454e6cbdf1721e5.tar.gz";
@@ -11,46 +8,29 @@ let
         url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
     }) {};
 
-  spektrafilm-python = import ../spektrafilm/python-runtime.nix;
-  spektrafilm-pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
-  }) {
-    config.allowBroken = true;
-    overlays = [
-      (final: prev: {
-        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-          (python-final: python-prev: {
-            colour-science = import ../spektrafilm/colour-science.nix { pkgs = final; };
-            pyfftw = import ../spektrafilm/pyfftw.nix { pkgs = final; };
-            openimageio = import ../spektrafilm/openimageio.nix { pkgs = final; };
-            spektrafilm = import ../spektrafilm/spektrafilm.nix { pkgs = final; };
-          })
-        ];
-      })
-    ];
-  };
-  spektrafilm = spektrafilm-pkgs.python3Packages.spektrafilm;
+  spektrafilm-flake = builtins.getFlake "github:rafaelcgs10/spektrafilm-art";
+  spektrafilm-packages = spektrafilm-flake.packages.${builtins.currentSystem};
 
-  art-newer = (pkgs.art.overrideAttrs (oldAttrs: {
-    version = "1.25.11-unstable-2026-04-01";
-    src = pkgs.fetchFromGitHub {
-      owner = "artraweditor";
-      repo = "ART";
-      rev = "27554bbeab0adcd98335b0470b37c7bd3db1ae80";
-      hash = "sha256-lCn/qBQ9PEx4pf+0y0fnWHZ2b68Lu6eLKHgcDzNAYio=";
-    };
-    postInstall = (oldAttrs.postInstall or "") + ''
-      mkdir -p $out/share/ART/extlut
-      cp -r $src/tools/extlut/* $out/share/ART/extlut/
-    '';
-    nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
-    postFixup = (oldAttrs.postFixup or "") + ''
-      wrapProgram $out/bin/ART \
-        --prefix PATH : "${spektrafilm-python}/bin"
-      wrapProgram $out/bin/ART-cli \
-        --prefix PATH : "${spektrafilm-python}/bin"
-    '';
-  }));
+  # art-newer = (pkgs.art.overrideAttrs (oldAttrs: {
+  #   version = "1.25.11-unstable-2026-04-01";
+  #   src = pkgs.fetchFromGitHub {
+  #     owner = "artraweditor";
+  #     repo = "ART";
+  #     rev = "27554bbeab0adcd98335b0470b37c7bd3db1ae80";
+  #     hash = "sha256-lCn/qBQ9PEx4pf+0y0fnWHZ2b68Lu6eLKHgcDzNAYio=";
+  #   };
+  #   postInstall = (oldAttrs.postInstall or "") + ''
+  #     mkdir -p $out/share/ART/extlut
+  #     cp -r $src/tools/extlut/* $out/share/ART/extlut/
+  #   '';
+  #   nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
+  #   postFixup = (oldAttrs.postFixup or "") + ''
+  #     wrapProgram $out/bin/ART \
+  #       --prefix PATH : "${spektrafilm-python}/bin"
+  #     wrapProgram $out/bin/ART-cli \
+  #       --prefix PATH : "${spektrafilm-python}/bin"
+  #   '';
+  # }));
 
   # createBraveExtensionFor = browserVersion: { id, sha256, version }:
   #   {
@@ -156,8 +136,8 @@ in
     # pkgs.pavucontrol
     unstable.freetube
     new_darktable.darktable
-    art-newer
-    spektrafilm
+    spektrafilm-packages.spektrafilm
+    spektrafilm-packages.spektrafilm-art
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
