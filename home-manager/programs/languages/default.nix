@@ -83,7 +83,7 @@ in
     # pkgs.z3
     # pkgs.vampire
     # patchedpython
-    # python
+    pkgs.python3
     pkgs.fontconfig
     # (pkgs.buildFHSEnv {
     #   name = "pixi";
