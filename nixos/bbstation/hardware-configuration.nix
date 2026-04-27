@@ -59,6 +59,11 @@ in
       fsType = "ext4";
     };
 
+  fileSystems."/boot/efi" =
+    { device = "/dev/disk/by-uuid/1A36-4B87";
+      fsType = "vfat";
+    };
+
 
   fileSystems."/hdd" =
     { device = "/dev/disk/by-label/hdd";
