@@ -32,51 +32,43 @@ in {
   #  Enables wireless support via wpa_supplicant.
   networking.networkmanager = {
    enable = true;
-   # dns = "none";
+   dns = "none";  # Prevent NM from overwriting /etc/resolv.conf
    wifi.powersave = false;
-   # extraConfig = ''
-   #    [main]
-   #    rc-manager=file
-   # '';
   };
   networking = {
-    nameservers = [  "2a07:a8c0::#7de4a9.dns.nextdns.io" "45.90.28.0#7de4a9.dns.nextdns.io" "45.90.30.0#7de4a9.dns.nextdns.io" "2a07:a8c1::#7de4a9.dns.nextdns.io" "45.90.28.219" ];
-    # nameservers = [  "localhost" ];
+    nameservers = [ "127.0.0.1" ];  # Pi-hole FTL owns port 53
   };
-  services.resolved = {
+  # systemd-resolved conflicts with Pi-hole FTL on port 53 — must be disabled.
+  # After running nixos-rebuild switch, also run:
+  #   sudo systemctl stop systemd-resolved
+  services.resolved.enable = false;
+  services.pihole-ftl = {
     enable = true;
-    dnssec = "true";
-    domains = [ "~." ];
-    fallbackDns = [ "1.1.1.1#one.one.one.one" ];
-    dnsovertls = "true";
+    openFirewallDNS = true;              # To open port 53 for DNS traffic
+    openFirewallDHCP = true;
+    openFirewallWebserver = true;
+
+    # Settings documented at <https://docs.pi-hole.net/ftldns/configfile/>
+    settings = {
+      dns.upstreams = [ "1.1.1.1" "8.8.8.8" ];   # To use Cloudflare's DNS Servers
+    };
+
+    # Lists can be added via URL
+    lists = [
+      {
+        url = "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt";
+        type = "block";
+        enabled = true;
+        description = "Sample blocklist by hagezi";
+      }
+    ];
   };
-  # services.pihole-ftl = {
-  #   enable = true;
-  #   openFirewallDNS = true;              # To open port 53 for DNS traffic
-  #   openFirewallDHCP = true;
-  #   openFirewallWebserver = true;
-
-  #   # Settings documented at <https://docs.pi-hole.net/ftldns/configfile/>
-  #   settings = {
-  #     dns.upstreams = [ "1.1.1.1" "8.8.8.8" ];   # To use Cloudflare's DNS Servers
-  #   };
-
-  #   # Lists can be added via URL
-  #   lists = [
-  #     {
-  #       url = "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt";
-  #       type = "block";
-  #       enabled = true;
-  #       description = "Sample blocklist by hagezi";
-  #     }
-  #   ];
-  # };
-  # services.pihole-web = {
-  #   enable = true;
-  #   ports = [
-  #     "9090"
-  #   ];
-  # };
+  services.pihole-web = {
+    enable = true;
+    ports = [
+      "9090"
+    ];
+  };
 
   # Set your time zone.
   time.timeZone = "Europe/Copenhagen";
