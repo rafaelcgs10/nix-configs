@@ -50,17 +50,7 @@ in {
 
     # Settings documented at <https://docs.pi-hole.net/ftldns/configfile/>
     settings = {
-      dns.upstreams = [ "1.1.1.1" "8.8.8.8" ];   # Cloudflare + Google as upstreams
-      dns.cache.optimizer = true;  # Prefetch popular/expiring entries before TTL expires
-
-      # misc.dnsmasq_lines = [
-      #   # Increase cache from default 10000 to 50000 entries
-      #   "cache-size=50000"
-      #   # Floor TTLs at 300s — prevents re-querying CDN domains with very short TTLs
-      #   "min-ttl=300"
-      #   # Negative cache TTL — cache NXDOMAIN for 60s (Pi-hole default is 3600)
-      #   "neg-ttl=60"
-      # ];
+      dns.upstreams = [ "1.1.1.1" "8.8.8.8" ];   # To use Cloudflare's DNS Servers
     };
 
     # Lists can be added via URL
