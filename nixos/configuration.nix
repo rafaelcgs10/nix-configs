@@ -282,7 +282,12 @@ in {
   services.teamviewer.enable = true;
 
   # printing
-  services.printing.enable = true;
+  services.printing = {
+    enable = true;
+    extraConf = ''
+      Listen /run/cups/cups.sock
+    '';
+  };
   services.avahi.enable = true;
   hardware.sane.enable = true;
   hardware.sane.extraBackends = [ pkgs.sane-airscan ];
