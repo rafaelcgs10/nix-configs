@@ -10,8 +10,15 @@ in {
     enable = true;
 
     matchBlocks = {
-      "ssh.rafaelcgs.com" = {
-        hostname = "ssh.rafaelcgs.com";
+      # "ssh.rafaelcgs.com" = {
+      #   hostname = "ssh.rafaelcgs.com";
+      #   user = "rafael";
+      #   extraOptions = {
+      #     proxyCommand = "${pkgs.cloudflared}/bin/cloudflared access ssh --hostname %h";
+      #   };
+          
+      "orangessh.rafaelcgs.com" = {
+        hostname = "orangessh.rafaelcgs.com";
         user = "rafael";
         extraOptions = {
           proxyCommand = "${pkgs.cloudflared}/bin/cloudflared access ssh --hostname %h";
