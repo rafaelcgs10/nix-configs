@@ -164,7 +164,7 @@ in {
     pkgs.fuse
     pkgs.sshfs
     pkgs.syncthing
-    pkgs.opencode
+    unstable.opencode
     pkgs.claude-code
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
