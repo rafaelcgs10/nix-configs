@@ -16,7 +16,7 @@ in
     ];
 
   # boot.kernelPackages = pkgs.linuxPackages_zen;
-  boot.kernelPackages = unstable.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages;
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usb_storage" "usbhid" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
@@ -142,7 +142,7 @@ in
     forceFullCompositionPipeline = false;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = unstable.linuxPackages.nvidiaPackages.beta;
+    package = pkgs.linuxPackages.nvidiaPackages.stable;
   };
   powerManagement = {
     cpuFreqGovernor = "performance";
