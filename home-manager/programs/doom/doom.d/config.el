@@ -614,6 +614,11 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;
 
 (setq custom-safe-themes t)
+;; cycle-themes still calls the old `first' alias, which is not defined by
+;; default on newer Emacs versions.
+(unless (fboundp 'first)
+  (defalias 'first #'car))
+
 (use-package! cycle-themes
   :ensure t
   :init
