@@ -1,6 +1,13 @@
 { pkgs, lib, config, ...}:
 let
-  unstable = import <nixpkgs-unstable> {};
+  unstable = import <nixpkgs-unstable> {
+    config = {
+      allowUnfree = true;
+      permittedInsecurePackages = [
+        "electron-39.8.10"
+      ];
+    };
+  };
   new_darktable = import (builtins.fetchTarball {
         url = "https://github.com/NixOS/nixpkgs/archive/7eea86e9c4edb957d3fa952f7454e6cbdf1721e5.tar.gz";
     }) {};
@@ -156,7 +163,7 @@ in
     # FIXME: move to kde things
     # pkgs.libsForQt5.kasts
     # pkgs.libsForQt5.plasma-browser-integration
-    pkgs.protonvpn-gui
+    pkgs.proton-vpn
     pkgs.deluge
     # (pkgs.kodi.withPackages (kodiPkgs: with kodiPkgs; [
     #   youtube

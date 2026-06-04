@@ -9,25 +9,16 @@ in {
   programs.ssh = {
     enable = true;
 
-    matchBlocks = {
-      # "ssh.rafaelcgs.com" = {
-      #   hostname = "ssh.rafaelcgs.com";
-      #   user = "rafael";
-      #   extraOptions = {
-      #     proxyCommand = "${pkgs.cloudflared}/bin/cloudflared access ssh --hostname %h";
-      #   };
-          
+    settings = {
       "orangessh.rafaelcgs.com" = {
-        hostname = "orangessh.rafaelcgs.com";
-        user = "rafael";
-        extraOptions = {
-          proxyCommand = "${pkgs.cloudflared}/bin/cloudflared access ssh --hostname %h";
-        };
+        HostName = "orangessh.rafaelcgs.com";
+        User = "rafael";
+        ProxyCommand = "${pkgs.cloudflared}/bin/cloudflared access ssh --hostname %h";
       };
     };
   };
 
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
 
   imports = [
     ./imports/default.nix
@@ -86,7 +77,12 @@ in {
     };
   };
 
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    permittedInsecurePackages = [
+      "electron-39.8.10"
+    ];
+  };
 
   home.packages = [
     pkgs.gawk
@@ -102,7 +98,7 @@ in {
     pkgs.dig
     pkgs.lazydocker
     pkgs.libgccjit
-    pkgs.neofetch
+    pkgs.owofetch
     pkgs.inxi
     pkgs.e2fsprogs
     pkgs.lightlocker
@@ -182,7 +178,7 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     # pkgs.vistafonts
-    pkgs.wineWowPackages.waylandFull
+    pkgs.wineWow64Packages.waylandFull
     pkgs.winetricks
     pkgs.fira-code
     # pkgs.wine64
@@ -227,8 +223,10 @@ in {
 
   programs.git = {
     enable = true;
-    userName = "rafaelcgs10";
-    userEmail = "rafaelcgs10@gmail.com";
+    settings.user = {
+      name = "rafaelcgs10";
+      email = "rafaelcgs10@gmail.com";
+    };
   };
 
   home.file.".languagetool.cfg".text = ''

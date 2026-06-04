@@ -105,7 +105,7 @@ in
     pkgs.rustfmt
     pkgs.rust-analyzer
     pkgs.valgrind
-    pkgs.massif-visualizer
+    # pkgs.massif-visualizer
     pkgs.gperftools
     pkgs.clippy
     pkgs.texlab

@@ -1,9 +1,8 @@
 {
   allowBroken = true;
 
-  # Ecrypts to ecrypt user home folder
-  security.pam.enableEcryptfs = true;
   permittedInsecurePackages = [
+    "electron-39.8.10"
     "nix-2.15.3"
   ];
   packageOverrides = pkgs: {
