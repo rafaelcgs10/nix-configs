@@ -38,7 +38,8 @@ in {
 
   home.sessionVariables = {
     XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:$XDG_DATA_DIRS";
-    _JAVA_OPTIONS = "-Dawt.useSystemAAFontSettings=on";
+    # Prevent Java/Swing apps (like jEdit) from being double-scaled on Wayland/XWayland.
+    _JAVA_OPTIONS = "-Dawt.useSystemAAFontSettings=on -Dsun.java2d.uiScale=1";
     JAVA_OPTS = "-Xverify:none";
     PAGER = "less";
     GTK_USE_PORTAL = "1";
