@@ -71,9 +71,9 @@ in
   # services.xserver.libinput.touchpad.tapping = false;
   # services.xserver.libinput.mouse.tapping = false;
 
-  systemd.sleep.extraConfig = ''
-      HibernateDelaySec=3m
-    '';
+  # systemd.sleep.extraConfig = ''
+  #     HibernateDelaySec=3m
+  #   '';
 
   services.logind.settings.Login.HandleLidSwitchExternalPower = "suspend";
   services.logind.settings.Login.HandleLidSwitch = "suspend";
@@ -104,9 +104,10 @@ in
     freeMemThreshold = 3;
   };
 
-  programs.adb.enable = true;
+  # programs.adb.enable = true;
 
-  programs.light.enable = true;
+  # programs.light.enable = true;
+  hardware.acpilight.enable = true;
   services.acpid.enable = true;
   services.acpid.handlers = {
     brightness-up = {
