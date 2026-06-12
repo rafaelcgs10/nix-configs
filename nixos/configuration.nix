@@ -2,15 +2,10 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   homemanager = import <home-manager> {};
-  pkgs2511 = import inputs.nixpkgs2511 {
-    system = pkgs.stdenv.hostPlatform.system;
-    config.allowUnfree = true;
-  };
-  ecryptfs = pkgs2511.ecryptfs;
 in {
   imports =
     [ # Include the results of the hardware scan.
@@ -190,44 +185,6 @@ in {
   };
   programs.zsh.enable = true;
 
-  # Auto-mount existing eCryptfs private home using ecryptfs-utils from nixpkgs 25.11.
-  security.pam.enableFscrypt = false;
-
-  security.wrappers."mount.ecryptfs_private" = {
-    source = "${ecryptfs}/bin/mount.ecryptfs_private";
-    owner = "root";
-    group = "root";
-    setuid = true;
-  };
-
-  security.wrappers."umount.ecryptfs_private" = {
-    source = "${ecryptfs}/bin/umount.ecryptfs_private";
-    owner = "root";
-    group = "root";
-    setuid = true;
-  };
-
-  security.pam.services = {
-    login.rules.auth.ecryptfs = {
-      order = 11800;
-      control = "optional";
-      modulePath = "${ecryptfs}/lib/security/pam_ecryptfs.so";
-      settings.unwrap = true;
-    };
-
-    login.rules.session.ecryptfs = {
-      order = 10900;
-      control = "optional";
-      modulePath = "${ecryptfs}/lib/security/pam_ecryptfs.so";
-    };
-
-    passwd.rules.password.ecryptfs = {
-      order = 12000;
-      control = "optional";
-      modulePath = "${ecryptfs}/lib/security/pam_ecryptfs.so";
-    };
-  };
-
   # Apparmor
   security.apparmor = {
     enable = true;
@@ -309,7 +266,6 @@ in {
     libgphoto2
     kdePackages.kamera
     waypipe
-    ecryptfs
 
     # (pkgs.writeShellScriptBin "python" ''
     #   export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
