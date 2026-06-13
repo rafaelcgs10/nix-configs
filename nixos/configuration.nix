@@ -129,21 +129,8 @@ in {
   #   xwayland.enable = true;
   # };
 
-  services = {
-    displayManager = {
-      defaultSession = "plasma";
-      sddm = {
-        enable = true;
-        wayland.enable = true;
-      };
-      # defaultSession = "xfce";
-    };
-    desktopManager = {
-      # plasma5.enable = true;
-      plasma6.enable = true;
-      # xterm.enable = false;
-    };
-  };
+  # Display manager / desktop environment is configured per-host
+  # (see each host's hardware-configuration.nix).
   services.gnome.gnome-remote-desktop.enable = true;
 
   services.gvfs = {

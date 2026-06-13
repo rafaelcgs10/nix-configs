@@ -220,4 +220,15 @@ in
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+
+  # Desktop environment: KDE Plasma 6 + SDDM
+  services.xserver.enable = true;
+  services.displayManager = {
+    defaultSession = "plasma";
+    sddm = {
+      enable = true;
+      wayland.enable = true;
+    };
+  };
+  services.desktopManager.plasma6.enable = true;
 }

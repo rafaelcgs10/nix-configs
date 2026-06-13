@@ -405,6 +405,18 @@ in
   boot.extraModprobeConfig = "options kvm_intel nested=1";
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
+
+  # Desktop environment: KDE Plasma 6 + SDDM
+  services.xserver.enable = true;
+  services.displayManager = {
+    defaultSession = "plasma";
+    sddm = {
+      enable = true;
+      wayland.enable = true;
+    };
+  };
+  services.desktopManager.plasma6.enable = true;
+
   services.cron = {
     enable = true;
     systemCronJobs = [
