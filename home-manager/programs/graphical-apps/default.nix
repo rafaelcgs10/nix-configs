@@ -64,7 +64,7 @@ let
 in
 {
   home.packages = [
-    unstable.gimp3-with-plugins
+    pkgs.gimp3-with-plugins
     pkgs.inkscape
     pkgs.lutris
     pkgs.gamescope

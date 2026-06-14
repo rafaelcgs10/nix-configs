@@ -28,7 +28,7 @@ in {
   home.homeDirectory = "/home/rafael";
 
   home.sessionVariables = {
-    XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:$XDG_DATA_DIRS";
+    XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS";
     # Prevent Java/Swing apps (like jEdit) from being double-scaled on Wayland/XWayland.
     _JAVA_OPTIONS = "-Dawt.useSystemAAFontSettings=on -Dsun.java2d.uiScale=1";
     JAVA_OPTS = "-Xverify:none";
