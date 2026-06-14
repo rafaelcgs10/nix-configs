@@ -176,7 +176,7 @@ in
   nix.settings = {
     substituters = [ "https://winapps.cachix.org/" ];
     trusted-public-keys = [ "winapps.cachix.org-1:HI82jWrXZsQRar/PChgIx1unmuEsiQMQq+zt05CD36g=" ];
-    trusted-users = [ "<your username>" ]; # replace with your username
+    trusted-users = [ "rafael" ]; # replace with your username
   };
 
   environment.systemPackages =
@@ -231,4 +231,6 @@ in
     };
   };
   services.desktopManager.plasma6.enable = true;
+  services.desktopManager.cosmic.enable = true;
+  services.system76-scheduler.enable = true;
 }
