@@ -6,19 +6,29 @@
 {
   imports =
     [ (modulesPath + "/installer/scan/not-detected.nix")
+      # Community hardware module for the Surface Go 1. Brings in the
+      # linux-surface patched kernel, Kaby Lake CPU/GPU bits, ath10k WiFi
+      # firmware override, SSD profile and Surface-specific power tuning.
+      # Requires the `nixos-hardware` channel:
+      #   sudo nix-channel --add https://github.com/NixOS/nixos-hardware/archive/master.tar.gz nixos-hardware
+      #   sudo nix-channel --update
+      <nixos-hardware/microsoft/surface/surface-go>
     ];
+
+  # Pin the LTS variant of the linux-surface kernel.
+  # Note: do NOT also set boot.kernelPackages here — the surface module
+  # owns the kernel and the two would conflict.
+  hardware.microsoft-surface.kernelVersion = "longterm";
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "nvme" "usbhid" "usb_storage" "sd_mod" "rtsx_pci_sdmmc" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
-  # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/aa974abe-e7e5-4823-8012-d41a7a2cc7a3";
       fsType = "ext4";
+      options = [ "noatime" ];
     };
 
   fileSystems."/boot" =
@@ -31,8 +41,14 @@
     [ { device = "/dev/disk/by-uuid/5e97a962-a45b-43ac-b3a8-16da7888aa65"; }
     ];
 
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+  };
+
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  # Intel microcode is enabled by the kaby-lake submodule pulled in via
+  # nixos-hardware/microsoft/surface/surface-go.
 
   networking.hostName = "bbtablet";
 
@@ -68,4 +84,44 @@
   };
 
   programs.firefox.enable = true;
+
+  # --- Surface Go specific tuning ---
+
+  # Touchscreen + pen via the Intel Precise Touch & Stylus daemon.
+  services.iptsd.enable = true;
+
+  # Bluetooth (Marvell module on Surface Go).
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+  services.blueman.enable = true;
+
+  # Surface Go is fanless; thermald keeps it under throttle thresholds
+  # without clamping frequency too aggressively.
+  services.thermald.enable = true;
+  powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
+
+  # Backlight + power keys (programs.light was removed from nixpkgs).
+  hardware.acpilight.enable = true;
+  services.acpid.enable = true;
+
+  # Touch ergonomics for GNOME on Wayland.
+  services.libinput = {
+    enable = true;
+    touchpad.naturalScrolling = true;
+  };
+
+  # Intel Kaby Lake GPU acceleration (VA-API video decode).
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-media-driver
+      libva-vdpau-driver
+      libvdpau-va-gl
+    ];
+  };
+
+  # Pull in non-redistributable firmware as well (covers IPU3 cameras).
+  hardware.enableAllFirmware = true;
 }
