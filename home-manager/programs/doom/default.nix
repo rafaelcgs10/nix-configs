@@ -20,5 +20,5 @@ in {
   #     };
   #   };
   # };
-  home.packages = [ pkgs.emacs-pgtk ];
+  home.packages = [ pkgs.emacs-pgtk pkgs.hack-font ];
 }

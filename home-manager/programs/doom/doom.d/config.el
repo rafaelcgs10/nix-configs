@@ -277,6 +277,10 @@
 
 (setq display-line-numbers-mode t)
 
+(after! which-key
+  (which-key-mode 1)
+  (setq which-key-idle-delay 0.5))
+
 ;; (use-package! lsp-isar
 ;;   :commands lsp-isar-define-client-and-start
 ;;   :custom
