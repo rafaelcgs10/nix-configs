@@ -66,6 +66,7 @@ in
   home.packages = [
     pkgs.gimp3-with-plugins
     pkgs.inkscape
+    pkgs.krita
     pkgs.lutris
     pkgs.gamescope
     pkgs.mangohud
