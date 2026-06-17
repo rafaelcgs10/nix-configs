@@ -37,13 +37,27 @@ in {
     EDITOR = "vim";
     # LSP_USE_PLISTS = "true";
 
-    # Wayland native rendering for Qt/GTK apps (performance at 4K scaling)
+    # Wayland native rendering for Qt/GTK apps (performance at 4K scaling).
+    # Note: do NOT set GDK_BACKEND here. xdg-desktop-portal-gnome 50+ treats
+    # *any* explicit GDK_BACKEND as "forced" and refuses to expose dialog
+    # interfaces (Access, Camera, FileChooser, …), which breaks portal-using
+    # apps like GNOME Snapshot, Firefox getUserMedia, etc. GTK4 already picks
+    # Wayland automatically when WAYLAND_DISPLAY is set.
     QT_QPA_PLATFORM = "wayland;xcb";
-    GDK_BACKEND = "wayland,x11";
     SDL_VIDEODRIVER = "wayland";
     CLUTTER_BACKEND = "wayland";
     # Improve XWayland app rendering (apps that can't use Wayland)
     XCURSOR_SIZE = "32";
+
+    # Globally redirect V4L2 calls (/dev/video* ioctls) to PipeWire so any
+    # legacy V4L2-only app (Zoom, OBS without the PipeWire plugin, plain
+    # ffmpeg, …) sees the Surface Go's IPU3 cameras — which never appear as
+    # /dev/video* devices. Intercepts only V4L2-specific syscalls; everything
+    # else passes through. Heads-up: if an app misbehaves (Electron sandboxes,
+    # weird forks), test by launching it with `LD_PRELOAD= app` to confirm
+    # this lib is the culprit before suspecting anything else. Removing this
+    # falls back to per-app wraps (see zoom-us-pw pattern in graphical-apps).
+    LD_PRELOAD = "${pkgs.pipewire}/lib/pipewire-0.3/v4l2/libpw-v4l2.so";
 
     USER_HOME = "/home/rafael";
     DIRENV_ALLOW_NIX = 1;
@@ -161,7 +175,27 @@ in {
     pkgs.fuse
     pkgs.sshfs
     pkgs.syncthing
-    pkgs.opencode
+    (pkgs.stdenv.mkDerivation {
+      pname = "opencode-baseline";
+      version = "1.17.6";
+      src = pkgs.fetchzip {
+        url = "https://github.com/anomalyco/opencode/releases/download/v1.17.6/opencode-linux-x64-baseline.tar.gz";
+        hash = "sha256-Q3Y7b29AVyx6RVtxDApTAIeHme8NnAsSLM/3I2Qhtbs=";
+        stripRoot = false;
+      };
+      nativeBuildInputs = [ pkgs.patchelf ];
+      dontConfigure = true;
+      dontBuild = true;
+      dontStrip = true;
+      dontPatchELF = true;
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 opencode $out/bin/opencode
+        patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/opencode
+        runHook postInstall
+      '';
+      meta.mainProgram = "opencode";
+    })
     pkgs.claude-code
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
