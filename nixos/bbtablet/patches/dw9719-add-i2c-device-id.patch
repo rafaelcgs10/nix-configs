@@ -1,0 +1,45 @@
+From: Sakari Ailus <sakari.ailus@linux.intel.com>
+Subject: [PATCH] media: i2c: dw9719: Add I2C device ID table
+
+The I2C device id table is necessary as the device may be, besides
+through system firmware, also instantiated in the IPU bridge so
+matching takes place using the I2C device id table.
+
+Without this table, Surface devices using the dw9719 VCM (voice coil
+motor for autofocus on OV8865) fail to bind the VCM driver. The
+ipu3-cio2 notifier then never completes, leaving every sensor with
+zero links to the CSI-2 receivers, and libcamera reports no cameras.
+
+Upstream fix: https://lore.kernel.org/all/20260326174909.2746696-1-sakari.ailus@linux.intel.com/
+Tracked in: https://github.com/linux-surface/linux-surface/pull/2123
+
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+---
+ drivers/media/i2c/dw9719.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/drivers/media/i2c/dw9719.c b/drivers/media/i2c/dw9719.c
+--- a/drivers/media/i2c/dw9719.c
++++ b/drivers/media/i2c/dw9719.c
+@@ -454,6 +454,15 @@ static const struct of_device_id dw9719_of_table[] = {
+ };
+ MODULE_DEVICE_TABLE(of, dw9719_of_table);
+
++static const struct i2c_device_id dw9719_id_table[] = {
++	{ .name = "dw9718s", .driver_data = (kernel_ulong_t)DW9718S },
++	{ .name = "dw9719",  .driver_data = (kernel_ulong_t)DW9719  },
++	{ .name = "dw9761",  .driver_data = (kernel_ulong_t)DW9761  },
++	{ .name = "dw9800k", .driver_data = (kernel_ulong_t)DW9800K },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, dw9719_id_table);
++
+ static DEFINE_RUNTIME_DEV_PM_OPS(dw9719_pm_ops, dw9719_suspend, dw9719_resume,
+ 				 NULL);
+
+@@ -466,4 +475,5 @@ static struct i2c_driver dw9719_i2c_driver = {
+ 	.probe = dw9719_probe,
+ 	.remove = dw9719_remove,
++	.id_table = dw9719_id_table,
+ };
+ module_i2c_driver(dw9719_i2c_driver);
