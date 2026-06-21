@@ -18,49 +18,6 @@ let
   spektrafilm-flake = builtins.getFlake "github:rafaelcgs10/spektrafilm-art";
   spektrafilm-packages = spektrafilm-flake.packages.${builtins.currentSystem};
 
-  # art-newer = (pkgs.art.overrideAttrs (oldAttrs: {
-  #   version = "1.25.11-unstable-2026-04-01";
-  #   src = pkgs.fetchFromGitHub {
-  #     owner = "artraweditor";
-  #     repo = "ART";
-  #     rev = "27554bbeab0adcd98335b0470b37c7bd3db1ae80";
-  #     hash = "sha256-lCn/qBQ9PEx4pf+0y0fnWHZ2b68Lu6eLKHgcDzNAYio=";
-  #   };
-  #   postInstall = (oldAttrs.postInstall or "") + ''
-  #     mkdir -p $out/share/ART/extlut
-  #     cp -r $src/tools/extlut/* $out/share/ART/extlut/
-  #   '';
-  #   nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
-  #   postFixup = (oldAttrs.postFixup or "") + ''
-  #     wrapProgram $out/bin/ART \
-  #       --prefix PATH : "${spektrafilm-python}/bin"
-  #     wrapProgram $out/bin/ART-cli \
-  #       --prefix PATH : "${spektrafilm-python}/bin"
-  #   '';
-  # }));
-
-  # createBraveExtensionFor = browserVersion: { id, sha256, version }:
-  #   {
-  #     inherit id;
-  #     crxPath = builtins.fetchurl {
-  #       url = "https://github.com/libredirect/libredirect/releases/download/v2.5.4/libredirect-2.5.4.crx";
-  #       name = "${id}.crx";
-  #       inherit sha256;
-  #     };
-  #     inherit version;
-  #   };
-  # createBraveExtension = createBraveExtensionFor (lib.versions.major pkgs.brave.version);
-  # pinnedZoomPkgs =
-  #   import
-  #     (builtins.fetchTarball {
-  #       url = "https://github.com/NixOS/nixpkgs/archive/0c19708cf035f50d28eb4b2b8e7a79d4dc52f6bb.tar.gz";
-  #       sha256 = "0ngw2shvl24swam5pzhcs9hvbwrgzsbcdlhpvzqc7nfk8lc28sp3";
-  #     })
-  #     {
-  #       system = "x86_64-linux";
-  #       config.allowUnfree = true;
-  #     };
-  #   pinnedZoom = pinnedZoomPkgs.zoom-us;
 in
 {
   home.packages = [
@@ -145,6 +102,7 @@ in
     new_darktable.darktable
     spektrafilm-packages.spektrafilm
     spektrafilm-packages.spektrafilm-art
+    pkgs.vkdt
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
