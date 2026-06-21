@@ -1,0 +1,37 @@
+From c6432f54839f6704e7e13447cc40926c5b9cbef6 Mon Sep 17 00:00:00 2001
+From: Jurison Murati <eng.juri@gmail.com>
+Date: Wed, 10 Jun 2026 01:14:41 +0200
+Subject: [PATCH 2/2] media: i2c: ov8865: Drop PM runtime reference if stream
+ start fails
+
+ov8865_s_stream() takes a runtime PM reference when enabling the
+stream, but returns without releasing it if ov8865_sw_standby()
+fails, leaving the reference unbalanced and the sensor powered
+indefinitely.
+
+Signed-off-by: Jurison Murati <eng.juri@gmail.com>
+Patchset: cameras
+---
+ drivers/media/i2c/ov8865.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/i2c/ov8865.c b/drivers/media/i2c/ov8865.c
+index d019ffd..e00a6c6 100644
+--- a/drivers/media/i2c/ov8865.c
++++ b/drivers/media/i2c/ov8865.c
+@@ -2647,8 +2647,11 @@ static int ov8865_s_stream(struct v4l2_subdev *subdev, int enable)
+ 	ret = ov8865_sw_standby(sensor, !enable);
+ 	mutex_unlock(&sensor->mutex);
+ 
+-	if (ret)
++	if (ret) {
++		if (enable)
++			pm_runtime_put(sensor->dev);
+ 		return ret;
++	}
+ 
+ 	state->streaming = !!enable;
+ 
+-- 
+2.54.0
+
