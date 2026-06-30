@@ -155,7 +155,7 @@ in
     defaultShared = true;
     openFirewall = true;
   };
-  services.printing.drivers = [ pkgs.carps-cups pkgs.gutenprint pkgs.gutenprintBin pkgs.hplip pkgs.hplipWithPlugin pkgs.cnijfilter2];
+  services.printing.drivers = [ pkgs.carps-cups pkgs.gutenprint pkgs.gutenprintBin pkgs.hplip pkgs.cnijfilter2 ];
 
 
   services.syncthing = {
@@ -233,4 +233,6 @@ in
   services.desktopManager.plasma6.enable = true;
   services.desktopManager.cosmic.enable = true;
   services.system76-scheduler.enable = true;
+
+
 }
