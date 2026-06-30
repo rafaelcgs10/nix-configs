@@ -20,10 +20,64 @@
   # owns the kernel and the two would conflict.
   hardware.microsoft-surface.kernelVersion = "longterm";
 
+  # IPU3 camera fixes layered on top of the linux-surface 6.19.8 kernel.
+  # All three are needed together to actually get a working stream:
+  #
+  # 1. dw9719-add-i2c-device-id — re-adds the i2c_device_id table that
+  #    upstream 6.19 dropped. On Surface, ipu_bridge instantiates the VCM
+  #    as a plain I2C device with no ACPI/OF companion, so without this
+  #    table the driver never binds, the OV8865 sub-notifier never
+  #    completes, and (because v4l2-async completes hierarchically) the
+  #    whole CIO2 notifier stalls — libcamera sees zero cameras.
+  #    Source: https://lore.kernel.org/all/20260326174909.2746696-1-sakari.ailus@linux.intel.com/
+  #    Tracked: https://github.com/linux-surface/linux-surface/pull/2123
+  #
+  # 2 & 3. ov8865-program-mode-on-stream-start / ov8865-drop-pm-ref-on-stream-fail.
+  #    Once enumeration works, streaming still stalls with "payload length
+  #    is X, received Y" in dmesg and `cam` hangs. Root cause: ov8865 only
+  #    writes its sensor registers in the runtime-PM resume handler, while
+  #    ipu_bridge gives the VCM a DL_FLAG_PM_RUNTIME link to the sensor.
+  #    WirePlumber (and any libcamera consumer) holding the VCM subdev open
+  #    pins the sensor runtime-active, so set_fmt() changes never reach
+  #    the hardware — the sensor keeps streaming the previously-programmed
+  #    mode while CIO2 expects the newly negotiated one.
+  #    Tracked: https://github.com/linux-surface/linux-surface/pull/2169
+  boot.kernelPatches = [
+    {
+      name = "dw9719-add-i2c-device-id";
+      patch = ./patches/dw9719-add-i2c-device-id.patch;
+    }
+    {
+      name = "ov8865-program-mode-on-stream-start";
+      patch = ./patches/ov8865-program-mode-on-stream-start.patch;
+    }
+    {
+      name = "ov8865-drop-pm-ref-on-stream-fail";
+      patch = ./patches/ov8865-drop-pm-ref-on-stream-fail.patch;
+    }
+  ];
+
   boot.initrd.availableKernelModules = [ "xhci_pci" "nvme" "usbhid" "usb_storage" "sd_mod" "rtsx_pci_sdmmc" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" ];
+  # IPU3 camera pipeline + Surface Go sensors + INT3472 power controllers.
+  # These all need to be available so that when `ipu3-cio2` re-binds (see the
+  # ipu3-rebind service below) the i2c sensors and their power rails are
+  # already up and the bridge can wire the media graph.
+  boot.kernelModules = [
+    "kvm-intel"
+    "ipu3_cio2"                   # CSI-2 receiver
+    "ipu3_imgu"                   # image processing unit
+    "ipu_bridge"                  # sensor <-> CSI2 ACPI bridge
+    "intel_skl_int3472_discrete"  # power control for OV5693/OV8865
+    "intel_skl_int3472_tps68470"  # power control for OV7251 (IR)
+    "ov5693"                      # front (color) sensor
+    "ov8865"                      # rear  (color) sensor
+    "ov7251"                      # IR sensor (Windows Hello)
+  ];
   boot.extraModulePackages = [ ];
+  boot.kernelParams = [
+    "mitigations=off"
+  ];
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/aa974abe-e7e5-4823-8012-d41a7a2cc7a3";
@@ -44,6 +98,16 @@
   zramSwap = {
     enable = true;
     algorithm = "zstd";
+  };
+
+  fileSystems."/rafael_mounts" = {
+    device = "//192.168.0.104/hdd";
+    fsType = "cifs";
+    options = let
+      # this line prevents hanging on network split
+      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
+
+    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
@@ -76,14 +140,54 @@
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
 
-  # Local user for the tablet (the shared config defines rafael as well).
-  users.users.bb = {
-    isNormalUser = true;
-    description = "bb";
-    extraGroups = [ "networkmanager" "wheel" ];
-  };
-
   programs.firefox.enable = true;
+
+  # libcamera is required for the Surface Go's Intel IPU3 cameras (front + rear).
+  # They do not present as standard UVC V4L2 devices, so raw v4l2 tools won't see
+  # them — only libcamera (and apps/PipeWire that use it) can drive the pipeline.
+  # WirePlumber's default `main` profile already loads `monitor.libcamera`
+  # (hardware.video-capture), so installing libcamera here is enough for
+  # PipeWire/WirePlumber to expose the cameras to portal-aware apps.
+  environment.systemPackages = with pkgs; [
+    libcamera
+  ];
+
+  # Surface Go IPU3 camera workaround.
+  #
+  # `ipu3-cio2` (the PCI CSI-2 receiver driver) probes very early in boot —
+  # before the I2C sensor drivers (ov5693/ov8865/ov7251) and the INT3472
+  # power controllers have attached. So when `ipu_bridge` runs at cio2 probe
+  # time it has no sensors to link, and the resulting media graph has the
+  # sensors and the four `ipu3-csi2` SINK pads sitting unconnected
+  # (0 links). libcamera's IPU3 pipeline handler then enumerates zero
+  # cameras even though `dmesg` says "Connected 3 cameras".
+  #
+  # Rebinding `ipu3-cio2` after userspace is up forces the bridge to re-run
+  # with the sensors and INT3472 already probed, which actually creates the
+  # fwnode links and makes the cameras visible to libcamera/PipeWire.
+  systemd.services.ipu3-rebind = {
+    description = "Rebind ipu3-cio2 so the IPU3 bridge picks up the sensors";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "systemd-modules-load.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      set -eu
+      drv=/sys/bus/pci/drivers/ipu3-cio2
+      # CIO2 (CSI-2 host controller) lives at 00:14.3 on Surface Go.
+      # The IMGU (8086:1919) at 00:05.0 is a separate device handled by ipu3-imgu.
+      dev=0000:00:14.3
+      # Give the i2c sensor drivers and INT3472 a moment to settle.
+      sleep 3
+      if [ -e "$drv/$dev" ]; then
+        echo "$dev" > "$drv/unbind"
+        sleep 1
+      fi
+      echo "$dev" > "$drv/bind"
+    '';
+  };
 
   # --- Surface Go specific tuning ---
 
