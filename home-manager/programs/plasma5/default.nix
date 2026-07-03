@@ -14,17 +14,6 @@ in
   ];
 
   home.file.".config/powermanagementprofilesrc".text = builtins.readFile ./powermanagementprofilesrc;
-  home.file.".config/autostart/bitwarden.desktop".text = ''
-    [Desktop Entry]
-    Categories=Utility
-    Comment=A secure and free password manager for all of your devices
-    Exec=bitwarden %U
-    Icon=bitwarden
-    Name=Bitwarden
-    Type=Application
-    Version=1.4
-  '';
-
   home.file.".config/autostart/synology-drive.desktop".text = ''
     [Desktop Entry]
     Categories=Network;FileTransfer;
@@ -40,6 +29,11 @@ in
   programs.plasma = {
     enable = true;
     workspace.clickItemTo = "select";
+
+    # Let Plasma derive Xft.dpi from the active output scale. A stale forced
+    # 144 DPI makes Java/Swing apps such as Isabelle/jEdit render oversized
+    # menus when the monitor is running at 1440p with 100% scaling.
+    configFile."kcmfonts"."General"."forceFontDPI" = 0;
 
     shortcuts = {
       "ActivityManager"."switch-to-activity-2a8a7b0f-2101-425e-b494-39f585de8194" = [ ];
