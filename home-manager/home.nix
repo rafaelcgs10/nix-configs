@@ -115,7 +115,6 @@ in {
     pkgs.owofetch
     pkgs.inxi
     pkgs.e2fsprogs
-    pkgs.lightlocker
     pkgs.tmux
     pkgs.pciutils
     pkgs.openfortivpn
