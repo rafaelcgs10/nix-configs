@@ -4,12 +4,10 @@
 { config,
   lib,
   pkgs,
+  inputs,
   system ? pkgs.system,
   modulesPath, ... }:
 
-let
-  unstable = import <nixpkgs-unstable> { config.allowUnfree = true; };
-in
 {
   imports =
     [ (modulesPath + "/installer/scan/not-detected.nix")
@@ -181,9 +179,7 @@ in
 
   environment.systemPackages =
     let
-      winapps =
-        (import (builtins.fetchTarball "https://github.com/winapps-org/winapps/archive/main.tar.gz"))
-        .packages."x86_64-linux";
+      winapps = inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system};
     in
     [
       winapps.winapps

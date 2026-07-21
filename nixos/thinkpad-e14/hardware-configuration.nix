@@ -141,7 +141,7 @@ in
   systemd.user.services.xmodmap = {
     serviceConfig.PassEnvironment = "DISPLAY";
     script = ''
-      ${pkgs.xorg.xmodmap}/bin/xmodmap -e "keycode 107 = Menu"
+      ${pkgs.xmodmap}/bin/xmodmap -e "keycode 107 = Menu"
   '';
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
@@ -416,6 +416,8 @@ in
     };
   };
   services.desktopManager.plasma6.enable = true;
+  services.desktopManager.cosmic.enable = true;
+  services.system76-scheduler.enable = true;
 
   services.cron = {
     enable = true;

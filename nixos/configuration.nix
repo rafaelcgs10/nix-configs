@@ -2,17 +2,15 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 let
-  homemanager = import <home-manager> {};
+  homeManagerPackage = inputs.home-manager.packages.${pkgs.stdenv.hostPlatform.system}.home-manager;
 in {
   imports =
-    [ # Include the results of the hardware scan.
+    [
       ./cachix.nix
-      ./boot-loader.nix
-      ./hardware-configuration.nix
-      <home-manager/nixos>
+      inputs.home-manager.nixosModules.home-manager
     ];
   nixpkgs.config.permittedInsecurePackages = [
     # "python-2.7.18.6"
@@ -230,7 +228,7 @@ in {
     terminator
     zsh
     vim
-    homemanager.home-manager
+    homeManagerPackage
     btrfs-progs
     compsize
     smartmontools
