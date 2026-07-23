@@ -131,10 +131,10 @@
     device = "//192.168.0.104/hdd";
     fsType = "cifs";
     options = let
-      # this line prevents hanging on network split
-      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
+      # Avoid blocking boot/switch/manual mount when the SMB server is unreachable.
+      mount_opts = "noauto,nofail,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
 
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=rafael,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
+    in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=rafael,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" ];
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

@@ -73,10 +73,10 @@
     device = "//192.168.0.104/hdd";
     fsType = "cifs";
     options = let
-      # this line prevents hanging on network split
-      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
+      # Avoid blocking boot/switch/manual mount when the SMB server is unreachable.
+      mount_opts = "noauto,nofail,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
 
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
+    in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" ];
   };
 
   # systemd = {
@@ -105,6 +105,7 @@
     # Electron / Chromium apps: use Wayland natively instead of XWayland
     NIXOS_OZONE_WL = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    COSMIC_DATA_CONTROL_ENABLED = "1";
     # Cursor rendering fix for NVIDIA on Wayland
     WLR_NO_HARDWARE_CURSORS = "1";
   };
@@ -217,14 +218,11 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-  # Desktop environment: KDE Plasma 6 + SDDM
+  # Desktop environment: KDE Plasma 6 + COSMIC greeter
   services.xserver.enable = true;
   services.displayManager = {
     defaultSession = "plasma";
-    sddm = {
-      enable = true;
-      wayland.enable = true;
-    };
+    cosmic-greeter.enable = true;
   };
   services.desktopManager.plasma6.enable = true;
   services.desktopManager.cosmic.enable = true;

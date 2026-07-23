@@ -167,6 +167,10 @@ in
   };
 
   security.pam.services = {
+    sddm.enableGnomeKeyring = true;
+    sddm.kwallet.enable = false;
+    login.kwallet.enable = lib.mkForce false;
+
     login.rules.auth.ecryptfs = {
       order = 11800;
       control = "optional";
@@ -191,9 +195,9 @@ in
     device = "//192.168.0.104/hdd";
     fsType = "cifs";
     options = let
-      # this line prevents hanging on network split
-      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" "noserverino" ];
+      # Avoid blocking boot/switch/manual mount when the SMB server is unreachable.
+      mount_opts = "noauto,nofail,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
+    in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" "noserverino" ];
   };
 
   # fileSystems."/" =
@@ -397,8 +401,11 @@ in
   #   };
   # };
 
-  # Wayland for Electon
-  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+  environment.sessionVariables = {
+    # Wayland for Electron
+    NIXOS_OZONE_WL = "1";
+    COSMIC_DATA_CONTROL_ENABLED = "1";
+  };
 
   # virtualisation.virtualbox.host.enable = true;
   # nixpkgs.config.virtualbox.host.enableExtensionPack = true;
