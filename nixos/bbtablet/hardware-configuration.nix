@@ -91,6 +91,36 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
+  fileSystems."/home/rafael/sd" = {
+    device = "/dev/disk/by-label/sd";
+    fsType = "btrfs";
+    options = [
+      "x-systemd.automount"
+      "noauto"
+      "nofail"
+      "x-systemd.idle-timeout=60"
+      "x-systemd.device-timeout=5s"
+      "x-systemd.mount-timeout=5s"
+      "compress=zstd"
+      "noatime"
+    ];
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /home/rafael/sd 0755 rafael users -"
+  ];
+
+  systemd.services.sd-storage-permissions = {
+    description = "Ensure Rafael owns the SD card mount root";
+    wantedBy = [ "home-rafael-sd.mount" ];
+    after = [ "home-rafael-sd.mount" ];
+    bindsTo = [ "home-rafael-sd.mount" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      chown rafael:users /home/rafael/sd
+    '';
+  };
+
   swapDevices =
     [ { device = "/dev/disk/by-uuid/5e97a962-a45b-43ac-b3a8-16da7888aa65"; }
     ];
@@ -107,7 +137,7 @@
       # this line prevents hanging on network split
       automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
 
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
+    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=rafael,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

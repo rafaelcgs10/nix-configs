@@ -15,8 +15,8 @@ let
         url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
     }) {};
 
-  spektrafilm-flake = builtins.getFlake "github:rafaelcgs10/spektrafilm-art";
-  spektrafilm-packages = spektrafilm-flake.packages.${builtins.currentSystem};
+  spektrafilm-flake = builtins.getFlake "github:rafaelcgs10/spektrafilm-art/29255addefda6ce93f27ad41966d469bee0e14e3?narHash=sha256-0oTNe926WqrCx/1zVLXjDB0/RXbeHGeJlajEhanrAOU%3D";
+  spektrafilm-packages = spektrafilm-flake.packages.${pkgs.system};
 
 in
 {
