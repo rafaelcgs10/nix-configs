@@ -1,7 +1,9 @@
-{ config, pkgs, lib, getBin,... }:
+{ config, pkgs, lib, getBin, osConfig ? null, ... }:
 
 let
   unstable = import <nixpkgs-unstable> {};
+  hostName = if osConfig == null then "" else osConfig.networking.hostName or "";
+  isBbtablet = hostName == "bbtablet";
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -49,16 +51,6 @@ in {
     # Improve XWayland app rendering (apps that can't use Wayland)
     XCURSOR_SIZE = "32";
 
-    # Globally redirect V4L2 calls (/dev/video* ioctls) to PipeWire so any
-    # legacy V4L2-only app (Zoom, OBS without the PipeWire plugin, plain
-    # ffmpeg, …) sees the Surface Go's IPU3 cameras — which never appear as
-    # /dev/video* devices. Intercepts only V4L2-specific syscalls; everything
-    # else passes through. Heads-up: if an app misbehaves (Electron sandboxes,
-    # weird forks), test by launching it with `LD_PRELOAD= app` to confirm
-    # this lib is the culprit before suspecting anything else. Removing this
-    # falls back to per-app wraps (see zoom-us-pw pattern in graphical-apps).
-    LD_PRELOAD = "${pkgs.pipewire}/lib/pipewire-0.3/v4l2/libpw-v4l2.so";
-
     USER_HOME = "/home/rafael";
     DIRENV_ALLOW_NIX = 1;
     CVC5_SOLVER = "/nix/store/wn18dx41k7b81naxgb3bv3qmkllaprsc-home-manager-path/bin/cvc5";
@@ -66,6 +58,10 @@ in {
     SATALLAX_HOME = "~/.nix-profile/bin";
     LEO3_HOME = "~/.nix-profile/bin";
     IQ_AUTH_TOKEN = "MY_TOKEN";
+  } // lib.optionalAttrs isBbtablet {
+    # Only the tablet needs this IPU3 camera bridge. Do not preload it into
+    # desktop compositors such as COSMIC on bbstation.
+    LD_PRELOAD = "${pkgs.pipewire}/lib/pipewire-0.3/v4l2/libpw-v4l2.so";
   };
 
   home.file.".config/winapps/compose.yaml".text = builtins.readFile ../winapps/compose.yaml;

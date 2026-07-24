@@ -94,8 +94,7 @@ in
     pkgs.lxrandr
     pkgs.srandrd
     # pkgs.glxinfo
-    # pkgs.zoom-us
-    pkgs.zoom-us              # picks up libpw-v4l2 via global LD_PRELOAD in home.nix
+    pkgs.zoom-us
     unstable.signal-desktop
     # pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol

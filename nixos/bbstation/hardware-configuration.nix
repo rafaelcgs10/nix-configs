@@ -221,15 +221,12 @@ in
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-  # Desktop environment: KDE Plasma 6 + SDDM
+  # Desktop environments: COSMIC (daily driver) + KDE Plasma 6
+  # cosmic-greeter instead of SDDM: SDDM's wayland greeter has a VT handoff
+  # race (sddm#1443, triggered by kwallet-pam) that hung the session start on
+  # first login after boot and made SDDM SIGKILL the session 90s after login.
   services.xserver.enable = true;
-  services.displayManager = {
-    defaultSession = "plasma";
-    sddm = {
-      enable = true;
-      wayland.enable = true;
-    };
-  };
+  services.displayManager.cosmic-greeter.enable = true;
   services.desktopManager.plasma6.enable = true;
   services.desktopManager.cosmic.enable = true;
   services.system76-scheduler.enable = true;
