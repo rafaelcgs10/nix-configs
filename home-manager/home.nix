@@ -211,14 +211,11 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     # pkgs.vistafonts
-    pkgs.wineWow64Packages.waylandFull
-    pkgs.winetricks
     pkgs.fira-code
     # pkgs.wine64
     # pkgs.wineWow64Packages.full
     # pkgs.wineWowPackages.stable
     pkgs.phockup
-    # (pkgs.callPackage ./hdl-batch-installer.nix {})
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
