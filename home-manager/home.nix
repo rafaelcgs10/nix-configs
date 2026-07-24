@@ -1,7 +1,6 @@
-{ config, pkgs, lib, getBin, osConfig ? null, ... }:
+{ config, pkgs, pkgsUnstable, lib, getBin, osConfig ? null, ... }:
 
 let
-  unstable = import <nixpkgs-unstable> {};
   hostName = if osConfig == null then "" else osConfig.networking.hostName or "";
   isBbtablet = hostName == "bbtablet";
 in {
