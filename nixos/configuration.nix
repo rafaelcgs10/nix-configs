@@ -10,11 +10,11 @@ in {
   imports =
     [
       ./cachix.nix
-      inputs.home-manager.nixosModules.home-manager
     ];
   nixpkgs.config.permittedInsecurePackages = [
     # "python-2.7.18.6"
     # "python-2.7.18.7"
+    "electron-39.8.10"
     "nix-2.15.3"
   ];
   environment.pathsToLink = [ "/libexec" ]; # links /libexec from derivations to /run/current-system/sw

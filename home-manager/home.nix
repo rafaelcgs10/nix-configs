@@ -1,15 +1,27 @@
-{ config, pkgs, lib, getBin,... }:
+{ config, pkgs, lib, pkgsUnstable, getBin,... }:
 
-let
-  unstable = import <nixpkgs-unstable> {};
-in {
+{
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
   programs.ssh = {
     enable = true;
+    enableDefaultConfig = false;
 
     settings = {
+      "*" = {
+        ForwardAgent = false;
+        AddKeysToAgent = "no";
+        Compression = false;
+        ServerAliveInterval = 0;
+        ServerAliveCountMax = 3;
+        HashKnownHosts = false;
+        UserKnownHostsFile = "~/.ssh/known_hosts";
+        ControlMaster = "no";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
+        ControlPersist = "no";
+      };
+
       "orangessh.rafaelcgs.com" = {
         HostName = "orangessh.rafaelcgs.com";
         User = "rafael";
@@ -19,10 +31,6 @@ in {
   };
 
   home.stateVersion = "26.05";
-
-  imports = [
-    ./imports/default.nix
-  ];
 
   home.username = "rafael";
   home.homeDirectory = "/home/rafael";
@@ -91,13 +99,6 @@ in {
     };
   };
 
-  nixpkgs.config = {
-    allowUnfree = true;
-    permittedInsecurePackages = [
-      "electron-39.8.10"
-    ];
-  };
-
   home.packages = [
     pkgs.gawk
     pkgs.jq
@@ -156,7 +157,7 @@ in {
     pkgs.android-tools
     # (pkgs.ripgrep.override { withPCRE2 = true; })
     pkgs.ripgrep
-    unstable.rclone
+    pkgsUnstable.rclone
     pkgs.veracrypt
     pkgs.graphviz
     pkgs.hcxdumptool
@@ -169,7 +170,7 @@ in {
     pkgs.aircrack-ng
     pkgs.john
     pkgs.bully
-    unstable.gallery-dl
+    pkgsUnstable.gallery-dl
     # pkgs.youtube-dl
     pkgs.fuse
     pkgs.sshfs

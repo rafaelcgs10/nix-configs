@@ -1,24 +1,5 @@
-{ pkgs, lib, config, ...}:
-let
-  unstable = import <nixpkgs-unstable> {
-    config = {
-      allowUnfree = true;
-      permittedInsecurePackages = [
-        "electron-39.8.10"
-      ];
-    };
-  };
-  new_darktable = import (builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/7eea86e9c4edb957d3fa952f7454e6cbdf1721e5.tar.gz";
-    }) {};
-  newer_channel = import (builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
-    }) {};
+{ pkgs, lib, config, pkgsUnstable, pkgsDarktable, pkgsLmstudio, spektrafilmPackages, ...}:
 
-  spektrafilm-flake = builtins.getFlake "github:rafaelcgs10/spektrafilm-art/29255addefda6ce93f27ad41966d469bee0e14e3?narHash=sha256-0oTNe926WqrCx/1zVLXjDB0/RXbeHGeJlajEhanrAOU%3D";
-  spektrafilm-packages = spektrafilm-flake.packages.${pkgs.system};
-
-in
 {
   home.packages = [
     pkgs.gimp3-with-plugins
@@ -71,7 +52,7 @@ in
     # pkgs.gnomeExtensions.appindicator
     # unstable.qmplay2
     pkgs.sc-controller
-    unstable.zulip
+    pkgsUnstable.zulip
     pkgs.pgadmin4-desktopmode
     pkgs.handbrake # ghb
     pkgs.lshw-gui
@@ -83,7 +64,7 @@ in
     # nur.repos.genesis.hdl-batch-installer
     pkgs.upscayl
     # pkgs.gpt4all
-    newer_channel.lmstudio
+    pkgsLmstudio.lmstudio
 
     # pkgs.flameshot
     # pkgs.noisetorch
@@ -96,13 +77,13 @@ in
     # pkgs.glxinfo
     # pkgs.zoom-us
     pkgs.zoom-us              # picks up libpw-v4l2 via global LD_PRELOAD in home.nix
-    unstable.signal-desktop
+    pkgsUnstable.signal-desktop
     # pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
-    unstable.freetube
-    new_darktable.darktable
-    spektrafilm-packages.spektrafilm
-    spektrafilm-packages.spektrafilm-art
+    pkgsUnstable.freetube
+    pkgsDarktable.darktable
+    spektrafilmPackages.spektrafilm
+    spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
     pkgs.focus-stack
     pkgs.hugin
