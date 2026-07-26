@@ -124,6 +124,13 @@
   home.file.".config/darktable/spektrafilm".source =
     spektrafilmPackages.spektrafilm-data-pack;
 
+  # Offline AI models for darktable's AI modules (denoise / upscale / object
+  # masking). The fork reports version 5.8.0, which has no auto-download match,
+  # so we bundle them here and link them into darktable's models dir (read-only;
+  # darktable only scans it). Not used by spektrafilm itself.
+  home.file.".local/share/darktable/models".source =
+    spektrafilmPackages.darktable-ai-models;
+
   # Chromium command-line flags. Chromium reads ~/.config/chromium-flags.conf
   # on startup and appends each line as an extra argv. Used here to turn on
   # the WebRTC PipeWire camera backend (same reason as the brave entry below)
