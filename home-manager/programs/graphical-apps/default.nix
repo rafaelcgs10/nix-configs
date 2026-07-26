@@ -81,7 +81,10 @@
     # pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     pkgsUnstable.freetube
-    pkgsDarktable.darktable
+    # darktable built from the Arecsu spektrafilm-draft branch (native C
+    # spektrafilm module). Replaces the stock pkgsDarktable.darktable; the
+    # runtime data pack is linked in via home.file below.
+    spektrafilmPackages.darktable-spektrafilm
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
@@ -113,6 +116,12 @@
   # home.file = {
   #   ".config/darktable/library.db".source = config.lib.file.mkoutofstoresymlink "/home/rafael/darktable/library.db";
   # };
+
+  # Film & print data pack for the darktable spektrafilm module. The module
+  # reads pack.json + spectra_lut.f32 + profiles/ from this exact path
+  # (dt_loc_get_user_config_dir()/spektrafilm), so link the pinned pack in.
+  home.file.".config/darktable/spektrafilm".source =
+    spektrafilmPackages.spektrafilm-data-pack;
 
   # Chromium command-line flags. Chromium reads ~/.config/chromium-flags.conf
   # on startup and appends each line as an extra argv. Used here to turn on

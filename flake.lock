@@ -202,6 +202,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-unstable_2": {
+      "locked": {
+        "lastModified": 1784872115,
+        "narHash": "sha256-THPEF2po0fsoH8gNtp+Ae0XFDJH3N/ol7xO3v6VMTJU=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "335f0738cb2fa9708f3f428e39d2eae975d1338d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs2511": {
       "locked": {
         "lastModified": 1782847189,
@@ -308,20 +324,21 @@
     },
     "spektrafilm-art": {
       "inputs": {
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_3",
+        "nixpkgs-unstable": "nixpkgs-unstable_2"
       },
       "locked": {
-        "lastModified": 1783760076,
-        "narHash": "sha256-0oTNe926WqrCx/1zVLXjDB0/RXbeHGeJlajEhanrAOU=",
+        "lastModified": 1785055677,
+        "narHash": "sha256-9Xeb8WSjFg/cpML08AM4SCFrWhLIVkcEcil1FZj8RTI=",
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art",
-        "rev": "29255addefda6ce93f27ad41966d469bee0e14e3",
+        "rev": "5464ed83219cd78e8f78f859bbbf390fb09baa81",
         "type": "github"
       },
       "original": {
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art",
-        "rev": "29255addefda6ce93f27ad41966d469bee0e14e3",
+        "rev": "5464ed83219cd78e8f78f859bbbf390fb09baa81",
         "type": "github"
       }
     },
