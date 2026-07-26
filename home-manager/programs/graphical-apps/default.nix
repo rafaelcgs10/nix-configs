@@ -83,8 +83,9 @@
     pkgsUnstable.freetube
     # darktable built from the Arecsu spektrafilm-draft branch (native C
     # spektrafilm module). Replaces the stock pkgsDarktable.darktable; the
-    # runtime data pack is linked in via home.file below.
-    spektrafilmPackages.darktable-spektrafilm
+    # runtime data pack is linked in via home.file below. withAi enables
+    # darktable's ONNX-based AI features (pulls in onnxruntime).
+    (spektrafilmPackages.darktable-spektrafilm.override { withAi = true; })
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
