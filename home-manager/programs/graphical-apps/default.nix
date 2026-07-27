@@ -81,8 +81,8 @@
     # pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
     pkgsUnstable.freetube
-    # darktable built from the Arecsu spektrafilm-draft branch (native C
-    # spektrafilm module). Replaces the stock pkgsDarktable.darktable; the
+    # darktable built from the spektrafilm PR branch (native C spektrafilm
+    # module). Replaces the stock pkgsDarktable.darktable; the
     # runtime data pack is linked in via home.file below. withAi enables
     # darktable's ONNX-based AI features (pulls in onnxruntime).
     (spektrafilmPackages.darktable-spektrafilm.override { withAi = true; })
