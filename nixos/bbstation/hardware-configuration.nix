@@ -157,12 +157,12 @@
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = [
-        "${config.hardware.nvidia.package}/bin/nvidia-smi --lock-memory-clocks=7001,7001"
-        "${config.hardware.nvidia.package}/bin/nvidia-smi --lock-gpu-clocks=1500,2100"
+        "${config.hardware.nvidia.package.bin}/bin/nvidia-smi --lock-memory-clocks=7001,7001"
+        "${config.hardware.nvidia.package.bin}/bin/nvidia-smi --lock-gpu-clocks=1500,2100"
       ];
       ExecStop = [
-        "-${config.hardware.nvidia.package}/bin/nvidia-smi --reset-gpu-clocks"
-        "-${config.hardware.nvidia.package}/bin/nvidia-smi --reset-memory-clocks"
+        "-${config.hardware.nvidia.package.bin}/bin/nvidia-smi --reset-gpu-clocks"
+        "-${config.hardware.nvidia.package.bin}/bin/nvidia-smi --reset-memory-clocks"
       ];
     };
   };
