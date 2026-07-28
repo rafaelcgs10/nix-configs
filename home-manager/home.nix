@@ -57,6 +57,9 @@ in {
     QT_QPA_PLATFORM = "wayland;xcb";
     SDL_VIDEODRIVER = "wayland";
     CLUTTER_BACKEND = "wayland";
+    MOZ_ENABLE_WAYLAND = "1";
+    NIXOS_OZONE_WL = "1";
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
     # Improve XWayland app rendering (apps that can't use Wayland)
     XCURSOR_SIZE = "32";
 

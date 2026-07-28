@@ -132,11 +132,11 @@
     spektrafilmPackages.darktable-ai-models;
 
   # Chromium command-line flags. Chromium reads ~/.config/chromium-flags.conf
-  # on startup and appends each line as an extra argv. Used here to turn on
-  # the WebRTC PipeWire camera backend (same reason as the brave entry below)
-  # since chromium is installed as a plain package, not via programs.chromium.
+  # on startup and appends each line as an extra argv. Keep Chromium native on
+  # Wayland at fractional scale and enable the WebRTC PipeWire camera backend.
   home.file.".config/chromium-flags.conf".text = ''
-    --enable-features=WebRtcPipeWireCamera
+    --ozone-platform-hint=auto
+    --enable-features=WaylandWindowDecorations,WebRtcPipeWireCamera
   '';
 
   # LibreWolf: force the WebRTC PipeWire camera backend on. The same pref
@@ -156,10 +156,12 @@
 
   programs.brave = {
     enable = true;
-    # Enable the WebRTC PipeWire camera backend so the browser can see the
-    # Surface Go's IPU3 cameras (no /dev/video* device exists for them — they
-    # only show up through libcamera/PipeWire via the desktop portal).
-    commandLineArgs = [ "--enable-features=WebRtcPipeWireCamera" ];
+    # Keep Brave native on Wayland at fractional scale and enable the WebRTC
+    # PipeWire camera backend for portal/libcamera cameras.
+    commandLineArgs = [
+      "--ozone-platform-hint=auto"
+      "--enable-features=WaylandWindowDecorations,WebRtcPipeWireCamera"
+    ];
     extensions = [
       {id = "nngceckbapebfimnlniiiahkandclblb";} # Bitwarden
       {id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";} # uBlock Origin

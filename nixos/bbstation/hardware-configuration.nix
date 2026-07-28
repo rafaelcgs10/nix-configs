@@ -51,7 +51,6 @@
     "nvidia-drm.fbdev=1"
   ];
 
-
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/2409ac65-2c0c-4321-bc6a-777e2097f025";
       fsType = "ext4";
@@ -132,8 +131,12 @@
     # supported GPUs is at: 
     # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus 
     # Only available from driver 515.43.04+
-    # Currently alpha-quality/buggy, so false is currently the recommended setting.
-    open = false;
+    # Recommended module for Turing+ on modern drivers. On this host it improved
+    # reclocking responsiveness under Wayland/COSMIC at 4K.
+    open = true;
+
+    # Keep the GPU initialized so the clock locks below persist before login.
+    nvidiaPersistenced = true;
 
     # Enable the Nvidia settings menu,
     # accessible via `nvidia-settings`.
@@ -143,6 +146,27 @@
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = pkgs.linuxPackages.nvidiaPackages.stable;
   };
+
+  systemd.services.nvidia-desktop-clocks = {
+    description = "Lock NVIDIA clocks for 4K desktop responsiveness";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "nvidia-persistenced.service" "systemd-udev-settle.service" ];
+    wants = [ "nvidia-persistenced.service" "systemd-udev-settle.service" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = [
+        "${config.hardware.nvidia.package}/bin/nvidia-smi --lock-memory-clocks=7001,7001"
+        "${config.hardware.nvidia.package}/bin/nvidia-smi --lock-gpu-clocks=1500,2100"
+      ];
+      ExecStop = [
+        "-${config.hardware.nvidia.package}/bin/nvidia-smi --reset-gpu-clocks"
+        "-${config.hardware.nvidia.package}/bin/nvidia-smi --reset-memory-clocks"
+      ];
+    };
+  };
+
   powerManagement = {
     cpuFreqGovernor = "performance";
   };
@@ -221,7 +245,7 @@
   # Desktop environment: KDE Plasma 6 + COSMIC greeter
   services.xserver.enable = true;
   services.displayManager = {
-    defaultSession = "plasma";
+    defaultSession = "cosmic";
     cosmic-greeter.enable = true;
   };
   services.desktopManager.plasma6.enable = true;
