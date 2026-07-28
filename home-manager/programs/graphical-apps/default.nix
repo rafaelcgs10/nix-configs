@@ -131,6 +131,26 @@
   home.file.".local/share/darktable/models".source =
     spektrafilmPackages.darktable-ai-models;
 
+  home.file.".local/share/darktable/raster-masks/.keep".text = "";
+
+  # darktable stores the raster-mask export directory in darktablerc. Keep the
+  # generated PNG masks out of $HOME without taking ownership of the full file.
+  home.activation.setDarktableRasterMaskPath = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
+    mask_dir="${config.home.homeDirectory}/.local/share/darktable/raster-masks"
+
+    ${pkgs.coreutils}/bin/mkdir -p "$mask_dir" "$(${pkgs.coreutils}/bin/dirname "$config_file")"
+    ${pkgs.coreutils}/bin/touch "$config_file"
+
+    if ${pkgs.gnugrep}/bin/grep -q '^plugins/darkroom/segments/def_path=' "$config_file"; then
+      ${pkgs.gnused}/bin/sed -i \
+        "s|^plugins/darkroom/segments/def_path=.*|plugins/darkroom/segments/def_path=$mask_dir|" \
+        "$config_file"
+    else
+      printf '\nplugins/darkroom/segments/def_path=%s\n' "$mask_dir" >> "$config_file"
+    fi
+  '';
+
   # Chromium command-line flags. Chromium reads ~/.config/chromium-flags.conf
   # on startup and appends each line as an extra argv. Keep Chromium native on
   # Wayland at fractional scale and enable the WebRTC PipeWire camera backend.
