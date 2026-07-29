@@ -30,7 +30,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    spektrafilm-art.url = "github:rafaelcgs10/spektrafilm-art-darktable/47f487047ea139bfb547966f8cabe0bdfb38f72d";
+    spektrafilm-art.url = "github:rafaelcgs10/spektrafilm-art-darktable/5ad5038684c375e2a08c1ad7dbaaaecc711636a8";
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
