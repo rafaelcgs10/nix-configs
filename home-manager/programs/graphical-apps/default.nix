@@ -88,6 +88,7 @@
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
+    pkgs.rapidraw
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
