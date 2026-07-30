@@ -1,15 +1,30 @@
-{ config, pkgs, lib, getBin,... }:
+{ config, pkgs, pkgsUnstable, lib, getBin, osConfig ? null, ... }:
 
 let
-  unstable = import <nixpkgs-unstable> {};
+  hostName = if osConfig == null then "" else osConfig.networking.hostName or "";
+  isBbtablet = hostName == "bbtablet";
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
   programs.ssh = {
     enable = true;
+    enableDefaultConfig = false;
 
     settings = {
+      "*" = {
+        ForwardAgent = false;
+        AddKeysToAgent = "no";
+        Compression = false;
+        ServerAliveInterval = 0;
+        ServerAliveCountMax = 3;
+        HashKnownHosts = false;
+        UserKnownHostsFile = "~/.ssh/known_hosts";
+        ControlMaster = "no";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
+        ControlPersist = "no";
+      };
+
       "orangessh.rafaelcgs.com" = {
         HostName = "orangessh.rafaelcgs.com";
         User = "rafael";
@@ -19,10 +34,6 @@ in {
   };
 
   home.stateVersion = "26.05";
-
-  imports = [
-    ./imports/default.nix
-  ];
 
   home.username = "rafael";
   home.homeDirectory = "/home/rafael";
@@ -46,18 +57,11 @@ in {
     QT_QPA_PLATFORM = "wayland;xcb";
     SDL_VIDEODRIVER = "wayland";
     CLUTTER_BACKEND = "wayland";
+    MOZ_ENABLE_WAYLAND = "1";
+    NIXOS_OZONE_WL = "1";
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
     # Improve XWayland app rendering (apps that can't use Wayland)
     XCURSOR_SIZE = "32";
-
-    # Globally redirect V4L2 calls (/dev/video* ioctls) to PipeWire so any
-    # legacy V4L2-only app (Zoom, OBS without the PipeWire plugin, plain
-    # ffmpeg, …) sees the Surface Go's IPU3 cameras — which never appear as
-    # /dev/video* devices. Intercepts only V4L2-specific syscalls; everything
-    # else passes through. Heads-up: if an app misbehaves (Electron sandboxes,
-    # weird forks), test by launching it with `LD_PRELOAD= app` to confirm
-    # this lib is the culprit before suspecting anything else. Removing this
-    # falls back to per-app wraps (see zoom-us-pw pattern in graphical-apps).
-    LD_PRELOAD = "${pkgs.pipewire}/lib/pipewire-0.3/v4l2/libpw-v4l2.so";
 
     USER_HOME = "/home/rafael";
     DIRENV_ALLOW_NIX = 1;
@@ -66,6 +70,10 @@ in {
     SATALLAX_HOME = "~/.nix-profile/bin";
     LEO3_HOME = "~/.nix-profile/bin";
     IQ_AUTH_TOKEN = "MY_TOKEN";
+  } // lib.optionalAttrs isBbtablet {
+    # Only the tablet needs this IPU3 camera bridge. Do not preload it into
+    # desktop compositors such as COSMIC on bbstation.
+    LD_PRELOAD = "${pkgs.pipewire}/lib/pipewire-0.3/v4l2/libpw-v4l2.so";
   };
 
   home.file.".config/winapps/compose.yaml".text = builtins.readFile ../winapps/compose.yaml;
@@ -89,13 +97,6 @@ in {
         # "application/*tar" = "org.gnome.FileRoller.desktop";
       };
     };
-  };
-
-  nixpkgs.config = {
-    allowUnfree = true;
-    permittedInsecurePackages = [
-      "electron-39.8.10"
-    ];
   };
 
   home.packages = [
@@ -156,7 +157,7 @@ in {
     pkgs.android-tools
     # (pkgs.ripgrep.override { withPCRE2 = true; })
     pkgs.ripgrep
-    unstable.rclone
+    pkgsUnstable.rclone
     pkgs.veracrypt
     pkgs.graphviz
     pkgs.hcxdumptool
@@ -169,7 +170,7 @@ in {
     pkgs.aircrack-ng
     pkgs.john
     pkgs.bully
-    unstable.gallery-dl
+    pkgsUnstable.gallery-dl
     # pkgs.youtube-dl
     pkgs.fuse
     pkgs.sshfs
@@ -211,14 +212,11 @@ in {
     pkgs.papirus-icon-theme
     pkgs.corefonts
     # pkgs.vistafonts
-    pkgs.wineWow64Packages.waylandFull
-    pkgs.winetricks
     pkgs.fira-code
     # pkgs.wine64
     # pkgs.wineWow64Packages.full
     # pkgs.wineWowPackages.stable
     pkgs.phockup
-    # (pkgs.callPackage ./hdl-batch-installer.nix {})
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts

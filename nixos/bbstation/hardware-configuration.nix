@@ -4,12 +4,10 @@
 { config,
   lib,
   pkgs,
+  inputs,
   system ? pkgs.system,
   modulesPath, ... }:
 
-let
-  unstable = import <nixpkgs-unstable> { config.allowUnfree = true; };
-in
 {
   imports =
     [ (modulesPath + "/installer/scan/not-detected.nix")
@@ -53,7 +51,6 @@ in
     "nvidia-drm.fbdev=1"
   ];
 
-
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/2409ac65-2c0c-4321-bc6a-777e2097f025";
       fsType = "ext4";
@@ -75,10 +72,10 @@ in
     device = "//192.168.0.104/hdd";
     fsType = "cifs";
     options = let
-      # this line prevents hanging on network split
-      automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
+      # Avoid blocking boot/switch/manual mount when the SMB server is unreachable.
+      mount_opts = "noauto,nofail,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
 
-    in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
+    in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" ];
   };
 
   # systemd = {
@@ -107,6 +104,7 @@ in
     # Electron / Chromium apps: use Wayland natively instead of XWayland
     NIXOS_OZONE_WL = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    COSMIC_DATA_CONTROL_ENABLED = "1";
     # Cursor rendering fix for NVIDIA on Wayland
     WLR_NO_HARDWARE_CURSORS = "1";
   };
@@ -133,8 +131,12 @@ in
     # supported GPUs is at: 
     # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus 
     # Only available from driver 515.43.04+
-    # Currently alpha-quality/buggy, so false is currently the recommended setting.
-    open = false;
+    # Recommended module for Turing+ on modern drivers. On this host it improved
+    # reclocking responsiveness under Wayland/COSMIC at 4K.
+    open = true;
+
+    # Keep the GPU initialized so the clock locks below persist before login.
+    nvidiaPersistenced = true;
 
     # Enable the Nvidia settings menu,
     # accessible via `nvidia-settings`.
@@ -144,6 +146,27 @@ in
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = pkgs.linuxPackages.nvidiaPackages.stable;
   };
+
+  systemd.services.nvidia-desktop-clocks = {
+    description = "Lock NVIDIA clocks for 4K desktop responsiveness";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "nvidia-persistenced.service" "systemd-udev-settle.service" ];
+    wants = [ "nvidia-persistenced.service" "systemd-udev-settle.service" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = [
+        "${config.hardware.nvidia.package.bin}/bin/nvidia-smi --lock-memory-clocks=7001,7001"
+        "${config.hardware.nvidia.package.bin}/bin/nvidia-smi --lock-gpu-clocks=1500,2100"
+      ];
+      ExecStop = [
+        "-${config.hardware.nvidia.package.bin}/bin/nvidia-smi --reset-gpu-clocks"
+        "-${config.hardware.nvidia.package.bin}/bin/nvidia-smi --reset-memory-clocks"
+      ];
+    };
+  };
+
   powerManagement = {
     cpuFreqGovernor = "performance";
   };
@@ -181,9 +204,7 @@ in
 
   environment.systemPackages =
     let
-      winapps =
-        (import (builtins.fetchTarball "https://github.com/winapps-org/winapps/archive/main.tar.gz"))
-        .packages."x86_64-linux";
+      winapps = inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system};
     in
     [
       winapps.winapps
@@ -221,14 +242,11 @@ in
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-  # Desktop environment: KDE Plasma 6 + SDDM
+  # Desktop environment: KDE Plasma 6 + COSMIC greeter
   services.xserver.enable = true;
   services.displayManager = {
-    defaultSession = "plasma";
-    sddm = {
-      enable = true;
-      wayland.enable = true;
-    };
+    defaultSession = "cosmic";
+    cosmic-greeter.enable = true;
   };
   services.desktopManager.plasma6.enable = true;
   services.desktopManager.cosmic.enable = true;

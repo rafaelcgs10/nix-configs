@@ -1,24 +1,5 @@
-{ pkgs, lib, config, ...}:
-let
-  unstable = import <nixpkgs-unstable> {
-    config = {
-      allowUnfree = true;
-      permittedInsecurePackages = [
-        "electron-39.8.10"
-      ];
-    };
-  };
-  new_darktable = import (builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/7eea86e9c4edb957d3fa952f7454e6cbdf1721e5.tar.gz";
-    }) {};
-  newer_channel = import (builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/ffb547307d66d88c2af80c34818ac064d7958231.tar.gz";
-    }) {};
+{ pkgs, lib, config, pkgsUnstable, pkgsDarktable, pkgsLmstudio, spektrafilmPackages, ...}:
 
-  spektrafilm-flake = builtins.getFlake "github:rafaelcgs10/spektrafilm-art/29255addefda6ce93f27ad41966d469bee0e14e3?narHash=sha256-0oTNe926WqrCx/1zVLXjDB0/RXbeHGeJlajEhanrAOU%3D";
-  spektrafilm-packages = spektrafilm-flake.packages.${pkgs.system};
-
-in
 {
   home.packages = [
     pkgs.gimp3-with-plugins
@@ -71,7 +52,7 @@ in
     # pkgs.gnomeExtensions.appindicator
     # unstable.qmplay2
     pkgs.sc-controller
-    unstable.zulip
+    pkgsUnstable.zulip
     pkgs.pgadmin4-desktopmode
     pkgs.handbrake # ghb
     pkgs.lshw-gui
@@ -83,7 +64,7 @@ in
     # nur.repos.genesis.hdl-batch-installer
     pkgs.upscayl
     # pkgs.gpt4all
-    newer_channel.lmstudio
+    pkgsLmstudio.lmstudio
 
     # pkgs.flameshot
     # pkgs.noisetorch
@@ -96,13 +77,16 @@ in
     # pkgs.glxinfo
     # pkgs.zoom-us
     pkgs.zoom-us              # picks up libpw-v4l2 via global LD_PRELOAD in home.nix
-    unstable.signal-desktop
+    pkgsUnstable.signal-desktop
     # pkgs.jetbrains.idea-ultimate
     # pkgs.pavucontrol
-    unstable.freetube
-    new_darktable.darktable
-    spektrafilm-packages.spektrafilm
-    spektrafilm-packages.spektrafilm-art
+    pkgsUnstable.freetube
+    # darktable built from the spektrafilm PR branch (native C spektrafilm
+    # module). Replaces the stock pkgsDarktable.darktable; the
+    # runtime data pack and AI models are linked in via home.file below.
+    spektrafilmPackages.darktable-spektrafilm-ai
+    spektrafilmPackages.spektrafilm
+    spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
     pkgs.focus-stack
     pkgs.hugin
@@ -133,12 +117,45 @@ in
   #   ".config/darktable/library.db".source = config.lib.file.mkoutofstoresymlink "/home/rafael/darktable/library.db";
   # };
 
+  # Film & print data pack for the darktable spektrafilm module. The module
+  # reads pack.json + spectra_lut.f32 + profiles/ from this exact path
+  # (dt_loc_get_user_config_dir()/spektrafilm), so link the pinned pack in.
+  home.file.".config/darktable/spektrafilm".source =
+    spektrafilmPackages.spektrafilm-data-pack;
+
+  # Offline AI models for darktable's AI modules (denoise / upscale / object
+  # masking). The fork reports version 5.8.0, which has no auto-download match,
+  # so we bundle them here and link them into darktable's models dir (read-only;
+  # darktable only scans it). Not used by spektrafilm itself.
+  home.file.".local/share/darktable/models".source =
+    spektrafilmPackages.darktable-ai-models;
+
+  home.file.".local/share/darktable/raster-masks/.keep".text = "";
+
+  # darktable stores the raster-mask export directory in darktablerc. Keep the
+  # generated PNG masks out of $HOME without taking ownership of the full file.
+  home.activation.setDarktableRasterMaskPath = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
+    mask_dir="${config.home.homeDirectory}/.local/share/darktable/raster-masks"
+
+    ${pkgs.coreutils}/bin/mkdir -p "$mask_dir" "$(${pkgs.coreutils}/bin/dirname "$config_file")"
+    ${pkgs.coreutils}/bin/touch "$config_file"
+
+    if ${pkgs.gnugrep}/bin/grep -q '^plugins/darkroom/segments/def_path=' "$config_file"; then
+      ${pkgs.gnused}/bin/sed -i \
+        "s|^plugins/darkroom/segments/def_path=.*|plugins/darkroom/segments/def_path=$mask_dir|" \
+        "$config_file"
+    else
+      printf '\nplugins/darkroom/segments/def_path=%s\n' "$mask_dir" >> "$config_file"
+    fi
+  '';
+
   # Chromium command-line flags. Chromium reads ~/.config/chromium-flags.conf
-  # on startup and appends each line as an extra argv. Used here to turn on
-  # the WebRTC PipeWire camera backend (same reason as the brave entry below)
-  # since chromium is installed as a plain package, not via programs.chromium.
+  # on startup and appends each line as an extra argv. Keep Chromium native on
+  # Wayland at fractional scale and enable the WebRTC PipeWire camera backend.
   home.file.".config/chromium-flags.conf".text = ''
-    --enable-features=WebRtcPipeWireCamera
+    --ozone-platform-hint=auto
+    --enable-features=WaylandWindowDecorations,WebRtcPipeWireCamera
   '';
 
   # LibreWolf: force the WebRTC PipeWire camera backend on. The same pref
@@ -158,10 +175,12 @@ in
 
   programs.brave = {
     enable = true;
-    # Enable the WebRTC PipeWire camera backend so the browser can see the
-    # Surface Go's IPU3 cameras (no /dev/video* device exists for them — they
-    # only show up through libcamera/PipeWire via the desktop portal).
-    commandLineArgs = [ "--enable-features=WebRtcPipeWireCamera" ];
+    # Keep Brave native on Wayland at fractional scale and enable the WebRTC
+    # PipeWire camera backend for portal/libcamera cameras.
+    commandLineArgs = [
+      "--ozone-platform-hint=auto"
+      "--enable-features=WaylandWindowDecorations,WebRtcPipeWireCamera"
+    ];
     extensions = [
       {id = "nngceckbapebfimnlniiiahkandclblb";} # Bitwarden
       {id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";} # uBlock Origin

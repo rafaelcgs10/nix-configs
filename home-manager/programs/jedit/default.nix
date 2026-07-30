@@ -1,12 +1,7 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, pkgsIsabelle, ... }:
 
-let
-  newer_isabelle_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/6a1b486ad3b39263e651cd772b4051cccf218634.tar.gz";
-  }) {};
-in
 {
-  home.packages = with newer_isabelle_pkgs; [
+  home.packages = with pkgsIsabelle; [
     (isabelle)
     # (isabelle.withComponents (p: [ p.isabelle-linter ]))
   ];

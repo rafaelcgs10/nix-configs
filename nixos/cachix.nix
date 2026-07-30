@@ -15,6 +15,9 @@ in {
       "https://nix-community.cachix.org"
       # "https://cache.armv7l.xyz"
     ];
+    trusted-public-keys = [
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
     # trusted-public-keys = [
     #   "cache.armv7l.xyz-1:kBY/eGnBAYiqYfg0fy0inWhshUo+pGFM3Pj7kIkmlBk="
     # ];

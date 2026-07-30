@@ -1,11 +1,5 @@
 { pkgs, ...}:
 
-let
-  unstable = import <nixpkgs-unstable> { config.allowUnfree = true; overlays = [(self: super: { discord = super.discord.overrideAttrs (_: { src = builtins.fetchTarball "https://discord.com/api/download?platform=linux&format=tar.gz"; });})];};
-  newer_pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/897876e4c484f1e8f92009fd11b7d988a121a4e7.tar.gz";
-  }) {};
-in
 {
   home.packages = [
     # pkgs.spotify

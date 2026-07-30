@@ -1,8 +1,5 @@
 { config, lib, pkgs, ... }:
 let
-  # unstable = import <nixpkgs-unstable> {};
-  moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/2292d4b35aa854e312ad2e95c4bb5c293656f21a.tar.gz);
-  nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
   # ruststable = (nixpkgs.latest.rustChannels.stable.rust.override { extensions = [ "rust-src" "rls-preview" "rust-analysis" "rustfmt-preview" ];});
 
   # mynixpkgs = import (builtins.fetchTarball {

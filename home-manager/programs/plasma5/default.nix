@@ -1,16 +1,8 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, plasmaManager, ... }:
 
-let
-  flake-compat = builtins.fetchTarball "https://github.com/edolstra/flake-compat/archive/ff81ac966bb2cae68946d5ed5fc4994f96d0ffec.tar.gz";
-
-  plasma-manager = (import flake-compat {
-    src = builtins.fetchTarball "https://github.com/pjones/plasma-manager/archive/552888403867ba9cfd170c1e7edddabe54ef4342.tar.gz";
-  }).defaultNix;
-
-in
 {
   imports = [
-    plasma-manager.homeManagerModules.plasma-manager
+    plasmaManager.homeManagerModules.plasma-manager
   ];
 
   home.file.".config/powermanagementprofilesrc".text = builtins.readFile ./powermanagementprofilesrc;

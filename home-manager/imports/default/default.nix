@@ -18,5 +18,6 @@
     # ../../programs/gcloud/default.nix
     ../../programs/graphical-apps/default.nix
     ../../programs/non-arm/default.nix
+    ../../programs/wine-apps/default.nix
   ];
 }
