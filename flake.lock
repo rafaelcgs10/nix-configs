@@ -328,17 +328,17 @@
         "nixpkgs-unstable": "nixpkgs-unstable_2"
       },
       "locked": {
-        "lastModified": 1785418201,
-        "narHash": "sha256-Ob0nIlpWIuthdBDPYxe4JvUeIHo7uXrCqnftMkVQ4/4=",
+        "lastModified": 1785419912,
+        "narHash": "sha256-zhixlDaauqqstTDQ6LB+i7gUCmJ9j3y+69AJf8of2U4=",
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art-darktable",
-        "rev": "09049284f9468db56239a13d1d90e0a684694706",
+        "rev": "bc85cd944c32b8a1a96452aafdd3a5eb082fa50c",
         "type": "github"
       },
       "original": {
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art-darktable",
-        "rev": "09049284f9468db56239a13d1d90e0a684694706",
+        "rev": "bc85cd944c32b8a1a96452aafdd3a5eb082fa50c",
         "type": "github"
       }
     },
