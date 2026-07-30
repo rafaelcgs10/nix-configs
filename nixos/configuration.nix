@@ -22,6 +22,34 @@ in {
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = "nix-command flakes";
 
+  # Auto-GC: keeps the store from growing unbounded
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+  # Safety valve: GC mid-build if free space drops below 5 GiB
+  nix.settings.min-free = 5 * 1024 * 1024 * 1024;
+  nix.settings.max-free = 20 * 1024 * 1024 * 1024;
+
+  # Monthly data-chunk balance: returns free space to "unallocated" so
+  # metadata can always grow (prevents ENOSPC on a fully-allocated btrfs).
+  # Data-only (-dusage): never balance metadata from a scheduled job.
+  systemd.services.btrfs-balance = {
+    description = "btrfs data balance to reclaim unallocated space";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.btrfs-progs}/bin/btrfs balance start -dusage=50 /";
+    };
+  };
+  systemd.timers.btrfs-balance = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "monthly";
+      Persistent = true;
+    };
+  };
+
   services.udisks2 = {
     enable = true;
   };
