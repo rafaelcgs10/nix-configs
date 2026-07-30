@@ -86,6 +86,8 @@
     enable = true;
     freeMemThreshold = 1;
   };
+  # earlyoom is the single OOM killer; don't run systemd-oomd alongside it.
+  systemd.oomd.enable = false;
 
   swapDevices = [ ];
   zramSwap.enable = true;
@@ -186,7 +188,6 @@
     group = "users";
     dataDir = "/home/rafael";
     enable = true;
-    relay.enable = true;
   };
 
   # Docker config
@@ -248,7 +249,6 @@
     defaultSession = "cosmic";
     cosmic-greeter.enable = true;
   };
-  services.desktopManager.plasma6.enable = true;
   services.desktopManager.cosmic.enable = true;
   services.system76-scheduler.enable = true;
 
