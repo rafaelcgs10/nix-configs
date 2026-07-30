@@ -262,7 +262,6 @@ in {
     # libdbusmenu
   ];
 
-  services.teamviewer.enable = true;
 
   # printing
   services.printing = {
