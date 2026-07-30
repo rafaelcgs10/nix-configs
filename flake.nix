@@ -30,7 +30,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    spektrafilm-art.url = "github:rafaelcgs10/spektrafilm-art-darktable/571e5a92e36f5717432c5da68fc849e0d2218903";
+    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/e2b1d3ad0bf504461e3564d203080e8c6746f107";
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
@@ -72,7 +72,7 @@
           };
 
           plasmaManager = inputs.plasma-manager;
-          spektrafilmPackages = inputs.spektrafilm-art.packages.${system};
+          spektrafilmPackages = inputs.spektrafilm-art-darktable.packages.${system};
         };
 
       homeProfiles = {

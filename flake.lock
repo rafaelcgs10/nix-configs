@@ -318,27 +318,27 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs2511": "nixpkgs2511",
         "plasma-manager": "plasma-manager",
-        "spektrafilm-art": "spektrafilm-art",
+        "spektrafilm-art-darktable": "spektrafilm-art-darktable",
         "winapps": "winapps"
       }
     },
-    "spektrafilm-art": {
+    "spektrafilm-art-darktable": {
       "inputs": {
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-unstable": "nixpkgs-unstable_2"
       },
       "locked": {
-        "lastModified": 1785354355,
-        "narHash": "sha256-AbOULin0qS4bEekEaPwZWuF5faWF50aVBfJ5QFQlqxs=",
+        "lastModified": 1785416743,
+        "narHash": "sha256-Ml6sEtP5UiKA4OTlfBhINzIM8A1cq9cbK1TZBBey3qg=",
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art-darktable",
-        "rev": "571e5a92e36f5717432c5da68fc849e0d2218903",
+        "rev": "e2b1d3ad0bf504461e3564d203080e8c6746f107",
         "type": "github"
       },
       "original": {
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art-darktable",
-        "rev": "571e5a92e36f5717432c5da68fc849e0d2218903",
+        "rev": "e2b1d3ad0bf504461e3564d203080e8c6746f107",
         "type": "github"
       }
     },
