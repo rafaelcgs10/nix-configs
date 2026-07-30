@@ -130,6 +130,18 @@
     algorithm = "zstd";
   };
 
+  # Kill the biggest memory hog before the whole tablet freezes when ART, a
+  # browser and Synology Drive fight over 8 GB of RAM. Threshold 3% mirrors the
+  # thinkpad-e14 config.
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 3;
+  };
+
+  # Prefer keeping working sets in RAM; zram already provides cheap compressed
+  # swap so cold pages still have somewhere to go without hitting the disk.
+  boot.kernel.sysctl."vm.swappiness" = 10;
+
   fileSystems."/rafael_mounts" = {
     device = "//192.168.0.104/hdd";
     fsType = "cifs";
@@ -138,6 +150,23 @@
       automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=10,x-systemd.device-timeout=5s,x-systemd.mount-timeout=2s";
 
     in ["${automount_opts},credentials=/home/rafael/.smb-secrets,uid=rafael,gid=100,_netdev" "cache=loose" "vers=3" "soft" "fsc" "actimeo=30" ];
+  };
+
+  # Back the `fsc` mount option on /rafael_mounts with a real FS-Cache backend.
+  # Without cachefilesd running, `fsc` on the CIFS mount is inert — ART re-reads
+  # every thumbnail byte over SMB on each browse. With it enabled, RAW headers
+  # and thumbnail data are cached on the local SSD (default: /var/cache/fscache)
+  # and the file browser becomes near-instant on repeat visits.
+  services.cachefilesd = {
+    enable = true;
+    extraConfig = ''
+      brun 10%
+      bcull 7%
+      bstop 3%
+      frun 10%
+      fcull 7%
+      fstop 3%
+    '';
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
