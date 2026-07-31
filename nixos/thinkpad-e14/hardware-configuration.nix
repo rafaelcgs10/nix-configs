@@ -22,12 +22,6 @@ in
 
   programs.steam.enable = true;
 
-  services.clamav.daemon.enable = true;
-  services.clamav.updater.enable = true;
-  systemd.services.clamav-daemon.serviceConfig = {
-    StateDirectory = "clamav";
-  };
-
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.kernelModules = [ "kvm-amd" ];
@@ -105,6 +99,8 @@ in
     enable = true;
     freeMemThreshold = 3;
   };
+  # earlyoom is the single OOM killer; don't run systemd-oomd alongside it.
+  systemd.oomd.enable = false;
 
   # programs.adb.enable = true;
 
@@ -244,10 +240,8 @@ in
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-  boot.postBootCommands = ''
-    echo none > /sys/block/nvme1n1/queue/scheduler
-  '';
-    # echo 1 > /sys/block/nvme1n1/queue/iosched/fifo_batch
+  # Scheduler is set to bfq via udev rule in nixos/io-performance.nix
+  # (a postBootCommands "echo none" override used to live here and fought it).
 
   # boot.kernel.sysctl."vm.dirty_background_bytes" = 16 * 1024 * 1024;
   # boot.kernel.sysctl."vm.dirty_bytes" = 16 * 1024 * 1024;
@@ -299,7 +293,6 @@ in
     group = "users";
     dataDir = "/home/rafael";
     enable = true;
-    relay.enable = true;
   };
   systemd.services.syncthing = {
     serviceConfig = {
@@ -413,16 +406,15 @@ in
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
 
-  # Desktop environment: KDE Plasma 6 + SDDM
+  # Desktop environment: COSMIC + SDDM
   services.xserver.enable = true;
   services.displayManager = {
-    defaultSession = "plasma";
+    defaultSession = "cosmic";
     sddm = {
       enable = true;
       wayland.enable = true;
     };
   };
-  services.desktopManager.plasma6.enable = true;
   services.desktopManager.cosmic.enable = true;
   services.system76-scheduler.enable = true;
 
@@ -451,5 +443,23 @@ in
   #   extraOptions = ["--network" "host"];
   #   environmentFiles = ["/home/rafael/Documents/private_keys/cloudflare_tunne/token"];
   # };
+
+  # Monthly data-chunk balance: returns free space to "unallocated" so
+  # metadata can always grow (prevents ENOSPC on a fully-allocated btrfs).
+  # Data-only (-dusage): never balance metadata from a scheduled job.
+  systemd.services.btrfs-balance = {
+    description = "btrfs data balance to reclaim unallocated space";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.btrfs-progs}/bin/btrfs balance start -dusage=50 /";
+    };
+  };
+  systemd.timers.btrfs-balance = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "monthly";
+      Persistent = true;
+    };
+  };
 
 }

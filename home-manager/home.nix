@@ -7,6 +7,23 @@ in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
+  # Expire old home-manager generations weekly so they don't pin
+  # years of closures in the nix store as GC roots.
+  services.home-manager.autoExpire = {
+    enable = true;
+    frequency = "weekly";
+    timestamp = "-30 days";
+  };
+
+  # User-level GC: the system nix.gc runs as root and never touches
+  # ~/.local/state/nix/profiles (nix profile + home-manager generations),
+  # so those accumulate as GC roots without this.
+  nix.gc = {
+    automatic = true;
+    frequency = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;

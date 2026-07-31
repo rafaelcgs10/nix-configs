@@ -128,6 +128,7 @@
           modules = [
             ./nixos/bbstation/boot-loader.nix
             ./nixos/bbstation/hardware-configuration.nix
+            ./nixos/io-performance.nix
           ];
         };
 
@@ -144,6 +145,7 @@
           modules = [
             ./nixos/thinkpad-e14/boot-loader.nix
             ./nixos/thinkpad-e14/hardware-configuration.nix
+            ./nixos/io-performance.nix
           ];
         };
       };

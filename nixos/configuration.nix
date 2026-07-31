@@ -22,6 +22,21 @@ in {
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = "nix-command flakes";
 
+  # Auto-GC: keeps the store from growing unbounded
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+  # Safety valve: GC mid-build if free space drops below 5 GiB
+  nix.settings.min-free = 5 * 1024 * 1024 * 1024;
+  nix.settings.max-free = 20 * 1024 * 1024 * 1024;
+
+  # Cap journald so logs don't grow unbounded (was at 1.9G on bbstation)
+  services.journald.extraConfig = ''
+    SystemMaxUse=500M
+  '';
+
   services.udisks2 = {
     enable = true;
   };
@@ -262,7 +277,6 @@ in {
     # libdbusmenu
   ];
 
-  services.teamviewer.enable = true;
 
   # printing
   services.printing = {
