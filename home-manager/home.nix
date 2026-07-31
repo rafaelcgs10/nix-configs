@@ -15,6 +15,15 @@ in {
     timestamp = "-30 days";
   };
 
+  # User-level GC: the system nix.gc runs as root and never touches
+  # ~/.local/state/nix/profiles (nix profile + home-manager generations),
+  # so those accumulate as GC roots without this.
+  nix.gc = {
+    automatic = true;
+    frequency = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;

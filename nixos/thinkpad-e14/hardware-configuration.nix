@@ -444,4 +444,22 @@ in
   #   environmentFiles = ["/home/rafael/Documents/private_keys/cloudflare_tunne/token"];
   # };
 
+  # Monthly data-chunk balance: returns free space to "unallocated" so
+  # metadata can always grow (prevents ENOSPC on a fully-allocated btrfs).
+  # Data-only (-dusage): never balance metadata from a scheduled job.
+  systemd.services.btrfs-balance = {
+    description = "btrfs data balance to reclaim unallocated space";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.btrfs-progs}/bin/btrfs balance start -dusage=50 /";
+    };
+  };
+  systemd.timers.btrfs-balance = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "monthly";
+      Persistent = true;
+    };
+  };
+
 }
