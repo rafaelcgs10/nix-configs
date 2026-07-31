@@ -144,7 +144,7 @@
     fsType = "cifs";
     options = let
       # Avoid blocking boot/switch/manual mount when the SMB server is unreachable.
-      mount_opts = "noauto,nofail,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
+      mount_opts = "noauto,nofail,x-systemd.automount,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
 
     in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=rafael,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" ];
   };
@@ -284,4 +284,30 @@
 
   # Pull in non-redistributable firmware as well (covers IPU3 cameras).
   hardware.enableAllFirmware = true;
+
+
+  programs.ssh.extraConfig = ''
+  Host eu.nixbuild.net
+  PubkeyAcceptedKeyTypes ssh-ed25519
+  ServerAliveInterval 60
+  IdentityFile /home/rafael/.ssh/id_ed25519
+'';
+
+  programs.ssh.knownHosts = {
+    nixbuild = {
+      hostNames = [ "eu.nixbuild.net" ];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPIQCZc54poJ8vqawd8TraNryQeJnvH1eLpIDgbiqymM";
+    };
+  };
+
+  nix = {
+    distributedBuilds = true;
+    buildMachines = [
+      { hostName = "eu.nixbuild.net";
+        system = "x86_64-linux";
+        maxJobs = 100;
+        supportedFeatures = [ "benchmark" "big-parallel" ];
+      }
+    ];
+  };
 }

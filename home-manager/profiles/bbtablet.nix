@@ -4,7 +4,9 @@
   imports = [
     # ../programs/xmonad/default.nix
     # ../programs/hyprland/default.nix
-    ../programs/languages/default.nix
+    # Keep this tablet profile intentionally small. The shared language,
+    # bundle pulls in a large compiler/TeX stack, which leaves too little
+    # headroom for nixos-rebuild switch on the Surface Go SSD.
     # ../programs/plasma5/default.nix
     ../programs/doom/default.nix
     ../programs/zsh/default.nix
@@ -16,7 +18,7 @@
     ../programs/X-themes/default.nix
     # ../programs/polybar/default.nix
     # ../programs/gcloud/default.nix
-    ../programs/graphical-apps/default.nix
+    ../programs/graphical-apps/everyday.nix
     ../programs/non-arm/default.nix
   ];
 
