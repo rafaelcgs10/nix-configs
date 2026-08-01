@@ -418,6 +418,9 @@ in
   services.desktopManager.cosmic.enable = true;
   services.system76-scheduler.enable = true;
 
+  # Firmware updates (BIOS, SSD, etc.) from LVFS: fwupdmgr get-updates / update
+  services.fwupd.enable = true;
+
   services.cron = {
     enable = true;
     systemCronJobs = [
