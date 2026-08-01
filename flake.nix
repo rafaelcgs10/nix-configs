@@ -31,6 +31,10 @@
     };
 
     spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/bc85cd944c32b8a1a96452aafdd3a5eb082fa50c";
+
+    # CLI for COSMIC toplevel management (scratchpad chat toggles).
+    # Unofficial but source-reviewed at this pin: no network/exec/fs access.
+    cos-cli.url = "github:estin/cos-cli/fe8c52016888302d6239ef53f1dbf876d8552dc2";
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
