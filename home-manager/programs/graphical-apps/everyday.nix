@@ -29,6 +29,12 @@
     pkgs.kdePackages.kalk
     pkgs.xpra
     pkgs.proton-vpn
+    pkgs.papers
+    pkgs.mission-center
+    pkgs.baobab
+    pkgs.wl-clipboard
+    pkgs.satty
+    pkgs.pdfarranger
   ];
 
   # Chromium command-line flags. Chromium reads ~/.config/chromium-flags.conf
