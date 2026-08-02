@@ -143,7 +143,6 @@ in
     partOf = [ "graphical-session.target" ];
   };
   # For mount.cifs, required unless domain name resolution is not needed.
-  environment.systemPackages = [ pkgs.cifs-utils ecryptfs ];
 
   # Auto-mount existing eCryptfs private home using ecryptfs-utils from nixpkgs 25.11.
   security.pam.enableFscrypt = false;
@@ -360,6 +359,33 @@ in
         onFailure = [ "hibernate.target" ];
         script = "${battery-level-sufficient}/bin/battery-level-sufficient";
       };
+
+
+  nix.settings = {
+    substituters = [ "https://winapps.cachix.org/" ];
+    trusted-public-keys = [ "winapps.cachix.org-1:HI82jWrXZsQRar/PChgIx1unmuEsiQMQq+zt05CD36g=" ];
+    trusted-users = [ "rafael" ]; # replace with your username
+  };
+  environment.systemPackages =
+    let
+      winappsPackages = inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system};
+      winapps = winappsPackages.winapps.overrideAttrs (oldAttrs: {
+        # The Docker backend connects to a local Windows VM on 127.0.0.1.
+        # Its self-signed RDP certificate changes when the VM is recreated,
+        # and upstream setup uses non-interactive /cert:tofu checks.
+        postPatch = (oldAttrs.postPatch or "") + ''
+          substituteInPlace setup.sh \
+            --replace-fail /cert:tofu /cert:ignore
+        '';
+      });
+    in
+      [
+        winapps
+        winappsPackages.winapps-launcher # optional
+        pkgs.cifs-utils
+        pkgs.cifs-utils
+        ecryptfs
+      ];
 
   # virtualisation.oci-containers.containers.jellyfin = {
   #   autoStart = true;
