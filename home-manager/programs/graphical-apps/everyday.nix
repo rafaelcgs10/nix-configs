@@ -3,15 +3,17 @@
 {
   home.packages = [
     pkgs.vlc
-    pkgs.feh
+    pkgs.loupe
     pkgs.onlyoffice-desktopeditors
     pkgs.dialect
     pkgs.remmina
     pkgs.ffmpegthumbnailer
     pkgs.libappindicator
     pkgs.gdk-pixbuf
+    pkgs.file-roller
     pkgs.gparted
     pkgs.lshw-gui
+    pkgs.seahorse
     pkgs.freerdp
     pkgs.xdotool
     pkgs.lxrandr
@@ -25,6 +27,7 @@
     pkgs.koreader
     pkgs.zotero
     pkgs.simple-scan
+    pkgs.snapshot
     pkgs.thunderbird
     pkgs.kdePackages.kalk
     pkgs.xpra
