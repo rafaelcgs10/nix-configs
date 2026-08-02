@@ -95,6 +95,41 @@ in {
 
   home.file.".config/winapps/compose.yaml".text = builtins.readFile ../winapps/compose.yaml;
 
+  xdg.configFile."winapps/winapps.conf".text = ''
+    RDP_USER="MyWindowsUser"
+    RDP_PASS="MyWindowsPassword"
+    RDP_DOMAIN=""
+    RDP_IP="127.0.0.1"
+    RDP_PORT="3389"
+    VM_NAME="RDPWindows"
+    WAFLAVOR="docker"
+    RDP_SCALE="140"
+    REMOVABLE_MEDIA="/run/media"
+    RDP_FLAGS="/cert:ignore /sound /microphone +home-drive /network:lan /gfx"
+    DEBUG="false"
+    AUTOPAUSE="off"
+    AUTOPAUSE_TIME="300"
+    FREERDP_COMMAND="xfreerdp"
+    PORT_TIMEOUT="5"
+    RDP_TIMEOUT="30"
+    APP_SCAN_TIMEOUT="60"
+    BOOT_TIMEOUT="120"
+    HIDEF="on"
+  '';
+
+  home.activation.fixWinAppsDesktopEntries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    app_dir="${config.home.homeDirectory}/.local/share/applications"
+    if [ -d "$app_dir" ]; then
+      for desktop_file in "$app_dir"/*.desktop; do
+        if [ -e "$desktop_file" ] && ${pkgs.gnugrep}/bin/grep -q 'Exec=/nix/store/.*/bin/winapps' "$desktop_file"; then
+          ${pkgs.gnused}/bin/sed -i \
+            's#Exec=/nix/store/[^ ]*/bin/winapps#Exec=/run/current-system/sw/bin/winapps#' \
+            "$desktop_file"
+        fi
+      done
+    fi
+  '';
+
   xdg = {
     enable = true;
     mime.enable = true;

@@ -205,11 +205,20 @@
 
   environment.systemPackages =
     let
-      winapps = inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system};
+      winappsPackages = inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system};
+      winapps = winappsPackages.winapps.overrideAttrs (oldAttrs: {
+        # The Docker backend connects to a local Windows VM on 127.0.0.1.
+        # Its self-signed RDP certificate changes when the VM is recreated,
+        # and upstream setup uses non-interactive /cert:tofu checks.
+        postPatch = (oldAttrs.postPatch or "") + ''
+          substituteInPlace setup.sh \
+            --replace-fail /cert:tofu /cert:ignore
+        '';
+      });
     in
     [
-      winapps.winapps
-      winapps.winapps-launcher # optional
+      winapps
+      winappsPackages.winapps-launcher # optional
       pkgs.cifs-utils
     ];
 
