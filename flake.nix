@@ -102,6 +102,7 @@
       mkHomeManagerNixosModule = system: profile: {
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
+        home-manager.backupFileExtension = "backup";
         home-manager.extraSpecialArgs = mkHomeArgs system;
         home-manager.users.rafael = {
           imports = mkHomeModules profile;

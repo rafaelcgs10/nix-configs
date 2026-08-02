@@ -20,7 +20,7 @@ in {
   # so those accumulate as GC roots without this.
   nix.gc = {
     automatic = true;
-    frequency = "weekly";
+    dates = "weekly";
     options = "--delete-older-than 30d";
   };
 
