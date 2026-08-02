@@ -66,4 +66,26 @@
       printf '\nplugins/darkroom/segments/def_path=%s\n' "$mask_dir" >> "$config_file"
     fi
   '';
+
+  # Expose the raw-crop fields in the "raw black/white point" module. The
+  # sensor holds more pixels than the official camera output (EOS RP:
+  # 6264x4180 active area vs 6240x4160 JPEG); with this set the crop is
+  # editable per image. The matching "EOS RP camera JPEG crop" auto-preset
+  # (crop module, 6240x4160) lives in data.db, not here — data.db is synced
+  # user data. Only run while darktable is closed: it rewrites darktablerc
+  # from memory on exit, undoing external edits.
+  home.activation.setDarktableRawCropEditing = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
+    # NB: the nix wrapper names the process ".darktable-wrap", match the
+    # command line instead of the process name
+    if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
+      if ${pkgs.gnugrep}/bin/grep -q '^plugins/darkroom/rawprepare/allow_editing_crop=' "$config_file"; then
+        ${pkgs.gnused}/bin/sed -i \
+          's|^plugins/darkroom/rawprepare/allow_editing_crop=.*|plugins/darkroom/rawprepare/allow_editing_crop=true|' \
+          "$config_file"
+      else
+        printf '\nplugins/darkroom/rawprepare/allow_editing_crop=true\n' >> "$config_file"
+      fi
+    fi
+  '';
 }
