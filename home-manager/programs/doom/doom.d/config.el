@@ -588,8 +588,29 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;   (setq eglot-java-user-init-opts-fn 'beetleman--eglot-java-init-opts))
 (add-hook 'java-ts-mode-hook 'eglot-java-mode)
 
+;; Inlay hints off everywhere, except C/C++ where seeing inferred types inline
+;; is genuinely useful. Decided here (not in a mode hook) so it runs only once
+;; eglot has actually attached to the buffer.
 (add-hook 'eglot-managed-mode-hook
-          (lambda () (eglot-inlay-hints-mode -1)))
+          (lambda ()
+            (eglot-inlay-hints-mode
+             (if (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
+                 1 -1))))
+
+;; --- C/C++ (darktable et al.) via eglot + clangd -------------------------
+;; Doom's (cc +lsp) module runs eglot in c/c++ buffers; override the default
+;; clangd invocation so goto-definition works across the whole project
+;; (background index) and clang-tidy diagnostics show up inline.
+(after! eglot
+  (add-to-list 'eglot-server-programs
+               '((c-mode c-ts-mode c++-mode c++-ts-mode)
+                 . ("clangd"
+                    "--background-index"
+                    "--clang-tidy"
+                    "--completion-style=detailed"
+                    "--header-insertion=never"
+                    "--pch-storage=memory"
+                    "-j=4"))))
 
 ;; (add-hook 'java-mode-hook 'eglot-java-mode)
 ;; (with-eval-after-load 'eglot-java
