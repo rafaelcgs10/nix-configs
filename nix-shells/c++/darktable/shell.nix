@@ -1,9 +1,11 @@
 # Dev shell for hacking on https://github.com/darktable-org/darktable
 #
+# Exposed as a flake devShell: `nix develop ~/nix-configs#darktable`.
+# Still usable standalone via `nix-shell` thanks to the default pkgs arg below.
+#
 # Setup once, in your darktable checkout (e.g. ~/Documents/darktable):
-#   ln -s ~/nix-configs/nix-shells/c++/darktable/shell.nix  shell.nix
-#   ln -s ~/nix-configs/nix-shells/c++/darktable/.envrc     .envrc
-#   cp    ~/nix-configs/nix-shells/c++/darktable/dot-clangd .clangd
+#   echo 'use flake ~/nix-configs#darktable' > .envrc   # or symlink this dir's .envrc
+#   cp ~/nix-configs/nix-shells/c++/darktable/dot-clangd .clangd
 #   direnv allow
 #
 # Build (inside the shell / once direnv has activated it):

@@ -178,5 +178,12 @@
         };
 
       };
+
+      # Per-project dev shells. Enter with `nix develop .#darktable` or, from a
+      # checkout, `echo 'use flake ~/nix-configs#darktable' > .envrc && direnv allow`.
+      devShells.x86_64-linux.darktable =
+        import ./nix-shells/c++/darktable/shell.nix {
+          pkgs = mkPkgs "x86_64-linux";
+        };
     };
 }
