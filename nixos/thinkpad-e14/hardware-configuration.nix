@@ -143,7 +143,6 @@ in
     partOf = [ "graphical-session.target" ];
   };
   # For mount.cifs, required unless domain name resolution is not needed.
-  environment.systemPackages = [ pkgs.cifs-utils ecryptfs ];
 
   # Auto-mount existing eCryptfs private home using ecryptfs-utils from nixpkgs 25.11.
   security.pam.enableFscrypt = false;
@@ -192,7 +191,7 @@ in
     fsType = "cifs";
     options = let
       # Avoid blocking boot/switch/manual mount when the SMB server is unreachable.
-      mount_opts = "noauto,nofail,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
+      mount_opts = "noauto,nofail,x-systemd.automount,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s";
     in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" "noserverino" ];
   };
 
@@ -361,6 +360,33 @@ in
         script = "${battery-level-sufficient}/bin/battery-level-sufficient";
       };
 
+
+  nix.settings = {
+    substituters = [ "https://winapps.cachix.org/" ];
+    trusted-public-keys = [ "winapps.cachix.org-1:HI82jWrXZsQRar/PChgIx1unmuEsiQMQq+zt05CD36g=" ];
+    trusted-users = [ "rafael" ]; # replace with your username
+  };
+  environment.systemPackages =
+    let
+      winappsPackages = inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system};
+      winapps = winappsPackages.winapps.overrideAttrs (oldAttrs: {
+        # The Docker backend connects to a local Windows VM on 127.0.0.1.
+        # Its self-signed RDP certificate changes when the VM is recreated,
+        # and upstream setup uses non-interactive /cert:tofu checks.
+        postPatch = (oldAttrs.postPatch or "") + ''
+          substituteInPlace setup.sh \
+            --replace-fail /cert:tofu /cert:ignore
+        '';
+      });
+    in
+      [
+        winapps
+        winappsPackages.winapps-launcher # optional
+        pkgs.cifs-utils
+        pkgs.cifs-utils
+        ecryptfs
+      ];
+
   # virtualisation.oci-containers.containers.jellyfin = {
   #   autoStart = true;
   #   environment = {
@@ -417,6 +443,9 @@ in
   };
   services.desktopManager.cosmic.enable = true;
   services.system76-scheduler.enable = true;
+
+  # Firmware updates (BIOS, SSD, etc.) from LVFS: fwupdmgr get-updates / update
+  services.fwupd.enable = true;
 
   services.cron = {
     enable = true;

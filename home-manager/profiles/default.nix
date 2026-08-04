@@ -6,7 +6,7 @@
     ../programs/doom/default.nix
     ../programs/zsh/default.nix
     ../programs/nvim/default.nix
-    ../programs/copyq/default.nix
+    ../programs/cosmic/default.nix
     ../programs/jedit/default.nix
     ../programs/X-themes/default.nix
     ../programs/graphical-apps/default.nix
