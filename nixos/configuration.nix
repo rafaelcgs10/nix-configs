@@ -135,6 +135,15 @@ in {
   };
 
 
+  # Fonts. Install the Hack Nerd Font system-wide and make it the default
+  # monospace so terminals (COSMIC Terminal, alacritty, ...) render the
+  # Starship powerline separators/icons from the same font as the text
+  # instead of a mismatched fallback (which breaks the powerline bar).
+  fonts = {
+    packages = [ pkgs.nerd-fonts.hack ];
+    fontconfig.defaultFonts.monospace = [ "Hack Nerd Font Mono" ];
+  };
+
   # Xserver basic
   programs.dconf.enable = true;
   # programs.hyprland = {

@@ -113,6 +113,15 @@ in
     ]
   '';
 
+  # COSMIC Terminal font. Without this it uses the default monospace, whose
+  # powerline separator glyphs get pulled from a narrower fallback font
+  # (Iosevka), which breaks the Starship powerline bar. "Hack Nerd Font Mono"
+  # (installed via home.packages) carries text + separators + icons in one
+  # font at one width, so the bar tiles seamlessly. Managed here means the
+  # COSMIC Settings font picker is read-only, same as the other files below.
+  xdg.configFile."cosmic/com.system76.CosmicTerm/v1/font_name".text =
+    ''"Hack Nerd Font Mono"'';
+
   # COSMIC custom shortcuts: Super+V opens the clipboard history picker,
   # Super+Shift+V opens the forget picker (deletes the chosen entry), and
   # Super+Shift+<letter> toggles each scratchpad chat. COSMIC Settings writes

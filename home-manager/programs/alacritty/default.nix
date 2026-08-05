@@ -19,11 +19,14 @@
 
       colors.draw_bold_text_with_bright_colors = true;
       font = {
-        normal.family = "Hack";
+        # Nerd Font variant so powerline separators/icons render from the same
+        # font as the text (plain "Hack" lacks them and falls back to Iosevka,
+        # which is narrower and breaks the powerline bar).
+        normal.family = "Hack Nerd Font Mono";
         normal.style = "Regular";
-        bold.family = "Hack";
+        bold.family = "Hack Nerd Font Mono";
         bold.style = "Regular";
-        italic.family = "Hack";
+        italic.family = "Hack Nerd Font Mono";
         italic.style = "Regular";
         # blod_italic.family = "mononoki";
         # blod_italic.style = "Regular";

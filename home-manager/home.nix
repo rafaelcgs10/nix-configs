@@ -277,7 +277,8 @@ in {
     # pkgs.emacsPackages.treemacs-all-the-icons
     pkgs.emacsPackages.all-the-icons-nerd-fonts
     pkgs.emacsPackages.all-the-icons-completion
-    # (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
+    # Nerd Font (Hack) is installed system-wide via fonts.packages in
+    # nixos/configuration.nix and set as the default monospace there.
 
   ];
 
