@@ -1,4 +1,4 @@
-{ pkgs, pkgsUnstable, lib, ...}:
+{ pkgs, pkgsUnstable, lib, inputs, ...}:
 
 {
   home.packages = [
@@ -114,26 +114,20 @@
       id = 0;
       isDefault = true;
       extensions = {
-        # Acknowledge, once and for all, that this profile's extension policy is
-        # managed declaratively (Catppuccin theme + the extensions below).
-        # mkForce so it wins over whatever catppuccin.librewolf sets - this flag
-        # is what the "override all previous extensions" assertion wants, and
-        # setting it here means changing extensions never re-triggers it.
+        # force acknowledges that catppuccin.librewolf writes the FirefoxColor
+        # extension's stored theme (an extensions.settings entry); mkForce so it
+        # wins regardless and the "override all previous extensions" assertion
+        # never recurs.
         force = lib.mkForce true;
-        # Force-install extensions from AMO via the ExtensionSettings policy
-        # (auto-updating; no extra flake input needed).
-        settings = {
-          # Bitwarden password manager
-          "{446900e4-71c2-419f-a6a7-df9c091e268b}".settings = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi";
-            installation_mode = "force_installed";
-          };
-          # Dark Reader
-          "addon@darkreader.org".settings = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi";
-            installation_mode = "force_installed";
-          };
-        };
+        # Actually INSTALL the add-ons (as signed .xpi in the profile). Note:
+        # extensions.settings only writes storage for already-installed add-ons,
+        # so installation must go through packages. firefox-color is required
+        # for the Catppuccin theme, which only sets FirefoxColor's stored theme.
+        packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
+          bitwarden
+          darkreader
+          firefox-color
+        ];
       };
     };
   };

@@ -39,6 +39,12 @@
     # Catppuccin theming for supported programs (neovim, fzf, ...).
     catppuccin.url = "github:catppuccin/nix";
 
+    # Packaged Firefox/LibreWolf add-ons (rycee) for declarative installation.
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Declarative COSMIC desktop configuration (used to apply the Catppuccin
     # COSMIC theme, since catppuccin/nix has no COSMIC module).
     cosmic-manager = {
