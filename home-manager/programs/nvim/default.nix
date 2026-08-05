@@ -22,7 +22,7 @@
       # es.next.syntax.vim # ES7 syntax
 
       # UI #################################################
-      # Colorscheme provided by catppuccin/nix (catppuccin.nvim).
+      # Colorscheme provided by Stylix (stylix.targets.neovim -> Rosé Pine).
       vim-gitgutter # status in gutter
       # vim-devicons
       # vim-airline

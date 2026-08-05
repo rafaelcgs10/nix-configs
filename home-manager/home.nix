@@ -7,45 +7,46 @@ in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
-  # Catppuccin theming (catppuccin/nix). Enabling it globally themes every
-  # supported program that is enabled (neovim, fzf, ...). Starship is kept on
-  # the hand-picked catppuccin-powerline preset, so its catppuccin module is
-  # disabled here to avoid overwriting that config. alacritty is disabled too
-  # since it has been removed from all hosts.
-  catppuccin = {
+  # Stylix: system-wide Rosé Pine (base16) theming. It auto-themes neovim, fzf,
+  # tmux, gtk, qt, btop, bat, fuzzel and more. Starship keeps its hand-built
+  # powerline (palette swapped to Rosé Pine); Doom Emacs and COSMIC are themed
+  # separately since Stylix has no COSMIC target.
+  stylix = {
     enable = true;
-    autoEnable = true;   # theme all supported+enabled programs
-    flavor = "mocha";
-    accent = "mauve";    # matches the mauve accent used for the COSMIC theme
+    polarity = "dark";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/rose-pine.yaml";
+    # App theming needs no real wallpaper; use a solid base00 pixel.
+    image = config.lib.stylix.pixel "base00";
+    # Keep the Nerd Font so terminal/powerline glyphs render.
+    fonts.monospace = {
+      package = pkgs.nerd-fonts.hack;
+      name = "Hack Nerd Font Mono";
+    };
+    targets.starship.enable = false;  # keep the hand-built powerline preset
+    targets.librewolf.profileNames = [ "default" ];  # theme the managed profile
   };
-  catppuccin.starship.enable = false;
-  catppuccin.alacritty.enable = false;
 
-  # opencode is installed as a custom package (not programs.opencode), so the
-  # catppuccin.opencode module can't hook in. Set its built-in "catppuccin"
-  # theme directly instead. opencode only reads this file; it stores state
-  # elsewhere, so a read-only symlink is fine.
+  # opencode is a custom package (not programs.opencode), so Stylix can't theme
+  # it; point it at its built-in rose-pine theme directly.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
-    theme = "catppuccin";
+    theme = "rose-pine";
   };
 
-  # Enable these so catppuccin/nix (autoEnable) themes them:
-  gtk.enable = true;              # catppuccin.gtk -> Catppuccin Papirus icons
-  programs.tmux.enable = true;    # catppuccin.tmux -> Catppuccin status bar
-  programs.delta = {              # catppuccin.delta -> Catppuccin git diffs
+  # These programs are enabled so Stylix themes them:
+  gtk.enable = true;              # stylix.targets.gtk
+  qt.enable = true;               # stylix.targets.qt (Qt5/Qt6 apps)
+  programs.tmux.enable = true;    # stylix.targets.tmux
+  programs.delta = {              # git diffs (Stylix has no delta target)
     enable = true;
     enableGitIntegration = true;
-  };
-
-  # Qt theming via Kvantum so catppuccin/nix themes Qt5 + Qt6 apps
-  # (qalculate-qt, protonup-qt, OBS, ...). qtct installs qt5ct + qt6ct; the
-  # kvantum style pulls both the Qt5 and Qt6 style plugins. catppuccin.kvantum
-  # then applies the Catppuccin Kvantum theme.
-  qt = {
-    enable = true;
-    platformTheme.name = "qtct";
-    style.name = "kvantum";
+    # Rosé Pine-tinted added/removed line backgrounds.
+    options = {
+      minus-style = "normal \"#3d2530\"";
+      minus-emph-style = "normal \"#5a3644\"";
+      plus-style = "normal \"#20352e\"";
+      plus-emph-style = "normal \"#2f5045\"";
+    };
   };
 
   # Expire old home-manager generations weekly so they don't pin
@@ -301,8 +302,7 @@ in {
     pkgs.mononoki
     # pkgs.font-awesome_4
     # pkgs.font-awesome_5
-    # papirus-icon-theme is provided (recoloured) by catppuccin.gtk via
-    # catppuccin-papirus-folders; installing both collides in the profile.
+    pkgs.papirus-icon-theme   # GTK icon set (Stylix themes widget colours only)
     pkgs.corefonts
     # pkgs.vistafonts
     pkgs.fira-code
