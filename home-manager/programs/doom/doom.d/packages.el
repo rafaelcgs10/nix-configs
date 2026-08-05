@@ -5,7 +5,7 @@
 (package! session-async)
 (package! academic-phrases)
 ;; (package! flycheck-languagetool)
-(package! cycle-themes)
+(package! catppuccin-theme)
 (package! quail :disable t)
 ;; (package! lsp-ltex)
 ;; (package! company-posframe)
