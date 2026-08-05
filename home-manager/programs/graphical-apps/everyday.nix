@@ -127,6 +127,7 @@
           bitwarden
           darkreader
           firefox-color
+          vimium
         ];
       };
     };
