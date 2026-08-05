@@ -1,6 +1,12 @@
 # Interactive-shell setup restored after moving off oh-my-zsh.
 # Sourced late (initContent) so it runs after compinit and the plugins.
 
+# --- Emacs line editing ----------------------------------------------------
+# zsh auto-selects the *vi* keymap because EDITOR=vim, which drops the standard
+# readline bindings (Ctrl+A/E, Alt+B/F, Alt+Backspace = backward-kill-word,
+# ...). oh-my-zsh forced emacs mode; restore it here.
+bindkey -e
+
 # --- Autosuggestions: fetch asynchronously ---------------------------------
 # The history is very large, and zsh-autosuggestions searches it on every
 # keystroke. Doing that synchronously blocks the line editor, which shows up as
