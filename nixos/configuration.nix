@@ -134,8 +134,6 @@ in {
     };
   };
 
-  services.xserver.windowManager.xmonad.enable = true;
-
 
   # Xserver basic
   programs.dconf.enable = true;
