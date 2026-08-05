@@ -92,8 +92,14 @@
       "privacy.resistFingerprinting" = false;
       # "Fix minor site issues": disable the lighter FingerprintingProtection.
       "privacy.fingerprintingProtection" = false;
+      # Never clear cookies/site data (or history) on close. LibreWolf clears
+      # on shutdown by default; keep both the legacy and the Firefox 128+ (_v2)
+      # prefs false so the "Clear cookies and site data every time you close
+      # LibreWolf" toggle stays off.
       "privacy.clearOnShutdown.history" = false;
       "privacy.clearOnShutdown.cookies" = false;
+      "privacy.clearOnShutdown_v2.cookiesAndStorage" = false;
+      "privacy.clearOnShutdown_v2.historyFormDataAndDownloads" = false;
       "network.cookie.lifetimePolicy" = 0;
       # DRM playback (Widevine) always on. LibreWolf disables it by default and
       # locks the UI toggle, so it has to be set here.
