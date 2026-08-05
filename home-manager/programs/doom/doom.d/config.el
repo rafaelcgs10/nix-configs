@@ -621,7 +621,14 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 ;; doom-themes-based Rosé Pine ships separate dark/light theme *symbols*
 ;; (doom-rose-pine = dark, doom-rose-pine-dawn = light); toggle by swapping.
-(load-theme 'doom-rose-pine t)           ; dark default
+;; load-theme searches `custom-theme-load-path', and an external doom-theme
+;; package's directory isn't added there automatically, which caused the
+;; "Unable to find theme file for 'doom-rose-pine'" startup error. Add it
+;; explicitly (the package is on load-path, so locate-library finds it).
+(dolist (thm '("doom-rose-pine-theme" "doom-rose-pine-dawn-theme"))
+  (when-let ((lib (locate-library thm)))
+    (add-to-list 'custom-theme-load-path (file-name-directory lib))))
+(setq doom-theme 'doom-rose-pine)        ; dark default
 
 (defun my/toggle-rose-pine ()
   "Toggle Rosé Pine between dark and light (dawn)."
