@@ -1,9 +1,15 @@
-{ pkgs, ...}:
+{ pkgs, lib, ...}:
 
 {
   programs.zsh = {
     enable = true;
     enableCompletion = true;
+
+    # Interactive setup restored after dropping oh-my-zsh: async autosuggestions
+    # (fixes backspace lag on the huge history), an arrow-selectable Tab menu,
+    # and Ctrl+Arrow directory navigation. mkAfter so it runs after compinit and
+    # the plugins are sourced.
+    initContent = lib.mkAfter (builtins.readFile ./extra.zsh);
     autosuggestion = {
       enable = true;
       highlight = "fg=8"; # dim hint; ANSI slot so it follows the flavour
