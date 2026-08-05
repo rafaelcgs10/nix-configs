@@ -20,6 +20,15 @@ in {
   catppuccin.starship.enable = false;
   catppuccin.alacritty.enable = false;
 
+  # opencode is installed as a custom package (not programs.opencode), so the
+  # catppuccin.opencode module can't hook in. Set its built-in "catppuccin"
+  # theme directly instead. opencode only reads this file; it stores state
+  # elsewhere, so a read-only symlink is fine.
+  xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
+    "$schema" = "https://opencode.ai/config.json";
+    theme = "catppuccin";
+  };
+
   # Expire old home-manager generations weekly so they don't pin
   # years of closures in the nix store as GC roots.
   services.home-manager.autoExpire = {
