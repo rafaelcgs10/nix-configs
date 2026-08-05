@@ -1,6 +1,17 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, lib, ... }:
 
 let
+  # Catppuccin Mocha theme for COSMIC (catppuccin/cosmic-desktop). There is no
+  # catppuccin/nix COSMIC module, so we apply it declaratively through
+  # cosmic-manager: parse the upstream ThemeBuilder .ron with cosmic-manager's
+  # own RON parser and feed it to appearance.theme.dark. Using fromRON avoids
+  # hand-transcribing the 300-line palette and stays faithful to upstream.
+  cosmicLib = import "${inputs.cosmic-manager}/lib/extend-lib.nix" { inherit lib; };
+  catppuccinCosmicDark = cosmicLib.cosmic.ron.fromRON
+    (builtins.readFile ./catppuccin-cosmic.ron);
+  catppuccinCosmicLight = cosmicLib.cosmic.ron.fromRON
+    (builtins.readFile ./catppuccin-cosmic-light.ron);
+
   # Third-party CLI speaking COSMIC's zcosmic_toplevel_manager protocol.
   # cosmic-comp exposes neither wlr-foreign-toplevel nor a first-party window
   # CLI, so this is the only way to script activate/minimize/sticky.
@@ -83,6 +94,48 @@ let
   floatingException = appid: ''(appid: "(?i)${appid}", title: "", enabled: true),'';
 in
 {
+  # Declarative COSMIC config via cosmic-manager. Apply Catppuccin to the
+  # desktop and COSMIC apps: Mocha at night, Latte during the day.
+  wayland.desktopManager.cosmic = {
+    enable = true;
+    appearance.theme = {
+      # `mode` is intentionally left unset: setting it would hard-write a
+      # static is_dark. Instead we enable COSMIC's native day/night auto
+      # switch below, which flips between these two themes at sunrise/sunset.
+      dark = catppuccinCosmicDark;    # Catppuccin Mocha (night)
+      light = catppuccinCosmicLight;  # Catppuccin Latte (day)
+    };
+
+    # Enable COSMIC's "Auto" appearance mode (follows the day/night cycle).
+    # cosmic-manager only exposes a static dark/light `mode`, so set
+    # `auto_switch` directly on com.system76.CosmicTheme.Mode via its generic
+    # configFile escape hatch.
+    # Only set auto_switch; leave is_dark for COSMIC to compute from the time
+    # of day, so a rebuild doesn't momentarily force one mode.
+    configFile."com.system76.CosmicTheme.Mode" = {
+      version = 1;
+      entries.auto_switch = true;
+    };
+
+    # COSMIC Terminal: font + Catppuccin colour schemes. syntax_theme_dark /
+    # _light follow the system dark/light mode, so the terminal tracks the
+    # day/night auto switch too (Latte by day, Mocha by night). The colour
+    # scheme maps are keyed by an integer ColorSchemeId, which a Nix attrset
+    # can't express, so build them via fromRON on the upstream scheme files.
+    configFile."com.system76.CosmicTerm" = {
+      version = 1;
+      entries = {
+        font_name = "Hack Nerd Font Mono";
+        syntax_theme_dark = "Catppuccin Mocha";
+        syntax_theme_light = "Catppuccin Latte";
+        color_schemes_dark = cosmicLib.cosmic.ron.fromRON
+          "{0: ${builtins.readFile ./catppuccin-term-mocha.ron}}";
+        color_schemes_light = cosmicLib.cosmic.ron.fromRON
+          "{0: ${builtins.readFile ./catppuccin-term-latte.ron}}";
+      };
+    };
+  };
+
   home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cos-cli ]
     ++ map (chat: chat.toggle) chats;
 
@@ -113,14 +166,8 @@ in
     ]
   '';
 
-  # COSMIC Terminal font. Without this it uses the default monospace, whose
-  # powerline separator glyphs get pulled from a narrower fallback font
-  # (Iosevka), which breaks the Starship powerline bar. "Hack Nerd Font Mono"
-  # (installed via home.packages) carries text + separators + icons in one
-  # font at one width, so the bar tiles seamlessly. Managed here means the
-  # COSMIC Settings font picker is read-only, same as the other files below.
-  xdg.configFile."cosmic/com.system76.CosmicTerm/v1/font_name".text =
-    ''"Hack Nerd Font Mono"'';
+  # (COSMIC Terminal font + colour schemes are managed via cosmic-manager in
+  # the wayland.desktopManager.cosmic block above.)
 
   # COSMIC custom shortcuts: Super+V opens the clipboard history picker,
   # Super+Shift+V opens the forget picker (deletes the chosen entry), and
