@@ -16,6 +16,7 @@ in {
     enable = true;
     autoEnable = true;   # theme all supported+enabled programs
     flavor = "mocha";
+    accent = "mauve";    # matches the mauve accent used for the COSMIC theme
   };
   catppuccin.starship.enable = false;
   catppuccin.alacritty.enable = false;
@@ -27,6 +28,14 @@ in {
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     theme = "catppuccin";
+  };
+
+  # Enable these so catppuccin/nix (autoEnable) themes them:
+  gtk.enable = true;              # catppuccin.gtk -> Catppuccin Papirus icons
+  programs.tmux.enable = true;    # catppuccin.tmux -> Catppuccin status bar
+  programs.delta = {              # catppuccin.delta -> Catppuccin git diffs
+    enable = true;
+    enableGitIntegration = true;
   };
 
   # Expire old home-manager generations weekly so they don't pin
@@ -190,7 +199,6 @@ in {
     pkgs.owofetch
     pkgs.inxi
     pkgs.e2fsprogs
-    pkgs.tmux
     pkgs.pciutils
     pkgs.openfortivpn
     pkgs.lm_sensors

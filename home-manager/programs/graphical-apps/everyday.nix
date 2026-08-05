@@ -92,5 +92,22 @@
       "privacy.clearOnShutdown.cookies" = false;
       "network.cookie.lifetimePolicy" = 0;
     };
+    # A home-manager-managed profile is required for catppuccin/nix to install
+    # the Catppuccin browser theme (it hooks into a named profile). NOTE: this
+    # becomes the default profile; the previously auto-generated profile still
+    # exists but is no longer default (switch back via about:profiles if
+    # needed).
+    profiles.default = {
+      id = 0;
+      isDefault = true;
+    };
+  };
+
+  # Install the Catppuccin Mocha (mauve) theme into the LibreWolf profile.
+  # `force` acknowledges that catppuccin manages this profile's extension
+  # settings (it only adds the theme).
+  catppuccin.librewolf.profiles.default = {
+    enable = true;
+    force = true;
   };
 }
