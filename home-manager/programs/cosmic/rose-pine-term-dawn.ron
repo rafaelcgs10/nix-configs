@@ -4,7 +4,7 @@
     background: "#faf4ed",
     cursor: "#9893a5",
     bright_foreground: "#575279",
-    dim_foreground: "#cecacd",
+    dim_foreground: "#797593",
     normal: (
         black: "#f2e9de",
         red: "#b4637a",
