@@ -7,6 +7,19 @@ in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
+  # Catppuccin theming (catppuccin/nix). Enabling it globally themes every
+  # supported program that is enabled (neovim, fzf, ...). Starship is kept on
+  # the hand-picked catppuccin-powerline preset, so its catppuccin module is
+  # disabled here to avoid overwriting that config. alacritty is disabled too
+  # since it has been removed from all hosts.
+  catppuccin = {
+    enable = true;
+    autoEnable = true;   # theme all supported+enabled programs
+    flavor = "mocha";
+  };
+  catppuccin.starship.enable = false;
+  catppuccin.alacritty.enable = false;
+
   # Expire old home-manager generations weekly so they don't pin
   # years of closures in the nix store as GC roots.
   services.home-manager.autoExpire = {

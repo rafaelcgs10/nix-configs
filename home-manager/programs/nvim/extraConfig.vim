@@ -1,6 +1,6 @@
 " vim:foldmethod=marker foldlevel=0
 
-colorscheme nord
+" Colorscheme is set by catppuccin/nix (catppuccin.nvim) -> `colorscheme catppuccin`.
 
 " ## Settings {{{
 nnoremap <silent> <C-L> :nohlsearch<CR><C-L>

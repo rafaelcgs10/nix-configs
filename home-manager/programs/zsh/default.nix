@@ -61,7 +61,7 @@
   # symbol. Read straight from the TOML so the Nerd Font glyphs stay byte-exact.
   # The powerline separators only render correctly with a Nerd Font terminal
   # font (Hack Nerd Font Mono, set as the default monospace in
-  # nixos/configuration.nix and in the alacritty/COSMIC terminal configs).
+  # nixos/configuration.nix and in the COSMIC Terminal config).
   #   https://starship.rs/presets/catppuccin-powerline
   programs.starship = {
     enable = true;
