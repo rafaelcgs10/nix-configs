@@ -106,18 +106,18 @@
         paths = [ pkgs.hunspellDicts.en_US pkgs.hunspellDicts.pt_BR ];
       }}/share/hunspell";
     };
-    # A home-manager-managed profile is required for catppuccin/nix to install
-    # the Catppuccin browser theme (it hooks into a named profile). NOTE: this
-    # becomes the default profile; the previously auto-generated profile still
-    # exists but is no longer default (switch back via about:profiles if needed).
+    # A home-manager-managed named profile is required for Stylix's librewolf
+    # target (stylix.targets.librewolf.profileNames = [ "default" ]) to theme it.
+    # NOTE: this becomes the default profile; the previously auto-generated
+    # profile still exists but is no longer default (switch back via
+    # about:profiles if needed).
     profiles.default = {
       id = 0;
       isDefault = true;
       extensions = {
-        # force acknowledges that catppuccin.librewolf writes the FirefoxColor
-        # extension's stored theme (an extensions.settings entry); mkForce so it
-        # wins regardless and the "override all previous extensions" assertion
-        # never recurs.
+        # mkForce true acknowledges declarative management of this profile's
+        # extension policy, so the "override all previous extensions" assertion
+        # never recurs when extensions/theme change.
         force = lib.mkForce true;
         # Actually INSTALL the add-ons (as signed .xpi in the profile). Note:
         # extensions.settings only writes storage for already-installed add-ons,
@@ -126,14 +126,11 @@
         packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
           bitwarden
           darkreader
-          firefox-color
           vimium
         ];
       };
     };
   };
 
-  # Catppuccin Mocha (mauve) theme for the profile. The extension-override
-  # acknowledgement is handled by extensions.force above.
-  catppuccin.librewolf.profiles.default.enable = true;
+  # (Browser theme is handled by Stylix's firefox target / Rosé Pine below.)
 }
