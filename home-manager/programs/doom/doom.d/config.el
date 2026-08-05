@@ -619,18 +619,18 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 (setq custom-safe-themes t)
 
-;; Rosé Pine ships separate dark/light theme *symbols* (rose-pine-moon = dark,
-;; rose-pine-dawn = light), so toggle by swapping the loaded theme.
-(load-theme 'rose-pine-moon t)           ; dark default
+;; doom-themes-based Rosé Pine ships separate dark/light theme *symbols*
+;; (doom-rose-pine = dark, doom-rose-pine-dawn = light); toggle by swapping.
+(load-theme 'doom-rose-pine t)           ; dark default
 
 (defun my/toggle-rose-pine ()
-  "Toggle Rosé Pine between dark (moon) and light (dawn)."
+  "Toggle Rosé Pine between dark and light (dawn)."
   (interactive)
-  (if (custom-theme-enabled-p 'rose-pine-moon)
-      (progn (disable-theme 'rose-pine-moon) (load-theme 'rose-pine-dawn t))
-    (progn (disable-theme 'rose-pine-dawn) (load-theme 'rose-pine-moon t)))
+  (if (custom-theme-enabled-p 'doom-rose-pine)
+      (progn (disable-theme 'doom-rose-pine) (load-theme 'doom-rose-pine-dawn t))
+    (progn (disable-theme 'doom-rose-pine-dawn) (load-theme 'doom-rose-pine t)))
   (message "Rosé Pine: %s"
-           (if (custom-theme-enabled-p 'rose-pine-moon) "moon (dark)" "dawn (light)")))
+           (if (custom-theme-enabled-p 'doom-rose-pine) "dark" "dawn (light)")))
 
 ;; Bind C-c C-t on a *global minor-mode* keymap, not the global map. Minor-mode
 ;; maps override major-mode maps, so the key keeps working in org-mode,

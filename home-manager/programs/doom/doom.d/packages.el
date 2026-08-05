@@ -5,8 +5,10 @@
 (package! session-async)
 (package! academic-phrases)
 ;; (package! flycheck-languagetool)
-(package! rose-pine-theme
-  :recipe (:host github :repo "thongpv87/rose-pine-emacs" :files ("*.el")))
+;; doom-themes-based Rosé Pine (proper syntax highlighting/contrast), with dark
+;; (doom-rose-pine) and light (doom-rose-pine-dawn) variants.
+(package! doom-rose-pine-theme
+  :recipe (:host github :repo "donniebreve/rose-pine-doom-emacs" :files ("*.el")))
 (package! quail :disable t)
 ;; (package! lsp-ltex)
 ;; (package! company-posframe)
