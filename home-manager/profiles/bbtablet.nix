@@ -8,7 +8,6 @@
     ../programs/doom/default.nix
     ../programs/zsh/default.nix
     ../programs/nvim/default.nix
-    ../programs/X-themes/default.nix
     ../programs/graphical-apps/everyday.nix
     ../programs/non-arm/default.nix
   ];

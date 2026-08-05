@@ -8,7 +8,6 @@
     ../../programs/nvim/default.nix
     # ../../programs/jedit/default.nix
     # ../../programs/rofi/default.nix
-    ../../programs/X-themes/default.nix
     # ../../programs/polybar/default.nix
     # ../../programs/gcloud/default.nix
     ../../programs/graphical-apps/default.nix

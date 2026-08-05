@@ -350,6 +350,7 @@ in {
   };
 
   fonts.fontconfig.enable = true;
+  # Isabelle's DejaVu Sans Mono (with the Isabelle symbol glyphs).
   home.file.".local/share/fonts/IsabelleDejaVuSansMono.ttf".source = ../fonts/IsabelleDejaVuSansMono.ttf;
 
   programs.git = {

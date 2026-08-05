@@ -102,6 +102,8 @@ in
       # `mode` is intentionally left unset: setting it would hard-write a
       # static is_dark. Instead we enable COSMIC's native day/night auto
       # switch below, which flips between these two themes at sunrise/sunset.
+      # window_hint (border/hint around the active window) is set to Love
+      # (#eb6f92) directly in rose-pine-cosmic.ron.
       dark = rosePineCosmicDark;    # Rosé Pine (night)
       light = rosePineCosmicLight;  # Rosé Pine Dawn (day)
     };
