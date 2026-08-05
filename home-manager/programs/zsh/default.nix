@@ -4,8 +4,45 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
+    autosuggestion = {
+      enable = true;
+      highlight = "fg=8"; # dim hint; ANSI slot so it follows the flavour
+    };
+
+    # zsh-syntax-highlighting colours expressed via ANSI palette slots (names,
+    # not hex) so the command line renders in the terminal's *current*
+    # Catppuccin flavour and follows the COSMIC day/night auto-switch (Latte by
+    # day, Mocha by night) instead of being pinned to one flavour.
+    syntaxHighlighting = {
+      enable = true;
+      styles = {
+        "unknown-token" = "fg=red,bold";
+        "reserved-word" = "fg=magenta";
+        "alias" = "fg=green";
+        "suffix-alias" = "fg=green";
+        "global-alias" = "fg=green";
+        "builtin" = "fg=green";
+        "function" = "fg=green";
+        "command" = "fg=green";
+        "precommand" = "fg=green,underline";
+        "hashed-command" = "fg=green";
+        "arg0" = "fg=green";
+        "single-hyphen-option" = "fg=yellow";
+        "double-hyphen-option" = "fg=yellow";
+        "single-quoted-argument" = "fg=yellow";
+        "double-quoted-argument" = "fg=yellow";
+        "dollar-quoted-argument" = "fg=yellow";
+        "backtick-quoted-argument" = "fg=yellow";
+        "globbing" = "fg=cyan";
+        "history-expansion" = "fg=cyan";
+        "command-substitution-delimiter" = "fg=cyan";
+        "process-substitution-delimiter" = "fg=cyan";
+        "path" = "fg=default,underline";
+        "path_pathseparator" = "fg=default,underline";
+        "comment" = "fg=8";
+        "default" = "fg=default";
+      };
+    };
 
     history = {
       path = "$HOME/zsh_history/zsh_history";
