@@ -34,7 +34,13 @@ in {
   };
 
   # These programs are enabled so Stylix themes them:
-  gtk.enable = true;              # stylix.targets.gtk
+  gtk = {
+    enable = true;               # stylix.targets.gtk (adw-gtk3 widget colours)
+    iconTheme = {                # Stylix doesn't set an icon theme; use Papirus
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+  };
   qt.enable = true;               # stylix.targets.qt (Qt5/Qt6 apps)
   programs.tmux.enable = true;    # stylix.targets.tmux
   programs.delta = {              # git diffs (Stylix has no delta target)
@@ -302,7 +308,7 @@ in {
     pkgs.mononoki
     # pkgs.font-awesome_4
     # pkgs.font-awesome_5
-    pkgs.papirus-icon-theme   # GTK icon set (Stylix themes widget colours only)
+    # (Papirus icons installed via gtk.iconTheme.package below.)
     pkgs.corefonts
     # pkgs.vistafonts
     pkgs.fira-code
