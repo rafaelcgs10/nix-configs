@@ -59,7 +59,9 @@ _dh-up() { builtin cd .. 2>/dev/null; zle reset-prompt }
 zle -N _dh-back
 zle -N _dh-forward
 zle -N _dh-up
-# Common xterm-style Ctrl+Arrow sequences (COSMIC Terminal uses these).
-bindkey '^[[1;5D' _dh-back      # Ctrl+Left  : previous directory
-bindkey '^[[1;5C' _dh-forward   # Ctrl+Right : next directory
-bindkey '^[[1;5A' _dh-up        # Ctrl+Up    : parent directory
+# Alt+Arrow for directory nav; Ctrl+Left/Right freed for word movement.
+bindkey '^[[1;3D' _dh-back       # Alt+Left   : previous directory
+bindkey '^[[1;3C' _dh-forward    # Alt+Right  : next directory
+bindkey '^[[1;3A' _dh-up         # Alt+Up     : parent directory
+bindkey '^[[1;5D' backward-word  # Ctrl+Left  : previous word
+bindkey '^[[1;5C' forward-word   # Ctrl+Right : next word
