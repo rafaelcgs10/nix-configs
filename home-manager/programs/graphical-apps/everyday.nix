@@ -1,4 +1,4 @@
-{ pkgs, pkgsUnstable, ...}:
+{ pkgs, pkgsUnstable, lib, inputs, ...}:
 
 {
   home.packages = [
@@ -87,10 +87,56 @@
     enable = true;
     settings = {
       "webgl.disabled" = false;
+      # "Fix major site issues (recommended)": disable ResistFingerprinting
+      # (the aggressive protection that breaks many sites).
       "privacy.resistFingerprinting" = false;
+      # "Fix minor site issues": disable the lighter FingerprintingProtection.
+      "privacy.fingerprintingProtection" = false;
+      # Never clear cookies/site data (or history) on close. LibreWolf clears
+      # on shutdown by default; keep both the legacy and the Firefox 128+ (_v2)
+      # prefs false so the "Clear cookies and site data every time you close
+      # LibreWolf" toggle stays off.
       "privacy.clearOnShutdown.history" = false;
       "privacy.clearOnShutdown.cookies" = false;
+      "privacy.clearOnShutdown_v2.cookiesAndStorage" = false;
+      "privacy.clearOnShutdown_v2.historyFormDataAndDownloads" = false;
       "network.cookie.lifetimePolicy" = 0;
+      # DRM playback (Widevine) always on. LibreWolf disables it by default and
+      # locks the UI toggle, so it has to be set here.
+      "media.eme.enabled" = true;
+      "media.gmp-widevinecdm.enabled" = true;
+      # Spell-check dictionaries: English (US) + Brazilian Portuguese. Firefox
+      # scans this directory for hunspell .dic/.aff files.
+      "spellchecker.dictionary_path" = "${pkgs.symlinkJoin {
+        name = "librewolf-hunspell-dicts";
+        paths = [ pkgs.hunspellDicts.en_US pkgs.hunspellDicts.pt_BR ];
+      }}/share/hunspell";
+    };
+    # A home-manager-managed named profile is required for Stylix's librewolf
+    # target (stylix.targets.librewolf.profileNames = [ "default" ]) to theme it.
+    # NOTE: this becomes the default profile; the previously auto-generated
+    # profile still exists but is no longer default (switch back via
+    # about:profiles if needed).
+    profiles.default = {
+      id = 0;
+      isDefault = true;
+      extensions = {
+        # mkForce true acknowledges declarative management of this profile's
+        # extension policy, so the "override all previous extensions" assertion
+        # never recurs when extensions/theme change.
+        force = lib.mkForce true;
+        # Actually INSTALL the add-ons (as signed .xpi in the profile). Note:
+        # extensions.settings only writes storage for already-installed add-ons,
+        # so installation must go through packages. firefox-color is required
+        # for the Catppuccin theme, which only sets FirefoxColor's stored theme.
+        packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
+          bitwarden
+          darkreader
+          vimium
+        ];
+      };
     };
   };
+
+  # (Browser theme is handled by Stylix's firefox target / Rosé Pine below.)
 }

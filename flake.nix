@@ -35,6 +35,27 @@
     # CLI for COSMIC toplevel management (scratchpad chat toggles).
     # Unofficial but source-reviewed at this pin: no network/exec/fs access.
     cos-cli.url = "github:estin/cos-cli/fe8c52016888302d6239ef53f1dbf876d8552dc2";
+
+    # Stylix: system-wide base16 theming (Rosé Pine) across supported programs
+    # (neovim, fzf, tmux, gtk, qt, btop, fuzzel, opencode, ...).
+    stylix = {
+      url = "github:nix-community/stylix/release-26.05";  # match home-manager
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Packaged Firefox/LibreWolf add-ons (rycee) for declarative installation.
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Declarative COSMIC desktop configuration (used to apply the Rosé Pine
+    # COSMIC theme, since Stylix has no COSMIC target).
+    cosmic-manager = {
+      url = "github:HeitorAugustoLN/cosmic-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
@@ -87,6 +108,8 @@
       mkHomeModules = profile: [
         ./home-manager/home.nix
         homeProfiles.${profile}
+        inputs.stylix.homeModules.stylix
+        inputs.cosmic-manager.homeManagerModules.cosmic-manager
       ];
 
       mkHome =

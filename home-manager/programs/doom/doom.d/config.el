@@ -219,7 +219,7 @@
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-nord t)
+  ;; Active theme is loaded by the Catppuccin block further down.
 
   ;; Enable flashing mode-line on errors
   (doom-themes-visual-bell-config)
@@ -639,20 +639,44 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;
 
 (setq custom-safe-themes t)
-;; cycle-themes still calls the old `first' alias, which is not defined by
-;; default on newer Emacs versions.
-(unless (fboundp 'first)
-  (defalias 'first #'car))
 
-(use-package! cycle-themes
-  :ensure t
-  :init
-  (setq custom-safe-themes t)
-  (load-theme 'doom-one-light t nil)
-  (load-theme 'doom-one t nil)
-  (setq cycle-themes-theme-list '(doom-one doom-one-light))
-  :config
-  (cycle-themes-mode))
+;; doom-themes-based Rosé Pine ships separate dark/light theme *symbols*
+;; (doom-rose-pine = dark, doom-rose-pine-dawn = light); toggle by swapping.
+;; load-theme searches `custom-theme-load-path', and an external doom-theme
+;; package's directory isn't added there automatically, which caused the
+;; "Unable to find theme file for 'doom-rose-pine'" startup error. Add it
+;; explicitly (the package is on load-path, so locate-library finds it).
+(dolist (thm '("doom-rose-pine-theme" "doom-rose-pine-dawn-theme"))
+  (when-let ((lib (locate-library thm)))
+    (add-to-list 'custom-theme-load-path (file-name-directory lib))))
+(setq doom-theme 'doom-rose-pine)        ; dark default
+
+(defun my/toggle-rose-pine ()
+  "Toggle Rosé Pine between dark and light (dawn)."
+  (interactive)
+  (if (custom-theme-enabled-p 'doom-rose-pine)
+      (progn (disable-theme 'doom-rose-pine) (load-theme 'doom-rose-pine-dawn t))
+    (progn (disable-theme 'doom-rose-pine-dawn) (load-theme 'doom-rose-pine t)))
+  (message "Rosé Pine: %s"
+           (if (custom-theme-enabled-p 'doom-rose-pine) "dark" "dawn (light)")))
+
+;; Bind C-c C-t on a *global minor-mode* keymap, not the global map. Minor-mode
+;; maps override major-mode maps, so the key keeps working in org-mode,
+;; prog-modes, etc. (which bind C-c C-t themselves). This is how the old
+;; cycle-themes-mode kept the key live in every buffer; plain global-set-key
+;; gets shadowed by those major modes.
+(defvar my/theme-toggle-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-t") #'my/toggle-rose-pine)
+    map)
+  "Keymap holding the global theme-toggle binding.")
+
+(define-minor-mode my/theme-toggle-mode
+  "Global minor mode that provides the Rosé Pine dark/light toggle key."
+  :global t
+  :keymap my/theme-toggle-map)
+
+(my/theme-toggle-mode 1)
 
 
 

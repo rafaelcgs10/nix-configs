@@ -7,6 +7,54 @@ in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
+  # Stylix: system-wide Rosé Pine (base16) theming. It auto-themes neovim, fzf,
+  # tmux, gtk, qt, btop, bat, fuzzel and more. Starship keeps its hand-built
+  # powerline (palette swapped to Rosé Pine); Doom Emacs and COSMIC are themed
+  # separately since Stylix has no COSMIC target.
+  stylix = {
+    enable = true;
+    polarity = "dark";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/rose-pine.yaml";
+    # App theming needs no real wallpaper; use a solid base00 pixel.
+    image = config.lib.stylix.pixel "base00";
+    # Keep the Nerd Font so terminal/powerline glyphs render.
+    fonts.monospace = {
+      package = pkgs.nerd-fonts.hack;
+      name = "Hack Nerd Font Mono";
+    };
+    targets.starship.enable = false;  # keep the hand-built powerline preset
+    targets.librewolf.profileNames = [ "default" ];  # theme the managed profile
+  };
+
+  # opencode is a custom package (not programs.opencode), so Stylix can't theme
+  # it; point it at its built-in rose-pine theme directly.
+  xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
+    "$schema" = "https://opencode.ai/config.json";
+    theme = "rose-pine";
+  };
+
+  # These programs are enabled so Stylix themes them:
+  gtk = {
+    enable = true;               # stylix.targets.gtk (adw-gtk3 widget colours)
+    iconTheme = {                # Stylix doesn't set an icon theme; use Papirus
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+  };
+  qt.enable = true;               # stylix.targets.qt (Qt5/Qt6 apps)
+  programs.tmux.enable = true;    # stylix.targets.tmux
+  programs.delta = {              # git diffs (Stylix has no delta target)
+    enable = true;
+    enableGitIntegration = true;
+    # Rosé Pine-tinted added/removed line backgrounds.
+    options = {
+      minus-style = "normal \"#3d2530\"";
+      minus-emph-style = "normal \"#5a3644\"";
+      plus-style = "normal \"#20352e\"";
+      plus-emph-style = "normal \"#2f5045\"";
+    };
+  };
+
   # Expire old home-manager generations weekly so they don't pin
   # years of closures in the nix store as GC roots.
   services.home-manager.autoExpire = {
@@ -168,7 +216,6 @@ in {
     pkgs.owofetch
     pkgs.inxi
     pkgs.e2fsprogs
-    pkgs.tmux
     pkgs.pciutils
     pkgs.openfortivpn
     pkgs.lm_sensors
@@ -261,7 +308,7 @@ in {
     pkgs.mononoki
     # pkgs.font-awesome_4
     # pkgs.font-awesome_5
-    pkgs.papirus-icon-theme
+    # (Papirus icons installed via gtk.iconTheme.package below.)
     pkgs.corefonts
     # pkgs.vistafonts
     pkgs.fira-code
@@ -277,7 +324,8 @@ in {
     # pkgs.emacsPackages.treemacs-all-the-icons
     pkgs.emacsPackages.all-the-icons-nerd-fonts
     pkgs.emacsPackages.all-the-icons-completion
-    # (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" "Mononoki" ]; })
+    # Nerd Font (Hack) is installed system-wide via fonts.packages in
+    # nixos/configuration.nix and set as the default monospace there.
 
   ];
 
@@ -302,7 +350,6 @@ in {
   };
 
   fonts.fontconfig.enable = true;
-  home.file.".local/share/fonts/IsabelleDejaVuSansMono.ttf".source = ../fonts/IsabelleDejaVuSansMono.ttf;
 
   programs.git = {
     enable = true;
