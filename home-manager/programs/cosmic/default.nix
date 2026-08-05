@@ -156,6 +156,12 @@ in
     ];
   };
 
+  # The clipboard-picker / clipboard-forget scripts above display cliphist
+  # through fuzzel (--dmenu). Enable programs.fuzzel so home-manager writes
+  # fuzzel.ini, which catppuccin.fuzzel themes (Catppuccin Mocha/mauve); the
+  # pickers read that default config since they pass no --config.
+  programs.fuzzel.enable = true;
+
   # Float-by-default rules ("floating window exceptions"). cosmic-comp watches
   # this file and applies changes live. COSMIC Settings writes the same file
   # from its Windows page; keep new exceptions here instead, or the read-only
