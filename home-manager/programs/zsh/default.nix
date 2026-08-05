@@ -100,15 +100,15 @@
   # Starship: fast (Rust), actively maintained, and free of p10k's
   # resize/redraw separator bug.
   #
-  # Official "catppuccin-powerline" preset (mocha flavour), plus a NixOS os
-  # symbol. Read straight from the TOML so the Nerd Font glyphs stay byte-exact.
-  # The powerline separators only render correctly with a Nerd Font terminal
-  # font (Hack Nerd Font Mono, set as the default monospace in
-  # nixos/configuration.nix and in the COSMIC Terminal config).
-  #   https://starship.rs/presets/catppuccin-powerline
+  # The starship "powerline" preset layout, repainted with the Rosé Pine
+  # palette (Stylix's starship target is disabled so this custom look stays).
+  # Read straight from the TOML so the Nerd Font glyphs stay byte-exact. The
+  # powerline separators only render with a Nerd Font terminal font (Hack Nerd
+  # Font Mono, set as the default monospace in nixos/configuration.nix and the
+  # COSMIC Terminal config).
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
-    settings = builtins.fromTOML (builtins.readFile ./catppuccin-powerline.toml);
+    settings = builtins.fromTOML (builtins.readFile ./rose-pine-powerline.toml);
   };
 }
