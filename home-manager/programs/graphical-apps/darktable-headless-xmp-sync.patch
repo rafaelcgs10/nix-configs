@@ -1,0 +1,127 @@
+diff --git a/src/control/crawler.c b/src/control/crawler.c
+index 37ee42e..1655f61 100644
+--- a/src/control/crawler.c
++++ b/src/control/crawler.c
+@@ -699,6 +699,50 @@ static gchar* str_time_delta(const int time_delta)
+   return g_strdup_printf(_("%id %02dh %02dm %02ds"), days, hours, minutes, seconds);
+ }
+ 
++// headless XMP -> database synchronisation, for a scheduled/service run.
++// intended to be called after a non-GUI dt_init(), so the startup crawler can
++// be disabled and this cost paid off the interactive path. reloads the XMP of
++// every image whose sidecar is newer than the database entry (the "keep the
++// XMP edit" action). returns the number of images successfully synchronised.
++int dt_control_crawler_sync_xmp_to_db(void)
++{
++  GList *changed = dt_control_crawler_run();
++
++  int synced = 0;
++  int failed = 0;
++  for(GList *iter = changed; iter; iter = g_list_next(iter))
++  {
++    dt_control_crawler_result_t *entry = iter->data;
++
++    // dt_control_crawler_run() only ever reports sidecars that are newer than
++    // the database, so the correct direction is always XMP -> DB. guard anyway.
++    if(entry->timestamp_xmp > entry->timestamp_db)
++    {
++      _db_update_timestamp(entry->id, entry->timestamp_xmp);
++      const gboolean error = dt_history_load_and_apply(entry->id, entry->xmp_path, 0);
++      if(error)
++      {
++        failed++;
++        dt_print(DT_DEBUG_ALWAYS,
++                 "[crawler] FAILED to sync XMP -> DB for `%s'", entry->image_path);
++      }
++      else
++      {
++        synced++;
++        dt_print(DT_DEBUG_CONTROL,
++                 "[crawler] synced XMP -> DB for `%s'", entry->image_path);
++      }
++    }
++
++    _free_crawler_result(entry);
++  }
++  g_list_free_full(changed, g_free);
++
++  dt_print(DT_DEBUG_ALWAYS,
++           "[crawler] headless XMP -> DB sync done: %d updated, %d failed", synced, failed);
++  return synced;
++}
++
+ // show a popup window with a list of updated images/xmp files and allow the user to tell dt what to do about them
+ void dt_control_crawler_show_image_list(GList *images)
+ {
+diff --git a/src/control/crawler.h b/src/control/crawler.h
+index 68f86cf..fac3ff5 100644
+--- a/src/control/crawler.h
++++ b/src/control/crawler.h
+@@ -36,6 +36,13 @@ GList *dt_control_crawler_run();
+ // show a popup with the images, let the user decide what to do and free the list afterwards
+ void dt_control_crawler_show_image_list(GList *images);
+ 
++// headless XMP -> database synchronisation, for a scheduled/service run.
++// runs dt_control_crawler_run() and, for every image whose sidecar is newer
++// than the database entry, reloads the XMP into the database (the same action
++// as the GUI "keep the XMP edit" button). does not touch the GUI.
++// returns the number of images successfully synchronised.
++int dt_control_crawler_sync_xmp_to_db(void);
++
+ // background thread updating all thumbnails is there is no user activity while being in lightroom
+ void dt_update_thumbs_thread(void *ptr);
+ void dt_set_backthumb_time(const double offset);
+diff --git a/src/main.c b/src/main.c
+index 366413e..0874913 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -21,8 +21,10 @@
+ #include "develop/develop.h"
+ #include "common/gimp.h"
+ #include "common/image_cache.h"
++#include "control/crawler.h"
+ #include "gui/gtk.h"
+ #include <stdlib.h>
++#include <string.h>
+ 
+ #ifdef __APPLE__
+ #include "osx/osx.h"
+@@ -114,6 +116,38 @@ int main(int argc, char *argv[])
+   g_setenv("GTK_CSD", "0", TRUE);
+ #endif
+ 
++  // Headless XMP -> database sync for a scheduled service. We detect and strip
++  // our private "--sync-xmp" option here because dt_init() aborts on unknown
++  // options. When present we run a non-GUI init and reconcile updated sidecars
++  // instead of starting the darkroom.
++  gboolean sync_xmp_and_exit = FALSE;
++  for(int k = 1; k < argc; k++)
++  {
++    if(argv[k] && !strcmp(argv[k], "--sync-xmp"))
++    {
++      sync_xmp_and_exit = TRUE;
++      // compact argv so dt_init() never sees the unknown option
++      for(int j = k; j < argc - 1; j++) argv[j] = argv[j + 1];
++      argv[--argc] = NULL;
++      k--;
++    }
++  }
++
++  if(sync_xmp_and_exit)
++  {
++    // init_gui = FALSE: no GTK, no dialogs. If another darktable holds the
++    // library lock, dt_init() returns non-zero without any UI and we abort this
++    // run — the scheduler will retry later. Exit code 75 (EX_TEMPFAIL) marks
++    // this expected "could not run now" case so the service manager can tell it
++    // apart from a real crash.
++    if(dt_init(argc, argv, FALSE, TRUE, NULL))
++      exit(75);
++
++    dt_control_crawler_sync_xmp_to_db();
++    dt_cleanup();
++    exit(0);
++  }
++
+   if(dt_init(argc, argv, TRUE, TRUE, NULL))
+   {
+     if(dt_gimpmode())

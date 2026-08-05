@@ -1,5 +1,19 @@
 { pkgs, lib, config, pkgsUnstable, pkgsLmstudio, spektrafilmPackages, ...}:
 
+let
+  # `darktable-spektrafilm-ai` is a symlinkJoin wrapper (it runtime-links the
+  # spektrafilm data pack and AI models) around the real darktable build, which
+  # it exposes through passthru as `.basePackage`. We patch that base to add a
+  # headless `--sync-xmp` mode that reconciles updated XMP sidecars into the
+  # library database without launching the GUI (darktable-headless-xmp-sync.patch).
+  # The data pack and AI models are already linked declaratively via home.file
+  # below, so the runtime wrapper is redundant here and we use the patched base
+  # package directly — one build, used for both the GUI and the sync timer.
+  darktable-xmp-sync =
+    spektrafilmPackages.darktable-spektrafilm-ai.basePackage.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ./darktable-headless-xmp-sync.patch ];
+    });
+in
 {
   home.packages = [
     pkgs.gimp3-with-plugins
@@ -21,9 +35,10 @@
     pkgsUnstable.freetube
 
     # darktable built from the spektrafilm PR branch (native C spektrafilm
-    # module). Replaces the stock pkgsDarktable.darktable; the runtime data pack
-    # and AI models are linked in via home.file below.
-    spektrafilmPackages.darktable-spektrafilm-ai
+    # module), patched to add the headless `--sync-xmp` mode driven by the
+    # systemd timer below. Replaces the stock pkgsDarktable.darktable; the
+    # runtime data pack and AI models are linked in via home.file below.
+    darktable-xmp-sync
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
@@ -85,6 +100,49 @@
           "$config_file"
       else
         printf '\nplugins/darkroom/rawprepare/allow_editing_crop=true\n' >> "$config_file"
+      fi
+    fi
+  '';
+
+  # Every 4 hours, reconcile updated XMP sidecars (edited on another machine and
+  # synced in) into darktable's library database, headless — replacing the slow
+  # interactive startup crawler (disabled just below). If darktable is open the
+  # library lock is held: `darktable --sync-xmp` then aborts cleanly with exit 75
+  # (EX_TEMPFAIL) and no GUI, which we mark as success so the timer isn't flagged
+  # as failed. The next tick catches everything, so a skipped run is harmless.
+  systemd.user.services.darktable-xmp-sync = {
+    Unit.Description =
+      "Reconcile updated darktable XMP sidecars into the library database";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${darktable-xmp-sync}/bin/darktable --sync-xmp";
+      # 0 = synced; 75 = library locked (darktable open) — both are fine.
+      SuccessExitStatus = "0 75";
+    };
+  };
+
+  systemd.user.timers.darktable-xmp-sync = {
+    Unit.Description = "Periodic darktable XMP -> library DB sync (every 4h)";
+    Timer = {
+      OnBootSec = "15min";
+      OnUnitActiveSec = "4h";
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
+  # Disable darktable's startup XMP crawler — the timer above does this work off
+  # the interactive path now, so we don't pay the full-library sidecar scan every
+  # launch. Only edit darktablerc while darktable is closed: it rewrites the file
+  # from memory on exit, which would otherwise undo this.
+  home.activation.disableDarktableStartupCrawler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
+    if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
+      if ${pkgs.gnugrep}/bin/grep -q '^run_crawler_on_start=' "$config_file"; then
+        ${pkgs.gnused}/bin/sed -i \
+          's|^run_crawler_on_start=.*|run_crawler_on_start=FALSE|' \
+          "$config_file"
+      else
+        printf '\nrun_crawler_on_start=FALSE\n' >> "$config_file"
       fi
     fi
   '';
