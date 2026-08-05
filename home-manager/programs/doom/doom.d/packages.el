@@ -5,7 +5,8 @@
 (package! session-async)
 (package! academic-phrases)
 ;; (package! flycheck-languagetool)
-(package! catppuccin-theme)
+(package! rose-pine-theme
+  :recipe (:host github :repo "thongpv87/rose-pine-emacs" :files ("*.el")))
 (package! quail :disable t)
 ;; (package! lsp-ltex)
 ;; (package! company-posframe)

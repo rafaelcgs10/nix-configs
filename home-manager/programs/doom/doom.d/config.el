@@ -619,19 +619,18 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 (setq custom-safe-themes t)
 
-;; Catppuccin is a single theme with a `catppuccin-flavor' variable rather than
-;; separate dark/light theme symbols, so the old cycle-themes list doesn't fit.
-;; Load it directly and toggle the flavour (mocha <-> latte) on the same key.
-(setq catppuccin-flavor 'mocha)          ; 'mocha = dark, 'latte = light
-(load-theme 'catppuccin t)
+;; Rosé Pine ships separate dark/light theme *symbols* (rose-pine-moon = dark,
+;; rose-pine-dawn = light), so toggle by swapping the loaded theme.
+(load-theme 'rose-pine-moon t)           ; dark default
 
-(defun my/toggle-catppuccin-flavor ()
-  "Toggle Catppuccin between dark (mocha) and light (latte)."
+(defun my/toggle-rose-pine ()
+  "Toggle Rosé Pine between dark (moon) and light (dawn)."
   (interactive)
-  (setq catppuccin-flavor
-        (if (eq catppuccin-flavor 'latte) 'mocha 'latte))
-  (catppuccin-reload)
-  (message "Catppuccin: %s" catppuccin-flavor))
+  (if (custom-theme-enabled-p 'rose-pine-moon)
+      (progn (disable-theme 'rose-pine-moon) (load-theme 'rose-pine-dawn t))
+    (progn (disable-theme 'rose-pine-dawn) (load-theme 'rose-pine-moon t)))
+  (message "Rosé Pine: %s"
+           (if (custom-theme-enabled-p 'rose-pine-moon) "moon (dark)" "dawn (light)")))
 
 ;; Bind C-c C-t on a *global minor-mode* keymap, not the global map. Minor-mode
 ;; maps override major-mode maps, so the key keeps working in org-mode,
@@ -640,12 +639,12 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;; gets shadowed by those major modes.
 (defvar my/theme-toggle-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-t") #'my/toggle-catppuccin-flavor)
+    (define-key map (kbd "C-c C-t") #'my/toggle-rose-pine)
     map)
-  "Keymap holding the global Catppuccin flavour-toggle binding.")
+  "Keymap holding the global theme-toggle binding.")
 
 (define-minor-mode my/theme-toggle-mode
-  "Global minor mode that provides the Catppuccin flavour toggle key."
+  "Global minor mode that provides the Rosé Pine dark/light toggle key."
   :global t
   :keymap my/theme-toggle-map)
 
