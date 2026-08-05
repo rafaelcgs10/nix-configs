@@ -1,4 +1,4 @@
-{ pkgs, pkgsUnstable, ...}:
+{ pkgs, pkgsUnstable, lib, ...}:
 
 {
   home.packages = [
@@ -87,27 +87,58 @@
     enable = true;
     settings = {
       "webgl.disabled" = false;
+      # "Fix major site issues (recommended)": disable ResistFingerprinting
+      # (the aggressive protection that breaks many sites).
       "privacy.resistFingerprinting" = false;
+      # "Fix minor site issues": disable the lighter FingerprintingProtection.
+      "privacy.fingerprintingProtection" = false;
       "privacy.clearOnShutdown.history" = false;
       "privacy.clearOnShutdown.cookies" = false;
       "network.cookie.lifetimePolicy" = 0;
+      # DRM playback (Widevine) always on. LibreWolf disables it by default and
+      # locks the UI toggle, so it has to be set here.
+      "media.eme.enabled" = true;
+      "media.gmp-widevinecdm.enabled" = true;
+      # Spell-check dictionaries: English (US) + Brazilian Portuguese. Firefox
+      # scans this directory for hunspell .dic/.aff files.
+      "spellchecker.dictionary_path" = "${pkgs.symlinkJoin {
+        name = "librewolf-hunspell-dicts";
+        paths = [ pkgs.hunspellDicts.en_US pkgs.hunspellDicts.pt_BR ];
+      }}/share/hunspell";
     };
     # A home-manager-managed profile is required for catppuccin/nix to install
     # the Catppuccin browser theme (it hooks into a named profile). NOTE: this
     # becomes the default profile; the previously auto-generated profile still
-    # exists but is no longer default (switch back via about:profiles if
-    # needed).
+    # exists but is no longer default (switch back via about:profiles if needed).
     profiles.default = {
       id = 0;
       isDefault = true;
+      extensions = {
+        # Acknowledge, once and for all, that this profile's extension policy is
+        # managed declaratively (Catppuccin theme + the extensions below).
+        # mkForce so it wins over whatever catppuccin.librewolf sets - this flag
+        # is what the "override all previous extensions" assertion wants, and
+        # setting it here means changing extensions never re-triggers it.
+        force = lib.mkForce true;
+        # Force-install extensions from AMO via the ExtensionSettings policy
+        # (auto-updating; no extra flake input needed).
+        settings = {
+          # Bitwarden password manager
+          "{446900e4-71c2-419f-a6a7-df9c091e268b}".settings = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # Dark Reader
+          "addon@darkreader.org".settings = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi";
+            installation_mode = "force_installed";
+          };
+        };
+      };
     };
   };
 
-  # Install the Catppuccin Mocha (mauve) theme into the LibreWolf profile.
-  # `force` acknowledges that catppuccin manages this profile's extension
-  # settings (it only adds the theme).
-  catppuccin.librewolf.profiles.default = {
-    enable = true;
-    force = true;
-  };
+  # Catppuccin Mocha (mauve) theme for the profile. The extension-override
+  # acknowledgement is handled by extensions.force above.
+  catppuccin.librewolf.profiles.default.enable = true;
 }
