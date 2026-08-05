@@ -38,6 +38,16 @@ in {
     enableGitIntegration = true;
   };
 
+  # Qt theming via Kvantum so catppuccin/nix themes Qt5 + Qt6 apps
+  # (qalculate-qt, protonup-qt, OBS, ...). qtct installs qt5ct + qt6ct; the
+  # kvantum style pulls both the Qt5 and Qt6 style plugins. catppuccin.kvantum
+  # then applies the Catppuccin Kvantum theme.
+  qt = {
+    enable = true;
+    platformTheme.name = "qtct";
+    style.name = "kvantum";
+  };
+
   # Expire old home-manager generations weekly so they don't pin
   # years of closures in the nix store as GC roots.
   services.home-manager.autoExpire = {
@@ -291,7 +301,8 @@ in {
     pkgs.mononoki
     # pkgs.font-awesome_4
     # pkgs.font-awesome_5
-    pkgs.papirus-icon-theme
+    # papirus-icon-theme is provided (recoloured) by catppuccin.gtk via
+    # catppuccin-papirus-folders; installing both collides in the profile.
     pkgs.corefonts
     # pkgs.vistafonts
     pkgs.fira-code
