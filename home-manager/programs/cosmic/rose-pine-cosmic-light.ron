@@ -290,5 +290,9 @@
     is_frosted: false,
     gaps: (0, 10),
     active_hint: 2,
-    window_hint: None,
+    window_hint: Some((
+        red: 0.92156863,
+        green: 0.43529412,
+        blue: 0.57254902,
+    )),
 )
