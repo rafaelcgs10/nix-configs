@@ -71,6 +71,49 @@
     fi
   '';
 
+  # Affinity/Wine HiDPI: COSMIC (descale_xwayland=fractional) hands XWayland
+  # clients unscaled pixels and expects them to scale themselves, but Wine only
+  # does that when its registry DPI (LogPixels) is set — default 96 leaves the
+  # UI tiny on a 4K/150% display. Derive the DPI from the largest enabled
+  # output scale in cosmic-comp's state (150% -> 144) and patch it into the
+  # writable Affinity prefix. Runs only when the prefix already exists (first
+  # launch creates it) and Affinity is closed (wineserver rewrites user.reg on
+  # exit, undoing external edits). Re-applies on every switch, so a changed
+  # COSMIC scale is picked up at the next rebuild.
+  home.activation.setAffinityWineDpi = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    outputs_ron="$HOME/.local/state/cosmic-comp/outputs.ron"
+    user_reg="$HOME/.local/share/affinity-v3/user.reg"
+
+    if [ -f "$outputs_ron" ] && [ -f "$user_reg" ] \
+        && ! ${pkgs.procps}/bin/pgrep -f 'affinity-nix-prefi[x]' >/dev/null; then
+      dpi=$(${pkgs.gawk}/bin/gawk '
+        match($0, /scale: ([0-9.]+)/, m) { if (m[1] + 0 > s) s = m[1] + 0 }
+        END { if (s == 0) s = 1; printf "%d", 96 * s + 0.5 }' "$outputs_ron")
+      hex=$(printf 'dword:%08x' "$dpi")
+
+      if ! ${pkgs.gnugrep}/bin/grep -q "\"LogPixels\"=$hex" "$user_reg"; then
+        # Set LogPixels in both sections wine consults: the canonical
+        # Control Panel\Desktop (what winecfg writes) and the legacy
+        # Software\Wine\Fonts one the base prefix ships with 96 in.
+        ${pkgs.gawk}/bin/gawk -v h1='[Control Panel\\\\Desktop]' \
+          -v h2='[Software\\\\Wine\\\\Fonts]' \
+          -v kv="\"LogPixels\"=$hex" '
+          /^\[/ {
+            if (insec && !seen) print kv
+            insec = (index($0, h1) == 1 || index($0, h2) == 1)
+            seen = 0
+            print; next
+          }
+          insec && /^"LogPixels"=/ { print kv; seen = 1; next }
+          { print }
+          END { if (insec && !seen) print kv }
+        ' "$user_reg" > "$user_reg.hm-tmp"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/mv "$user_reg.hm-tmp" "$user_reg"
+        ${pkgs.coreutils}/bin/rm -f "$user_reg.hm-tmp"
+      fi
+    fi
+  '';
+
   # Expose the raw-crop fields in the "raw black/white point" module. The
   # sensor holds more pixels than the official camera output (EOS RP:
   # 6264x4180 active area vs 6240x4160 JPEG); with this set the crop is
