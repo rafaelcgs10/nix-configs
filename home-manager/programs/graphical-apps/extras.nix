@@ -130,20 +130,4 @@ in
     Install.WantedBy = [ "timers.target" ];
   };
 
-  # Disable darktable's startup XMP crawler — the timer above does this work off
-  # the interactive path now, so we don't pay the full-library sidecar scan every
-  # launch. Only edit darktablerc while darktable is closed: it rewrites the file
-  # from memory on exit, which would otherwise undo this.
-  home.activation.disableDarktableStartupCrawler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
-    if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
-      if ${pkgs.gnugrep}/bin/grep -q '^run_crawler_on_start=' "$config_file"; then
-        ${pkgs.gnused}/bin/sed -i \
-          's|^run_crawler_on_start=.*|run_crawler_on_start=FALSE|' \
-          "$config_file"
-      else
-        printf '\nrun_crawler_on_start=FALSE\n' >> "$config_file"
-      fi
-    fi
-  '';
 }
