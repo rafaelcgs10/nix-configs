@@ -86,6 +86,35 @@ in
     fi
   '';
 
+  # ── Why Affinity's scratch folder has to live outside your home ──────────
+  # Affinity is installed read-only in the Nix store. So that it can still
+  # save things (its Wine prefix, settings, activation), affinity-nix stacks
+  # a *writable* folder on top of that read-only install using an "overlay"
+  # mount. By default that writable folder goes in your home:
+  #   ~/.local/share/affinity-v3   (the changes)  = overlay "upperdir"
+  #   ~/.local/state/affinity-v3   (its scratch)  = overlay "workdir"
+  #
+  # The catch: your home is encrypted with ecryptfs, and an overlay mount is
+  # not allowed to keep its writable layer on ecryptfs (that filesystem is
+  # missing features overlayfs needs — trusted xattrs, whiteouts). The kernel
+  # rejects the mount and Affinity dies at launch with a misleading
+  # "Cannot allocate memory (os error 12)". (A machine with an unencrypted
+  # home has no problem — that's why it "just works" elsewhere.)
+  #
+  # Fix: move ONLY those two folders onto the normal, unencrypted btrfs disk
+  # (/var/lib/affinity-nix, created by the tmpfiles rule in
+  # nixos/configuration.nix) and leave a symlink where Affinity looks for
+  # them. What moves out is just a throwaway scratch layer that rebuilds in
+  # seconds — your Affinity *preferences* ($XDG_DATA_HOME/affinity/) and your
+  # saved .afdesign documents still live in your encrypted home. It is the
+  # *filesystem*, not the path, that has to be non-ecryptfs; the symlinks
+  # themselves still sit in ~. If you ever disable home encryption, delete
+  # these two lines (and the tmpfiles rule) to return to the default.
+  home.file.".local/share/affinity-v3".source =
+    config.lib.file.mkOutOfStoreSymlink "/var/lib/affinity-nix/data";
+  home.file.".local/state/affinity-v3".source =
+    config.lib.file.mkOutOfStoreSymlink "/var/lib/affinity-nix/state";
+
   # Affinity/Wine HiDPI: COSMIC (descale_xwayland=fractional) hands XWayland
   # clients unscaled pixels and expects them to scale themselves, but Wine only
   # does that when its registry DPI (LogPixels) is set — default 96 leaves the

@@ -252,6 +252,20 @@ in {
   # wine closure stays substitutable from cache.forall.systems.
   nixpkgs.overlays = [ inputs.affinity-nix.overlays.default ];
 
+  # A permanent home, OFF the encrypted home directory, for Affinity's
+  # writable overlay layer. Affinity needs an overlayfs mount to save its
+  # state, but overlayfs can't keep that writable layer on our ecryptfs home
+  # (the mount fails and Affinity won't start). So we park it here on the
+  # plain btrfs disk and symlink ~/.local/{share,state}/affinity-v3 to it
+  # from home-manager (full explanation in
+  # home-manager/programs/graphical-apps/extras.nix). Owned by the user so
+  # the launcher can write it; the trailing "-" age means never auto-cleaned.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/affinity-nix       0700 rafael users - -"
+    "d /var/lib/affinity-nix/data  0700 rafael users - -"
+    "d /var/lib/affinity-nix/state 0700 rafael users - -"
+  ];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
