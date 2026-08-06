@@ -12,6 +12,12 @@
 ;;; Appearance
 (setq doom-font (font-spec :family "Hack" :height 120))
 
+;; Keep font caches resident across GC. With doom-modeline's nerd-icons on a 4K
+;; display (plus Isabelle/LaTeX unicode), compacting the font cache on every GC
+;; forces redisplay to re-open fonts, causing scroll/redraw stutter. The only
+;; cost is a larger memory footprint. See the variable's docstring.
+(setq inhibit-compacting-font-caches t)
+
 ;; doom-themes-based Rosé Pine ships separate dark/light theme *symbols*
 ;; (doom-rose-pine = dark, doom-rose-pine-dawn = light); toggle by swapping.
 ;; load-theme searches `custom-theme-load-path', and an external doom-theme

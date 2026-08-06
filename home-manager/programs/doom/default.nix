@@ -17,5 +17,8 @@
   #     };
   #   };
   # };
-  home.packages = [ pkgsEmacs.emacs-pgtk pkgsEmacs.hack-font ];
+  # wordnet provides the `wn' binary + offline WordNet database used by Doom's
+  # (lookup +dictionary +offline) backends: wordnut for definitions and
+  # synosaurus-wordnet for synonyms.
+  home.packages = [ pkgsEmacs.emacs-pgtk pkgsEmacs.hack-font pkgs.wordnet ];
 }

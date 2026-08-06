@@ -91,7 +91,7 @@
        ;;ein               ; tame Jupyter notebooks with emacs
        (eval +overlay)     ; run code, run (also, repls)
        ;;gist              ; interacting with github gists
-       lookup              ; navigate your code and its documentation
+       (lookup +dictionary +offline) ; navigate code + offline dictionary/thesaurus
        (lsp +eglot)
        ;;macos             ; MacOS-specific commands
        magit             ; a git porcelain for Emacs
