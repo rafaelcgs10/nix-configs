@@ -5,6 +5,10 @@
     pkgs.gimp3-with-plugins
     pkgs.inkscape
     pkgs.krita
+    # Affinity v3 (unified Photo/Designer/Publisher app) via Wine, from the
+    # affinity-nix overlay. v2 apps also exist as affinity-photo/-designer/
+    # -publisher if ever needed.
+    pkgs.affinity-v3
     pkgs.lutris
     pkgs.gamescope
     pkgs.mangohud

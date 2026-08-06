@@ -22,6 +22,13 @@ in {
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = "nix-command flakes";
 
+  # Binary cache for affinity-nix (Affinity on Wine) — avoids building a
+  # patched wine locally.
+  nix.settings.extra-substituters = [ "https://cache.forall.systems" ];
+  nix.settings.extra-trusted-public-keys = [
+    "cache.forall.systems:5PmD7QO4MSF8YgyRZtkSGXRDo96H3bybIf2SsQh8ScI="
+  ];
+
   # Auto-GC: keeps the store from growing unbounded
   nix.gc = {
     automatic = true;
@@ -237,6 +244,14 @@ in {
   # ];
 
   nixpkgs.config.allowUnfree = true;
+
+  # Affinity (Wine) packages. The overlay is the supported install path: the
+  # flake's own `packages` output refuses to eval (unfree) since it uses the
+  # flake's nixpkgs, while the overlay evaluates against ours (allowUnfree).
+  # Wine itself still comes from affinity-nix's pinned nixpkgs, so the big
+  # wine closure stays substitutable from cache.forall.systems.
+  nixpkgs.overlays = [ inputs.affinity-nix.overlays.default ];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
