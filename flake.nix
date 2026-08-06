@@ -56,6 +56,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+
+    # Affinity (Photo/Designer/Publisher) on Wine. Intentionally NOT following
+    # our nixpkgs: the prebuilt closures on cache.forall.systems are built
+    # against the flake's own pin, and overriding it would force a local
+    # wine build.
+    affinity-nix.url = "github:mrshmllow/affinity-nix";
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
@@ -74,6 +80,9 @@
       mkPkgs = system: import nixpkgs {
         inherit system;
         config = nixpkgsConfig;
+        # Affinity via overlay (see note in nixos/configuration.nix) — needed
+        # here too so the standalone homeConfigurations see pkgs.affinity-v3.
+        overlays = [ inputs.affinity-nix.overlays.default ];
       };
 
       mkHomeArgs = system:

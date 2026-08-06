@@ -4,6 +4,7 @@
 ;; (package! lsp-isar-parse-args)
 (package! session-async)
 (package! academic-phrases)
+(package! writegood-mode)
 ;; (package! flycheck-languagetool)
 ;; doom-themes-based Rosé Pine (proper syntax highlighting/contrast), with dark
 ;; (doom-rose-pine) and light (doom-rose-pine-dawn) variants.
