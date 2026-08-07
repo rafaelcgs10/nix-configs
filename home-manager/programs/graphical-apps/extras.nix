@@ -1,5 +1,19 @@
 { pkgs, lib, config, pkgsUnstable, pkgsLmstudio, spektrafilmPackages, ...}:
 
+let
+  # `darktable-spektrafilm-ai` is a symlinkJoin wrapper (it runtime-links the
+  # spektrafilm data pack and AI models) around the real darktable build, which
+  # it exposes through passthru as `.basePackage`. We patch that base to add a
+  # headless `--sync-xmp` mode that reconciles updated XMP sidecars into the
+  # library database without launching the GUI (darktable-headless-xmp-sync.patch).
+  # The data pack and AI models are already linked declaratively via home.file
+  # below, so the runtime wrapper is redundant here and we use the patched base
+  # package directly — one build, used for both the GUI and the sync timer.
+  darktable-xmp-sync =
+    spektrafilmPackages.darktable-spektrafilm-ai.basePackage.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ./darktable-headless-xmp-sync.patch ];
+    });
+in
 {
   home.packages = [
     pkgs.gimp3-with-plugins
@@ -25,9 +39,10 @@
     pkgsUnstable.freetube
 
     # darktable built from the spektrafilm PR branch (native C spektrafilm
-    # module). Replaces the stock pkgsDarktable.darktable; the runtime data pack
-    # and AI models are linked in via home.file below.
-    spektrafilmPackages.darktable-spektrafilm-ai
+    # module), patched to add the headless `--sync-xmp` mode driven by the
+    # systemd timer below. Replaces the stock pkgsDarktable.darktable; the
+    # runtime data pack and AI models are linked in via home.file below.
+    darktable-xmp-sync
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
@@ -70,6 +85,35 @@
       printf '\nplugins/darkroom/segments/def_path=%s\n' "$mask_dir" >> "$config_file"
     fi
   '';
+
+  # ── Why Affinity's scratch folder has to live outside your home ──────────
+  # Affinity is installed read-only in the Nix store. So that it can still
+  # save things (its Wine prefix, settings, activation), affinity-nix stacks
+  # a *writable* folder on top of that read-only install using an "overlay"
+  # mount. By default that writable folder goes in your home:
+  #   ~/.local/share/affinity-v3   (the changes)  = overlay "upperdir"
+  #   ~/.local/state/affinity-v3   (its scratch)  = overlay "workdir"
+  #
+  # The catch: your home is encrypted with ecryptfs, and an overlay mount is
+  # not allowed to keep its writable layer on ecryptfs (that filesystem is
+  # missing features overlayfs needs — trusted xattrs, whiteouts). The kernel
+  # rejects the mount and Affinity dies at launch with a misleading
+  # "Cannot allocate memory (os error 12)". (A machine with an unencrypted
+  # home has no problem — that's why it "just works" elsewhere.)
+  #
+  # Fix: move ONLY those two folders onto the normal, unencrypted btrfs disk
+  # (/var/lib/affinity-nix, created by the tmpfiles rule in
+  # nixos/configuration.nix) and leave a symlink where Affinity looks for
+  # them. What moves out is just a throwaway scratch layer that rebuilds in
+  # seconds — your Affinity *preferences* ($XDG_DATA_HOME/affinity/) and your
+  # saved .afdesign documents still live in your encrypted home. It is the
+  # *filesystem*, not the path, that has to be non-ecryptfs; the symlinks
+  # themselves still sit in ~. If you ever disable home encryption, delete
+  # these two lines (and the tmpfiles rule) to return to the default.
+  home.file.".local/share/affinity-v3".source =
+    config.lib.file.mkOutOfStoreSymlink "/var/lib/affinity-nix/data";
+  home.file.".local/state/affinity-v3".source =
+    config.lib.file.mkOutOfStoreSymlink "/var/lib/affinity-nix/state";
 
   # Affinity/Wine HiDPI: COSMIC (descale_xwayland=fractional) hands XWayland
   # clients unscaled pixels and expects them to scale themselves, but Wine only
@@ -135,4 +179,31 @@
       fi
     fi
   '';
+
+  # Every 4 hours, reconcile updated XMP sidecars (edited on another machine and
+  # synced in) into darktable's library database, headless — replacing the slow
+  # interactive startup crawler (disabled just below). If darktable is open the
+  # library lock is held: `darktable --sync-xmp` then aborts cleanly with exit 75
+  # (EX_TEMPFAIL) and no GUI, which we mark as success so the timer isn't flagged
+  # as failed. The next tick catches everything, so a skipped run is harmless.
+  systemd.user.services.darktable-xmp-sync = {
+    Unit.Description =
+      "Reconcile updated darktable XMP sidecars into the library database";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${darktable-xmp-sync}/bin/darktable --sync-xmp";
+      # 0 = synced; 75 = library locked (darktable open) — both are fine.
+      SuccessExitStatus = "0 75";
+    };
+  };
+
+  systemd.user.timers.darktable-xmp-sync = {
+    Unit.Description = "Periodic darktable XMP -> library DB sync (every 4h)";
+    Timer = {
+      OnBootSec = "15min";
+      OnUnitActiveSec = "4h";
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
 }
