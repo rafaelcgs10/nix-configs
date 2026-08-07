@@ -53,10 +53,15 @@ in
     pkgs.deluge
   ];
 
-  # Film & print data pack for the darktable spektrafilm module. The module
-  # reads pack.json + spectra_lut.f32 + profiles/ from this exact path
-  # (dt_loc_get_user_config_dir()/spektrafilm), so link the pinned pack in.
-  home.file.".config/darktable/spektrafilm".source =
+  # Film & print data pack for the darktable spektrafilm module. Newer builds
+  # can download this pack from within the UI into
+  # ~/.config/darktable/spektrafilm/packs/<lut_hash>/; we pre-install the pinned
+  # pack at that same hashed path so it works offline with no download, while
+  # leaving spektrafilm/ itself writable so the in-UI downloader still works for
+  # other tables. The resolver (src/common/spektra_fetch.c) picks this up for
+  # both fresh edits and edits recorded with this LUT hash. The hash comes from
+  # the pack derivation so it tracks pack bumps automatically.
+  home.file.".config/darktable/spektrafilm/packs/${spektrafilmPackages.spektrafilm-data-pack.lutHash}".source =
     spektrafilmPackages.spektrafilm-data-pack;
 
   # Offline AI models for darktable's AI modules (denoise / upscale / object
