@@ -29,11 +29,40 @@ in {
     "cache.forall.systems:5PmD7QO4MSF8YgyRZtkSGXRDo96H3bybIf2SsQh8ScI="
   ];
 
+  system.autoUpgrade = {
+    enable = true;
+    flake = "/home/rafael/nix-configs/";
+    flags = [
+      "--print-build-logs"
+      "--commit-lock-file"  # If you want to automatically commit the updated flake.lock
+    ];
+    dates = "12:00";
+    randomizedDelaySec = "45min";
+  };
+
+  # nixos-upgrade.service runs as root, but the flake above is rafael's
+  # checkout, so git's ownership check (CVE-2022-24765) rejects every
+  # operation in it: "repository is not owned by current user". Instead of
+  # the wiki's imperative `git config --global --add safe.directory` (a file
+  # in root's home), declare it in the system-wide /etc/gitconfig, which
+  # every user's git — root's included — reads. The identity is required for
+  # --commit-lock-file: root has none, and `git commit` refuses without one.
+  # For rafael both settings are overridden by home-manager's per-user config.
+  programs.git = {
+    enable = true;
+    config = {
+      safe.directory = "/home/rafael/nix-configs"; # exact match, no trailing slash
+      user.name = "nixos-upgrade";
+      user.email = "nixos-upgrade@localhost";
+    };
+  };
+
+
   # Auto-GC: keeps the store from growing unbounded
   nix.gc = {
     automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
+    dates = "daily";
+    options = "--delete-older-than 5d";
   };
   # Safety valve: GC mid-build if free space drops below 5 GiB
   nix.settings.min-free = 5 * 1024 * 1024 * 1024;
