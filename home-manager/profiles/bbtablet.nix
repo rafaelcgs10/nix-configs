@@ -10,6 +10,7 @@
     ../programs/nvim/default.nix
     ../programs/graphical-apps/everyday.nix
     ../programs/non-arm/default.nix
+    ../programs/nix-configs-autoupdate.nix
   ];
 
   home.file.".config/autostart/synology-drive.desktop" = {

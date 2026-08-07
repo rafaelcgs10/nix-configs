@@ -29,32 +29,118 @@ in {
     "cache.forall.systems:5PmD7QO4MSF8YgyRZtkSGXRDo96H3bybIf2SsQh8ScI="
   ];
 
+  # Rebuild half of the auto-upgrade split: the flake.lock update, commit and
+  # push happen an hour earlier as rafael (nix-configs-update user timer in
+  # home-manager/programs/nix-configs-autoupdate.nix); this root service only
+  # rebuilds the committed state. --no-write-lock-file guarantees root never
+  # writes into the checkout, which would leave root-owned files behind and
+  # break rafael's own git with permission errors.
   system.autoUpgrade = {
     enable = true;
     flake = "/home/rafael/nix-configs/";
     flags = [
       "--print-build-logs"
-      "--commit-lock-file"  # If you want to automatically commit the updated flake.lock
+      "--no-write-lock-file"
     ];
     dates = "12:00";
     randomizedDelaySec = "45min";
   };
 
+  # Desktop notifications (COSMIC) around the upgrade: one when it starts and
+  # one on finish with the package version bumps between the old and new
+  # generation (nvd diff, capped at 10 lines in the popup; the full diff lands
+  # in this service's journal). The service runs as root, so notify-send is
+  # bridged into rafael's session bus with runuser. Every hook is best-effort
+  # ("-" prefix, || true): an upgrade must never fail just because nobody was
+  # logged in to see the popup.
+  #
+  # The failure branch also drives the revert strategy: if the run failed
+  # WITHOUT switching generations, the new lock is unbuildable and rafael's
+  # nix-configs-revert user service rolls the auto-update commit back (see
+  # home-manager/programs/nix-configs-autoupdate.nix). If it failed after
+  # switching (like a network mount racing the activation), the lock is fine
+  # and reverting would be a false positive — notify only.
+  systemd.services.nixos-upgrade.serviceConfig =
+    let
+      notify = pkgs.writeShellScript "nixos-upgrade-notify" ''
+        uid=$(${pkgs.coreutils}/bin/id -u rafael)
+        exec ${pkgs.util-linux}/bin/runuser -u rafael -- \
+          ${pkgs.coreutils}/bin/env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" \
+          ${pkgs.libnotify}/bin/notify-send -a "NixOS upgrade" "$@"
+      '';
+    in
+    {
+      ExecStartPre = [
+        ("-" + pkgs.writeShellScript "nixos-upgrade-notify-start" ''
+          # Remember the generation we started from for the finish diff.
+          ${pkgs.coreutils}/bin/readlink -f /run/current-system \
+            > /run/nixos-upgrade.prev-system || true
+          ${notify} "NixOS upgrade started" "Rebuilding from /home/rafael/nix-configs"
+        '')
+      ];
+      ExecStopPost = [
+        ("-" + pkgs.writeShellScript "nixos-upgrade-notify-done" ''
+          if [ "$SERVICE_RESULT" != success ]; then
+            prev=$(${pkgs.coreutils}/bin/cat /run/nixos-upgrade.prev-system 2>/dev/null || true)
+            cur=$(${pkgs.coreutils}/bin/readlink -f /run/current-system)
+            if [ -n "$prev" ] && [ "$prev" != "$cur" ]; then
+              # The generation switched, so the new lock built and activated —
+              # the failure is a degraded unit (e.g. a network mount racing the
+              # switch), not the lock's fault. Never revert for this.
+              ${notify} -u critical "NixOS upgrade: switched with failing units" \
+                "New generation is active but some units failed — see: systemctl --failed"
+            else
+              # Nothing switched: the new lock does not build/activate. Have
+              # rafael's session revert the auto-update commit (root must not
+              # write into the checkout).
+              ${notify} -u critical "NixOS upgrade failed" \
+                "$SERVICE_RESULT — reverting today's flake.lock update; see: journalctl -u nixos-upgrade"
+              uid=$(${pkgs.coreutils}/bin/id -u rafael)
+              ${pkgs.util-linux}/bin/runuser -u rafael -- \
+                ${pkgs.coreutils}/bin/env "XDG_RUNTIME_DIR=/run/user/$uid" \
+                "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" \
+                ${pkgs.systemd}/bin/systemctl --user start nix-configs-revert.service
+            fi
+            exit 0
+          fi
+
+          prev=$(${pkgs.coreutils}/bin/cat /run/nixos-upgrade.prev-system 2>/dev/null || true)
+          cur=$(${pkgs.coreutils}/bin/readlink -f /run/current-system)
+          if [ -z "$prev" ] || [ "$prev" = "$cur" ]; then
+            ${notify} "NixOS upgrade finished" "Already up to date — no changes."
+            exit 0
+          fi
+
+          # nvd lines look like "[U.]  #12  firefox  128.0 -> 129.0"; strip the
+          # status/index columns for the popup.
+          diff=$(${pkgs.nvd}/bin/nvd diff "$prev" "$cur" || true)
+          printf '%s\n' "$diff"
+          changes=$(printf '%s\n' "$diff" \
+            | ${pkgs.gnugrep}/bin/grep '^\[' \
+            | ${pkgs.gnused}/bin/sed -E 's/^\[[^]]*\][[:space:]]+#[0-9]+[[:space:]]+//' \
+            || true)
+          total=$(printf '%s\n' "$changes" | ${pkgs.gnugrep}/bin/grep -c . || true)
+          total=''${total:-0}
+          body=$(printf '%s\n' "$changes" | ${pkgs.coreutils}/bin/head -n 10)
+          if [ "$total" -gt 10 ]; then
+            body="$body
+    … and $((total - 10)) more (journalctl -u nixos-upgrade)"
+          fi
+          ${notify} "NixOS upgrade finished" "''${body:-New generation activated.}"
+        '')
+      ];
+    };
+
   # nixos-upgrade.service runs as root, but the flake above is rafael's
-  # checkout, so git's ownership check (CVE-2022-24765) rejects every
-  # operation in it: "repository is not owned by current user". Instead of
-  # the wiki's imperative `git config --global --add safe.directory` (a file
-  # in root's home), declare it in the system-wide /etc/gitconfig, which
-  # every user's git — root's included — reads. The identity is required for
-  # --commit-lock-file: root has none, and `git commit` refuses without one.
-  # For rafael both settings are overridden by home-manager's per-user config.
+  # checkout, so git's ownership check (CVE-2022-24765) rejects even reading
+  # it: "repository is not owned by current user". Instead of the wiki's
+  # imperative `git config --global --add safe.directory` (a file in root's
+  # home), declare it in the system-wide /etc/gitconfig, which every user's
+  # git — root's included — reads. rafael's own git is unaffected: the
+  # per-user home-manager config overrides this file.
   programs.git = {
     enable = true;
-    config = {
-      safe.directory = "/home/rafael/nix-configs"; # exact match, no trailing slash
-      user.name = "nixos-upgrade";
-      user.email = "nixos-upgrade@localhost";
-    };
+    config.safe.directory = "/home/rafael/nix-configs"; # exact match, no trailing slash
   };
 
 

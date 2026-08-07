@@ -11,5 +11,6 @@
     ../programs/graphical-apps/default.nix
     ../programs/non-arm/default.nix
     ../programs/wine-apps/default.nix
+    ../programs/nix-configs-autoupdate.nix
   ];
 }
