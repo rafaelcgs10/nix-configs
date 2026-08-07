@@ -126,7 +126,7 @@ in
   # COSMIC scale is picked up at the next rebuild.
   home.activation.setAffinityWineDpi = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     outputs_ron="$HOME/.local/state/cosmic-comp/outputs.ron"
-    user_reg="$HOME/.local/share/affinity-v3/user.reg"
+    user_reg="/var/lib/affinity-nix/data/user.reg"
 
     if [ -f "$outputs_ron" ] && [ -f "$user_reg" ] \
         && ! ${pkgs.procps}/bin/pgrep -f 'affinity-nix-prefi[x]' >/dev/null; then
