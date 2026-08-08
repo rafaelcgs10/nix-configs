@@ -26,6 +26,19 @@
     extraPackages = epkgs: [ epkgs.treesit-grammars.with-all-grammars ];
 
     emacsPackageOverrides = _eself: esuper: {
+      # The canonical Codeberg Git endpoint has returned 504s during evaluation.
+      # Fetch the same commit from its maintained GitHub mirror instead. `commit`
+      # is assigned from Doom's package pin by Unstraightened, so this follows
+      # future Doom updates without duplicating the revision in packages.el.
+      geiser = esuper.geiser.overrideAttrs (old: {
+        src = builtins.fetchTree {
+          type = "github";
+          owner = "emacsmirror";
+          repo = "geiser";
+          rev = old.commit;
+        };
+      });
+
       # Doom works around https://github.com/ProofGeneral/PG/issues/771 by
       # building Proof General without autoloads, then loading proof-site
       # explicitly in its Coq module. See the official Doom workaround at
