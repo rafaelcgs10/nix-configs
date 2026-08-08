@@ -319,11 +319,7 @@ in {
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
     pkgs.emacs-all-the-icons-fonts
-    pkgs.emacsPackages.nerd-icons
-    pkgs.emacsPackages.all-the-icons
-    # pkgs.emacsPackages.treemacs-all-the-icons
-    pkgs.emacsPackages.all-the-icons-nerd-fonts
-    pkgs.emacsPackages.all-the-icons-completion
+    # Doom's Emacs packages are provided by nix-doom-emacs-unstraightened.
     # Nerd Font (Hack) is installed system-wide via fonts.packages in
     # nixos/configuration.nix and set as the default monospace there.
 

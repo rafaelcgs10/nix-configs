@@ -1,40 +1,68 @@
-{ config, lib, pkgs, pkgsEmacs, ... }:
+{ pkgs, ... }:
 
-let
-  doomDir = "${config.home.homeDirectory}/nix-configs/home-manager/programs/doom/doom.d";
-  doomLocalDir = "${config.home.homeDirectory}/.doom-local";
-in
 {
-  home = {
-    sessionPath = [ "${config.xdg.configHome}/emacs/bin" ];
-    sessionVariables = {
-      DOOMDIR = doomDir;
-      DOOMLOCALDIR = doomLocalDir;
-      OZONE_PLATFORM = "wayland";
+  # Doom Emacs via nix-doom-emacs-unstraightened. The config in ./doom.d and
+  # its entire package set are built into the Nix store, so there is no
+  # ~/.config/emacs clone, ~/.doom-local, or `doom sync`. Unstraightened stores
+  # mutable state under XDG dirs (~/.cache/doom, ~/.local/share/doom, and
+  # ~/.local/state/doom), not DOOMLOCALDIR. Its default `nix` profile puts some
+  # state in `nix` subdirectories, so old standalone Doom state is not migrated
+  # automatically.
+  #
+  # DOOMDIR is read-only in the store. This config redirects custom-file to the
+  # writable Doom cache; persistent declarative changes belong in config.el.
+  programs.doom-emacs = {
+    enable = true;
+    # Flakes only copy Git-tracked files to the store, so every file below this
+    # directory must be added to Git before rebuilding.
+    doomDir = ./doom.d;
+    # pgtk build for native Wayland rendering, matching the rest of the system.
+    emacs = pkgs.emacs-pgtk;
+    # Nix 2.19+ can fail to fetch pinned Git revisions through fetchGit. Use the
+    # fetchTree path recommended by Unstraightened for modern Nix versions.
+    experimentalFetchTree = true;
+    # Tree-sitter grammars are not pulled in automatically; ship them all so any
+    # (lang +tree-sitter) module works out of the box.
+    extraPackages = epkgs: [ epkgs.treesit-grammars.with-all-grammars ];
+
+    emacsPackageOverrides = _eself: esuper: {
+      # Doom works around https://github.com/ProofGeneral/PG/issues/771 by
+      # building Proof General without autoloads, then loading proof-site
+      # explicitly in its Coq module. See the official Doom workaround at
+      # https://github.com/doomemacs/core/issues/8169.
+      # Unstraightened ignores Doom's `:build (:not autoloads)` recipe directive,
+      # so mirror that official workaround by removing the generated autoload
+      # file after installation.
+      proof-general = esuper.proof-general.overrideAttrs (old: {
+        postInstall = (old.postInstall or "") + ''
+          rm "$out"/share/emacs/site-lisp/elpa/proof-general-*/proof-general-autoloads.el
+        '';
+      });
     };
   };
 
-  # Run Emacs as a daemon so Doom's startup cost (config + packages) is paid
-  # once at login, in the background; frames then open near-instantly via
-  # emacsclient. Launch with `emacsclient -c` or the "Emacs (Client)" desktop
-  # entry. After `doom sync`, restart with `systemctl --user restart emacs`.
+  # Run Emacs as a daemon so Doom's startup cost is paid once at login; frames
+  # then open instantly via `emacsclient -c` or the "Emacs (Client)" desktop
+  # entry. The unstraightened module already points services.emacs.package at
+  # the Doom emacs (provideEmacs = true by default), so we only enable the
+  # service here. Home Manager deliberately sets X-RestartIfChanged=false for
+  # this unit to avoid killing live editor sessions, so restart it manually
+  # after a rebuild that changes Doom or its config.
   services.emacs = {
     enable = true;
-    package = pkgsEmacs.emacs-pgtk;
     client.enable = true; # adds the "Emacs (Client)" desktop entry
     startWithUserSession = "graphical";
   };
 
-  # The daemon is a systemd user service, which never sources
-  # home.sessionVariables (login-shell only) — without these it would look for
-  # the Doom config in the default locations and start plain Emacs.
-  systemd.user.sessionVariables = {
-    DOOMDIR = doomDir;
-    DOOMLOCALDIR = doomLocalDir;
+  # Keep spelling data in Home Manager's XDG data tree instead of referring to
+  # files in the mutable nix-configs checkout from config.el.
+  xdg.dataFile = {
+    "doom/american-english-exhaustive.txt".source = ./american-english-exhaustive.txt;
+    "doom/ispell.dict".source = ./ispell.dict;
   };
 
-  # wordnet provides the `wn' binary + offline WordNet database used by Doom's
+  # wordnet provides the `wn` binary + offline WordNet database used by Doom's
   # (lookup +dictionary +offline) backends: wordnut for definitions and
   # synosaurus-wordnet for synonyms.
-  home.packages = [ pkgsEmacs.emacs-pgtk pkgsEmacs.hack-font pkgs.wordnet ];
+  home.packages = [ pkgs.wordnet ];
 }

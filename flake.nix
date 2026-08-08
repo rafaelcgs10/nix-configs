@@ -25,11 +25,6 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    emacs-overlay = {
-      url = "github:nix-community/emacs-overlay/9714d18e3b55f61531a42795779a941365cb2588";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/ceeaa4a47d5281dd65c46c57b57fd1fdd1b20cc5";
 
     # CLI for COSMIC toplevel management (scratchpad chat toggles).
@@ -62,6 +57,16 @@
     # against the flake's own pin, and overriding it would force a local
     # wine build.
     affinity-nix.url = "github:mrshmllow/affinity-nix";
+
+    # Doom Emacs built declaratively (no straight.el, no `doom sync`): the
+    # config in home-manager/programs/doom/doom.d and its whole package set are
+    # bundled into the resulting Emacs package. Only nixpkgs follows ours so
+    # Emacs uses the system libraries. Keep Unstraightened's own emacs-overlay
+    # pin: it supplies the package recipes tested against its pinned Doom inputs.
+    nix-doom-emacs-unstraightened = {
+      url = "github:marienz/nix-doom-emacs-unstraightened";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
@@ -99,12 +104,6 @@
           pkgsDarktable = importWithConfig inputs.nixpkgs-darktable;
           pkgsIsabelle = importWithConfig inputs.nixpkgs-isabelle;
           pkgsLmstudio = importWithConfig inputs.nixpkgs-lmstudio;
-          pkgsEmacs = import nixpkgs {
-            inherit system;
-            config = nixpkgsConfig;
-            overlays = [ inputs.emacs-overlay.overlays.default ];
-          };
-
           plasmaManager = inputs.plasma-manager;
           spektrafilmPackages = inputs.spektrafilm-art-darktable.packages.${system};
         };
@@ -119,6 +118,7 @@
         homeProfiles.${profile}
         inputs.stylix.homeModules.stylix
         inputs.cosmic-manager.homeManagerModules.cosmic-manager
+        inputs.nix-doom-emacs-unstraightened.homeModule
       ];
 
       mkHome =

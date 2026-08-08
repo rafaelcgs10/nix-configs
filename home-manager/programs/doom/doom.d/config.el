@@ -1,7 +1,6 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 ;;
-;; Personal Doom configuration. `doom sync' is only required after editing
-;; init.el or packages.el, not this file.
+;; Personal Doom configuration. Home Manager rebuilds Doom and its packages.
 
 
 ;;; Identity
@@ -10,7 +9,10 @@
 
 
 ;;; Appearance
-(setq doom-font (font-spec :family "Hack" :height 120))
+;; Match the Hack Nerd Font installed by Stylix/Home Manager. A missing font
+;; errors in Doom's frame hook before theme and late keybindings are applied,
+;; which also makes daemon-created emacsclient frames immediately close.
+(setq doom-font (font-spec :family "Hack Nerd Font Mono" :height 120))
 
 ;; Keep font caches resident across GC. With doom-modeline's nerd-icons on a 4K
 ;; display (plus Isabelle/LaTeX unicode), compacting the font cache on every GC
@@ -274,10 +276,11 @@ With prefix argument (`C-u'), also kill the special buffers."
 
 ;;; Writing & spell-checking
 (setq ispell-alternate-dictionary
-      (file-truename
-       "/home/rafael/nix-configs/home-manager/programs/doom/american-english-exhaustive.txt")
+      (expand-file-name "doom/american-english-exhaustive.txt"
+                        (or (getenv "XDG_DATA_HOME") "~/.local/share"))
       ispell-personal-dictionary
-      "/home/rafael/nix-configs/home-manager/programs/doom/ispell.dict")
+      (expand-file-name "doom/ispell.dict"
+                        (or (getenv "XDG_DATA_HOME") "~/.local/share")))
 
 ;; writegood-mode highlights weasel words, passive voice and duplicated words
 ;; in prose buffers.
