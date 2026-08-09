@@ -211,6 +211,7 @@ in {
     pkgs.zip
     pkgs.zsh
     pkgs.dig
+    pkgs.fastfetch
     pkgs.lazydocker
     pkgs.libgccjit
     pkgs.owofetch
