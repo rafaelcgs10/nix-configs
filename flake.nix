@@ -141,6 +141,52 @@
         };
       };
 
+      cosmicUnstableModule = { ... }: {
+        # Keep the stable NixOS module API, but replace its hard-coded COSMIC
+        # packages as one suite. Importing the unstable module would reference
+        # NixOS options that do not exist on the stable release.
+        nixpkgs.overlays = [
+          (_final: prev:
+            let
+              unstable = import inputs.nixpkgs-unstable {
+                inherit (prev.stdenv.hostPlatform) system;
+                config = nixpkgsConfig;
+              };
+              cosmicPackages = [
+                "cosmic-applets"
+                "cosmic-bg"
+                "cosmic-comp"
+                "cosmic-edit"
+                "cosmic-files"
+                "cosmic-greeter"
+                "cosmic-icons"
+                "cosmic-idle"
+                "cosmic-initial-setup"
+                "cosmic-launcher"
+                "cosmic-notifications"
+                "cosmic-osd"
+                "cosmic-panel"
+                "cosmic-player"
+                "cosmic-randr"
+                "cosmic-reader"
+                "cosmic-screenshot"
+                "cosmic-session"
+                "cosmic-settings"
+                "cosmic-settings-daemon"
+                "cosmic-store"
+                "cosmic-term"
+                "cosmic-wallpapers"
+                "cosmic-workspaces-epoch"
+                "xdg-desktop-portal-cosmic"
+              ];
+            in
+            prev.lib.genAttrs cosmicPackages (name: unstable.${name}) // {
+              # The stable module still uses the old attribute name.
+              cosmic-applibrary = unstable.cosmic-app-library;
+            })
+        ];
+      };
+
       mkHost =
         { system ? "x86_64-linux"
         , common ? true
@@ -163,6 +209,7 @@
         bbstation = mkHost {
           homeProfile = "default";
           modules = [
+            cosmicUnstableModule
             ./nixos/bbstation/boot-loader.nix
             ./nixos/bbstation/hardware-configuration.nix
             ./nixos/io-performance.nix
@@ -180,6 +227,7 @@
         thinkpad-e14 = mkHost {
           homeProfile = "default";
           modules = [
+            cosmicUnstableModule
             ./nixos/thinkpad-e14/boot-loader.nix
             ./nixos/thinkpad-e14/hardware-configuration.nix
             ./nixos/io-performance.nix
