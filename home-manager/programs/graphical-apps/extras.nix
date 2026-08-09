@@ -17,6 +17,7 @@ in
 {
   home.packages = [
     pkgs.gimp3-with-plugins
+    pkgs.scribus
     pkgs.inkscape
     pkgs.krita
     # Affinity v3 (unified Photo/Designer/Publisher app) via Wine, from the
