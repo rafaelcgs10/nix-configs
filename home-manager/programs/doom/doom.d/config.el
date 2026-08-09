@@ -14,6 +14,14 @@
 ;; which also makes daemon-created emacsclient frames immediately close.
 (setq doom-font (font-spec :family "Hack Nerd Font Mono" :height 120))
 
+;; Hide the native compositor/GTK title bar on Emacs frames only. The default
+;; list covers daemon-created `emacsclient -c' frames; the initial list covers a
+;; direct GUI launch.
+(add-to-list 'default-frame-alist '(undecorated . t))
+(add-to-list 'initial-frame-alist '(undecorated . t))
+(when (display-graphic-p)
+  (modify-frame-parameters nil '((undecorated . t))))
+
 ;; Keep font caches resident across GC. With doom-modeline's nerd-icons on a 4K
 ;; display (plus Isabelle/LaTeX unicode), compacting the font cache on every GC
 ;; forces redisplay to re-open fonts, causing scroll/redraw stutter. The only
