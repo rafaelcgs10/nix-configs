@@ -141,6 +141,17 @@ in
   home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cos-cli ]
     ++ map (chat: chat.toggle) chats;
 
+  xdg.configFile."autostart/synology-drive.desktop".text = ''
+    [Desktop Entry]
+    Name=Synology Drive Client
+    Comment=Synology Drive Client
+    Exec=synology-drive autostart
+    Icon=synology-drive
+    Terminal=false
+    Type=Application
+    Categories=Network;FileTransfer;
+  '';
+
   # cliphist watches the clipboard through the Wayland data-control protocol,
   # which cosmic-comp only exposes when COSMIC_DATA_CONTROL_ENABLED=1 (set in
   # the host hardware-configuration.nix). CopyQ cannot fill this role on
