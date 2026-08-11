@@ -108,6 +108,24 @@ in
       light = rosePineCosmicLight;  # Rosé Pine Dawn (day)
     };
 
+    # UI fonts (com.system76.CosmicTk). Inter is designed for screens (the
+    # closest FOSS analog to Apple's SF) and is installed system-wide by
+    # nixos/font-rendering.nix; pin it explicitly rather than relying on
+    # COSMIC's compiled-in default. Monospace matches the terminal font so
+    # cosmic-edit/-term agree.
+    appearance.toolkit = let
+      normal = { __type = "enum"; variant = "Normal"; };
+      font = family: {
+        inherit family;
+        stretch = normal;
+        style = normal;
+        weight = normal;
+      };
+    in {
+      interface_font = font "Inter";
+      monospace_font = font "Hack Nerd Font Mono";
+    };
+
     # Enable COSMIC's "Auto" appearance mode (follows the day/night cycle).
     # cosmic-manager only exposes a static dark/light `mode`, so set
     # `auto_switch` directly on com.system76.CosmicTheme.Mode via its generic
@@ -140,6 +158,14 @@ in
 
   home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cos-cli ]
     ++ map (chat: chat.toggle) chats;
+
+  # Match GTK apps to the COSMIC interface font. Set here (not in home.nix)
+  # deliberately: this module is only imported by the COSMIC profile, so
+  # bbtablet's GNOME setup keeps Stylix's default sans-serif.
+  stylix.fonts.sansSerif = {
+    package = pkgs.inter;
+    name = "Inter";
+  };
 
   xdg.configFile."autostart/synology-drive.desktop".text = ''
     [Desktop Entry]
