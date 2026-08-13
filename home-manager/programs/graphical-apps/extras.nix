@@ -47,12 +47,57 @@ in
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
+    pkgs.digikam
     pkgs.rapidraw
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
     pkgs.deluge
+
+    # Parabolic (Nickvision Tube Converter) — a GTK GUI over yt-dlp. Unlike the
+    # integrated YouTube-streaming apps (Spotube/Bloomee), which each ship their
+    # own extractor that YouTube keeps breaking, this rides yt-dlp — the one
+    # extractor that is patched within hours of any YouTube change — so it stays
+    # reliable. Paste a track/playlist/album URL; it downloads audio with tags
+    # and cover art to ~/Music, to be played by any local player.
+    pkgs.parabolic
+    pkgs.yt-dlp
+
+    # Elisa — clean, modern KDE/Kirigami music player for the beets-managed
+    # ~/Music (library browser, reads embedded tags/art/synced lyrics). Set as
+    # the default audio handler on these (COSMIC) hosts via xdg.mimeApps below.
+    pkgs.kdePackages.elisa
   ];
+
+  # Parabolic's binary/desktop id is `org.nickvision.tubeconverter`; alias the
+  # short name so `parabolic` works in a terminal (the launcher shows "Parabolic").
+  home.shellAliases.parabolic = "org.nickvision.tubeconverter";
+
+  # Make Elisa the default music player. This lives in extras.nix (the default
+  # profile = the COSMIC desktop hosts) rather than the shared home.nix, so the
+  # tablet — which doesn't get Elisa — isn't pointed at a missing handler. The
+  # attrset merges with the (empty) defaultApplications in home.nix. COSMIC reads
+  # the standard XDG mimeapps.list, so this is what its "Default Applications"
+  # resolves to as well.
+  xdg.mimeApps.defaultApplications =
+    let elisa = "org.kde.elisa.desktop";
+    in lib.genAttrs [
+      "audio/mpeg"
+      "audio/mp4"
+      "audio/aac"
+      "audio/flac"
+      "audio/x-flac"
+      "audio/ogg"
+      "audio/x-vorbis+ogg"
+      "audio/opus"
+      "audio/x-opus+ogg"
+      "audio/x-m4a"
+      "audio/wav"
+      "audio/x-wav"
+      "audio/webm"
+      "audio/x-ms-wma"
+      "application/ogg"
+    ] (_: elisa);
 
   # Film & print data pack for the darktable spektrafilm module. Newer builds
   # can download this pack from within the UI into
@@ -182,6 +227,86 @@ in
           "$config_file"
       else
         printf '\nplugins/darkroom/rawprepare/allow_editing_crop=true\n' >> "$config_file"
+      fi
+    fi
+  '';
+
+  # digiKam metadata settings for darktable interoperability. digiKam does the
+  # local AI auto-tagging and must write those tags into the XMP *sidecar* that
+  # darktable already owns — never into the RAW — using the tag namespaces
+  # darktable reads. digiKam 9.x already writes both Xmp.dc.subject and
+  # Xmp.lr.hierarchicalSubject by default (the two darktable imports), so we only
+  # overlay the handful of keys that differ from digiKam's defaults, via
+  # kwriteconfig6 so digiKam's own state in digikamrc (collections, DB paths, UI)
+  # is preserved. Guarded on digiKam being closed: it rewrites digikamrc from
+  # memory on exit, which would undo an external edit.
+  #
+  #   Save Tags=true                  default is FALSE — digiKam writes no tags
+  #                                   to metadata at all until this is enabled.
+  #   Metadata Writing Mode=1         WRITE_TO_SIDECAR_ONLY: only ever touches
+  #                                   IMG.CR3.xmp, never the original image file.
+  #   Use XMP Sidecar For Reading     read the same sidecars back in digiKam.
+  #   Use Lazy Synchronization=false  write tags to the sidecar immediately, so
+  #                                   the flush is predictable and the "Write
+  #                                   Metadata" action is never greyed by a queue.
+  #
+  # The reverse direction (sidecar -> darktable library.db) is the
+  # darktable-xmp-sync service below, run on demand with the `dt-sync` alias.
+  home.activation.setDigikamMetadata = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/digikamrc"
+    kwriteconfig="${pkgs.kdePackages.kconfig}/bin/kwriteconfig6"
+    # digiKam is a nix-wrapped binary (comm is ".digikam-wrappe"), so `pgrep -x
+    # digikam` never matches a running instance — match the cmdline instead, or
+    # we'd rewrite digikamrc while it's open and it would clobber these keys
+    # again on exit.
+    if ! ${pkgs.procps}/bin/pgrep -f digikam >/dev/null; then
+      set_meta_key() {
+        "$kwriteconfig" --file "$config_file" --group "Metadata Settings" --key "$1" "$2"
+      }
+      set_meta_key "Save Tags"                   "true"
+      set_meta_key "Metadata Writing Mode"       "1"
+      set_meta_key "Use XMP Sidecar For Reading" "true"
+      set_meta_key "Use Lazy Synchronization"    "false"
+
+      # Keep the digiKam databases on the NVMe SSD (~/.local/share/digikam),
+      # NOT on the HDD alongside the 41k RAW files. With both on the spinning
+      # disk, SQLite writes (especially the ~1.2 GB thumbnails DB) thrash the
+      # drive head against the photo reads, dragging scans out for hours.
+      # Only repoint where the photo library actually lives (i.e. bbstation);
+      # the DB files themselves were copied over once by hand.
+      if [ -d /hdd/raw_photos ]; then
+        db_dir="${config.home.homeDirectory}/.local/share/digikam/"
+        for key in "Database Name" "Database Name Face" \
+                   "Database Name Similarity" "Database Name Thumbnails"; do
+          "$kwriteconfig" --file "$config_file" --group "Database Settings" --key "$key" "$db_dir"
+        done
+      fi
+    fi
+  '';
+
+  # Point Parabolic (the yt-dlp GUI) at ~/Music, where beets organizes downloads.
+  # Parabolic (.NET/Nickvision) remembers the last-used save folder in
+  # ~/.config/<AppName>/config.json under the "PreviousSaveFolder" key (default
+  # is ~/Downloads). The config dir name isn't stable across versions, so we find
+  # an existing Parabolic config by that telltale key and patch it; if none
+  # exists yet we create one at the conventional path (a later launch/switch
+  # self-corrects if the name differs). Guarded on Parabolic being closed, since
+  # it rewrites its config from memory on exit.
+  home.activation.setParabolicSaveFolder = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if ! ${pkgs.procps}/bin/pgrep -f 'nickvision.tubeconverter' >/dev/null; then
+      music="${config.home.homeDirectory}/Music"
+      cfg=""
+      for c in "${config.home.homeDirectory}/.config"/*/config.json; do
+        [ -f "$c" ] || continue
+        if ${pkgs.gnugrep}/bin/grep -q PreviousSaveFolder "$c" 2>/dev/null; then cfg="$c"; break; fi
+      done
+      [ -n "$cfg" ] || cfg="${config.home.homeDirectory}/.config/Nickvision Parabolic/config.json"
+      mkdir -p "$(dirname "$cfg")"
+      if [ -f "$cfg" ]; then
+        tmp="$(mktemp)"
+        ${pkgs.jq}/bin/jq --arg f "$music" '.PreviousSaveFolder = $f' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+      else
+        printf '{"PreviousSaveFolder":"%s"}\n' "$music" > "$cfg"
       fi
     fi
   '';
