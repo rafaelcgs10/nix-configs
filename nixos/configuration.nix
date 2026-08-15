@@ -22,11 +22,133 @@ in {
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = "nix-command flakes";
 
+  # Binary cache for affinity-nix (Affinity on Wine) — avoids building a
+  # patched wine locally.
+  nix.settings.extra-substituters = [ "https://cache.forall.systems" ];
+  nix.settings.extra-trusted-public-keys = [
+    "cache.forall.systems:5PmD7QO4MSF8YgyRZtkSGXRDo96H3bybIf2SsQh8ScI="
+  ];
+
+  # Rebuild half of the auto-upgrade split: the flake.lock update, commit and
+  # push happen an hour earlier as rafael (nix-configs-update user timer in
+  # home-manager/programs/nix-configs-autoupdate.nix); this root service only
+  # rebuilds the committed state. --no-write-lock-file guarantees root never
+  # writes into the checkout, which would leave root-owned files behind and
+  # break rafael's own git with permission errors.
+  system.autoUpgrade = {
+    enable = true;
+    flake = "/home/rafael/nix-configs/";
+    flags = [
+      "--print-build-logs"
+      "--no-write-lock-file"
+    ];
+    dates = "12:00";
+    randomizedDelaySec = "45min";
+  };
+
+  # Desktop notifications (COSMIC) around the upgrade: one when it starts and
+  # one on finish with the package version bumps between the old and new
+  # generation (nvd diff, capped at 10 lines in the popup; the full diff lands
+  # in this service's journal). The service runs as root, so notify-send is
+  # bridged into rafael's session bus with runuser. Every hook is best-effort
+  # ("-" prefix, || true): an upgrade must never fail just because nobody was
+  # logged in to see the popup.
+  #
+  # The failure branch also drives the revert strategy: if the run failed
+  # WITHOUT switching generations, the new lock is unbuildable and rafael's
+  # nix-configs-revert user service rolls the auto-update commit back (see
+  # home-manager/programs/nix-configs-autoupdate.nix). If it failed after
+  # switching (like a network mount racing the activation), the lock is fine
+  # and reverting would be a false positive — notify only.
+  systemd.services.nixos-upgrade.serviceConfig =
+    let
+      notify = pkgs.writeShellScript "nixos-upgrade-notify" ''
+        uid=$(${pkgs.coreutils}/bin/id -u rafael)
+        exec ${pkgs.util-linux}/bin/runuser -u rafael -- \
+          ${pkgs.coreutils}/bin/env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" \
+          ${pkgs.libnotify}/bin/notify-send -a "NixOS upgrade" "$@"
+      '';
+    in
+    {
+      ExecStartPre = [
+        ("-" + pkgs.writeShellScript "nixos-upgrade-notify-start" ''
+          # Remember the generation we started from for the finish diff.
+          ${pkgs.coreutils}/bin/readlink -f /run/current-system \
+            > /run/nixos-upgrade.prev-system || true
+          ${notify} "NixOS upgrade started" "Rebuilding from /home/rafael/nix-configs"
+        '')
+      ];
+      ExecStopPost = [
+        ("-" + pkgs.writeShellScript "nixos-upgrade-notify-done" ''
+          if [ "$SERVICE_RESULT" != success ]; then
+            prev=$(${pkgs.coreutils}/bin/cat /run/nixos-upgrade.prev-system 2>/dev/null || true)
+            cur=$(${pkgs.coreutils}/bin/readlink -f /run/current-system)
+            if [ -n "$prev" ] && [ "$prev" != "$cur" ]; then
+              # The generation switched, so the new lock built and activated —
+              # the failure is a degraded unit (e.g. a network mount racing the
+              # switch), not the lock's fault. Never revert for this.
+              ${notify} -u critical "NixOS upgrade: switched with failing units" \
+                "New generation is active but some units failed — see: systemctl --failed"
+            else
+              # Nothing switched: the new lock does not build/activate. Have
+              # rafael's session revert the auto-update commit (root must not
+              # write into the checkout).
+              ${notify} -u critical "NixOS upgrade failed" \
+                "$SERVICE_RESULT — reverting today's flake.lock update; see: journalctl -u nixos-upgrade"
+              uid=$(${pkgs.coreutils}/bin/id -u rafael)
+              ${pkgs.util-linux}/bin/runuser -u rafael -- \
+                ${pkgs.coreutils}/bin/env "XDG_RUNTIME_DIR=/run/user/$uid" \
+                "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" \
+                ${pkgs.systemd}/bin/systemctl --user start nix-configs-revert.service
+            fi
+            exit 0
+          fi
+
+          prev=$(${pkgs.coreutils}/bin/cat /run/nixos-upgrade.prev-system 2>/dev/null || true)
+          cur=$(${pkgs.coreutils}/bin/readlink -f /run/current-system)
+          if [ -z "$prev" ] || [ "$prev" = "$cur" ]; then
+            ${notify} "NixOS upgrade finished" "Already up to date — no changes."
+            exit 0
+          fi
+
+          # nvd lines look like "[U.]  #12  firefox  128.0 -> 129.0"; strip the
+          # status/index columns for the popup.
+          diff=$(${pkgs.nvd}/bin/nvd diff "$prev" "$cur" || true)
+          printf '%s\n' "$diff"
+          changes=$(printf '%s\n' "$diff" \
+            | ${pkgs.gnugrep}/bin/grep '^\[' \
+            | ${pkgs.gnused}/bin/sed -E 's/^\[[^]]*\][[:space:]]+#[0-9]+[[:space:]]+//' \
+            || true)
+          total=$(printf '%s\n' "$changes" | ${pkgs.gnugrep}/bin/grep -c . || true)
+          total=''${total:-0}
+          body=$(printf '%s\n' "$changes" | ${pkgs.coreutils}/bin/head -n 10)
+          if [ "$total" -gt 10 ]; then
+            body="$body
+    … and $((total - 10)) more (journalctl -u nixos-upgrade)"
+          fi
+          ${notify} "NixOS upgrade finished" "''${body:-New generation activated.}"
+        '')
+      ];
+    };
+
+  # nixos-upgrade.service runs as root, but the flake above is rafael's
+  # checkout, so git's ownership check (CVE-2022-24765) rejects even reading
+  # it: "repository is not owned by current user". Instead of the wiki's
+  # imperative `git config --global --add safe.directory` (a file in root's
+  # home), declare it in the system-wide /etc/gitconfig, which every user's
+  # git — root's included — reads. rafael's own git is unaffected: the
+  # per-user home-manager config overrides this file.
+  programs.git = {
+    enable = true;
+    config.safe.directory = "/home/rafael/nix-configs"; # exact match, no trailing slash
+  };
+
+
   # Auto-GC: keeps the store from growing unbounded
   nix.gc = {
     automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
+    dates = "daily";
+    options = "--delete-older-than 5d";
   };
   # Safety valve: GC mid-build if free space drops below 5 GiB
   nix.settings.min-free = 5 * 1024 * 1024 * 1024;
@@ -134,8 +256,15 @@ in {
     };
   };
 
-  services.xserver.windowManager.xmonad.enable = true;
 
+  # Fonts. Install the Hack Nerd Font system-wide and make it the default
+  # monospace so terminals (COSMIC Terminal, alacritty, ...) render the
+  # Starship powerline separators/icons from the same font as the text
+  # instead of a mismatched fallback (which breaks the powerline bar).
+  fonts = {
+    packages = [ pkgs.nerd-fonts.hack ];
+    fontconfig.defaultFonts.monospace = [ "Hack Nerd Font Mono" ];
+  };
 
   # Xserver basic
   programs.dconf.enable = true;
@@ -230,6 +359,28 @@ in {
   # ];
 
   nixpkgs.config.allowUnfree = true;
+
+  # Affinity (Wine) packages. The overlay is the supported install path: the
+  # flake's own `packages` output refuses to eval (unfree) since it uses the
+  # flake's nixpkgs, while the overlay evaluates against ours (allowUnfree).
+  # Wine itself still comes from affinity-nix's pinned nixpkgs, so the big
+  # wine closure stays substitutable from cache.forall.systems.
+  nixpkgs.overlays = [ inputs.affinity-nix.overlays.default ];
+
+  # A permanent home, OFF the encrypted home directory, for Affinity's
+  # writable overlay layer. Affinity needs an overlayfs mount to save its
+  # state, but overlayfs can't keep that writable layer on our ecryptfs home
+  # (the mount fails and Affinity won't start). So we park it here on the
+  # plain btrfs disk and symlink ~/.local/{share,state}/affinity-v3 to it
+  # from home-manager (full explanation in
+  # home-manager/programs/graphical-apps/extras.nix). Owned by the user so
+  # the launcher can write it; the trailing "-" age means never auto-cleaned.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/affinity-nix       0700 rafael users - -"
+    "d /var/lib/affinity-nix/data  0700 rafael users - -"
+    "d /var/lib/affinity-nix/state 0700 rafael users - -"
+  ];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -416,6 +567,13 @@ in {
   #   alsa-lib
 
   # ];
+
+  # set default timeout to 10s - many times reboot waits 90s
+  systemd.settings = {
+    Manager = {
+      DefaultTimeoutStopSec = "10s";
+    };
+  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

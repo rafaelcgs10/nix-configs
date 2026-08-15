@@ -1,10 +1,55 @@
-{ pkgs, ...}:
+{ pkgs, lib, ...}:
 
 {
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    autosuggestion.enable = true;
+
+    # Interactive setup restored after dropping oh-my-zsh: async autosuggestions
+    # (fixes backspace lag on the huge history), an arrow-selectable Tab menu,
+    # and Ctrl+Arrow directory navigation. mkAfter so it runs after compinit and
+    # the plugins are sourced.
+    initContent = lib.mkAfter (builtins.readFile ./extra.zsh);
+    autosuggestion = {
+      enable = true;
+      highlight = "fg=8"; # dim hint; ANSI slot so it follows the flavour
+    };
+
+    # zsh-syntax-highlighting colours expressed via ANSI palette slots (names,
+    # not hex) so the command line renders in the terminal's *current*
+    # Catppuccin flavour and follows the COSMIC day/night auto-switch (Latte by
+    # day, Mocha by night) instead of being pinned to one flavour.
+    syntaxHighlighting = {
+      enable = true;
+      styles = {
+        "unknown-token" = "fg=red,bold";
+        "reserved-word" = "fg=magenta";
+        "alias" = "fg=green";
+        "suffix-alias" = "fg=green";
+        "global-alias" = "fg=green";
+        "builtin" = "fg=green";
+        "function" = "fg=green";
+        "command" = "fg=green";
+        "precommand" = "fg=green,underline";
+        "hashed-command" = "fg=green";
+        "arg0" = "fg=green";
+        "single-hyphen-option" = "fg=yellow";
+        "double-hyphen-option" = "fg=yellow";
+        "single-quoted-argument" = "fg=yellow";
+        "double-quoted-argument" = "fg=yellow";
+        "dollar-quoted-argument" = "fg=yellow";
+        "backtick-quoted-argument" = "fg=yellow";
+        "globbing" = "fg=cyan";
+        "history-expansion" = "fg=cyan";
+        "command-substitution-delimiter" = "fg=cyan";
+        "process-substitution-delimiter" = "fg=cyan";
+        "path" = "fg=default,underline";
+        "path_pathseparator" = "fg=default,underline";
+        "comment" = "fg=8";
+        "default" = "fg=default";
+      };
+    };
+
     history = {
       path = "$HOME/zsh_history/zsh_history";
       save = 1000000;
@@ -14,11 +59,9 @@
       ignoreDups = true;
     };
 
-    oh-my-zsh = {
-      enable = true;
-      plugins = [ "git" "sudo" "git-auto-fetch" "git-extras" "dirhistory" ];
-    };
-
+    # oh-my-zsh removed: it was the main startup-time cost. The pieces we
+    # actually used (completion, autosuggestions, syntax highlighting) are
+    # loaded natively above; git info now lives in the Starship prompt.
     plugins = [
       {
         name = "zsh-nix-shell";
@@ -30,54 +73,48 @@
           sha256 = "0snhch9hfy83d4amkyxx33izvkhbwmindy0zjjk28hih1a9l2jmx";
         };
       }
-      {
-        name = "zsh-git";
-        src = pkgs.fetchFromGitHub {
-          owner = "zsh-users";
-          repo = "zsh-git";
-          rev = "v0.6.3";
-          sha256 = "1h8h2mz9wpjpymgl2p7pc146c1jgb3dggpvzwm9ln3in336wl95c";
-        };
-      }
-      {
-        name = "zsh-autosuggestions";
-        src = pkgs.fetchFromGitHub {
-          owner = "zsh-users";
-          repo = "zsh-autosuggestions";
-          rev = "v0.6.3";
-          sha256 = "1h8h2mz9wpjpymgl2p7pc146c1jgb3dggpvzwm9ln3in336wl95c";
-        };
-      }
-      {
-        name = "zsh-syntax-highlighting";
-        src = pkgs.fetchFromGitHub {
-          owner = "zsh-users";
-          repo = "zsh-syntax-highlighting";
-          rev = "be3882aeb054d01f6667facc31522e82f00b5e94";
-          sha256 = "0w8x5ilpwx90s2s2y56vbzq92ircmrf0l5x8hz4g1nx3qzawv6af";
-        };
-      }
-      {
-        name = "powerlevel10k";
-        src = pkgs.zsh-powerlevel10k;
-        file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
-      }
-      {
-        name = "powerlevel10k-config";
-        src = pkgs.lib.cleanSource ./p10k;
-        file = "p10k.zsh";
-      }
     ];
+
     sessionVariables = rec {
       NIXPKGS_ALLOW_UNFREE = 1;
       EDITOR = "vim";
       VISUAL = EDITOR;
       GIT_EDITOR = EDITOR;
-      # DOOMLOCALDIR = "$HOME/.doom_local";
-      # DOOMDIR = "$HOME/nix-configs/doom.d";
       DIRENV_ALLOW_NIX = 1;
     };
-    shellAliases = rec {
+
+    shellAliases = {
+      # A few of the oh-my-zsh git aliases most people keep in muscle memory.
+      # Trim or extend as you like.
+      gst = "git status";
+      gco = "git checkout";
+      gc = "git commit -v";
+      ga = "git add";
+      gd = "git diff";
+      gp = "git push";
+      gl = "git pull";
+      glog = "git log --oneline --graph --decorate";
+
+      # Pull XMP sidecar changes (e.g. digiKam AI tags) into darktable's library
+      # DB on demand, headless, without the slow startup crawler. Run after a
+      # digiKam tagging session and before opening darktable. Exits cleanly if
+      # darktable is open (library locked); the tail shows the result either way.
+      dt-sync = "systemctl --user start darktable-xmp-sync.service; journalctl --user -u darktable-xmp-sync.service -n 3 --no-pager";
     };
+  };
+
+  # Starship: fast (Rust), actively maintained, and free of p10k's
+  # resize/redraw separator bug.
+  #
+  # The starship "powerline" preset layout, repainted with the Rosé Pine
+  # palette (Stylix's starship target is disabled so this custom look stays).
+  # Read straight from the TOML so the Nerd Font glyphs stay byte-exact. The
+  # powerline separators only render with a Nerd Font terminal font (Hack Nerd
+  # Font Mono, set as the default monospace in nixos/configuration.nix and the
+  # COSMIC Terminal config).
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = builtins.fromTOML (builtins.readFile ./rose-pine-powerline.toml);
   };
 }

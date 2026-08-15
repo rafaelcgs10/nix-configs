@@ -1,403 +1,230 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
+;;
+;; Personal Doom configuration. Home Manager rebuilds Doom and its packages.
 
-;; Place your private configuration here! Remember, you do not need to run 'doom
-;; sync' after modifying this file!
 
-
-;; Some functionality uses this to identify you, e.g. GPG configuration, email
-;; clients, file templates and snippets.
+;;; Identity
 (setq user-full-name "Rafael Castro Gonçalves Silva"
       user-mail-address "me@rafaelcgs.com")
 
-;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
-;; are the three important ones:
-;;
-;; + `doom-font'
-;; + `doom-variable-pitch-font'
-;; + `doom-big-font' -- used for `doom-big-font-mode'; use this for
-;;   presentations or streaming.
-;;
-;; They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
-;; font string. You generally only need these two:
-;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
-;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
-;; (setq doom-font (font-spec :family "mononoki" :height 120 :weight'normal :width 'normal))
-;; (setq doom-font (font-spec :family "Fira Code" :height 180 :weight'normal :width 'normal))
-(setq doom-font (font-spec :family "Hack" :height 120))
-;; {}}}{{{{{}
 
-;; There are two ways to load a theme. Both assume the theme is installed and
-;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. This is the default:
-;; (setq doom-theme 'doom-one)
+;;; Appearance
+;; Match the Hack Nerd Font installed by Stylix/Home Manager. A missing font
+;; errors in Doom's frame hook before theme and late keybindings are applied,
+;; which also makes daemon-created emacsclient frames immediately close.
+(setq doom-font (font-spec :family "Hack Nerd Font Mono" :height 120))
 
-;; If you use `org' and don't want your org files in the default location below,
-;; change `org-directory'. It must be set before org loads!
-(after! org
-  (setq org-directory "~/org/")
-  )
+;; Hide the native compositor/GTK title bar on Emacs frames only. The default
+;; list covers daemon-created `emacsclient -c' frames; the initial list covers a
+;; direct GUI launch.
+(add-to-list 'default-frame-alist '(undecorated . t))
+(add-to-list 'initial-frame-alist '(undecorated . t))
+(when (display-graphic-p)
+  (modify-frame-parameters nil '((undecorated . t))))
 
-;; This determines the style of line numbers in effect. If set to `nil', line
-;; numbers are disabled. For relative line numbers, set this to `relative'.
-(setq-default display-line-numbers-width 0)
+;; Keep font caches resident across GC. With doom-modeline's nerd-icons on a 4K
+;; display (plus Isabelle/LaTeX unicode), compacting the font cache on every GC
+;; forces redisplay to re-open fonts, causing scroll/redraw stutter. The only
+;; cost is a larger memory footprint. See the variable's docstring.
+(setq inhibit-compacting-font-caches t)
 
-;; Scroll line by line with the whell
-(setq scroll-step 1
-      scroll-conservatively 10000)
-(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-(setq mouse-wheel-progressive-speed nil)
+;; doom-themes-based Rosé Pine ships separate dark/light theme *symbols*
+;; (doom-rose-pine = dark, doom-rose-pine-dawn = light); toggle by swapping.
+;; load-theme searches `custom-theme-load-path', and an external doom-theme
+;; package's directory isn't added there automatically, which caused the
+;; "Unable to find theme file for 'doom-rose-pine'" startup error. Add it
+;; explicitly (the package is on load-path, so locate-library finds it).
+(setq custom-safe-themes t)
+(dolist (thm '("doom-rose-pine-theme" "doom-rose-pine-dawn-theme"))
+  (when-let ((lib (locate-library thm)))
+    (add-to-list 'custom-theme-load-path (file-name-directory lib))))
+(setq doom-theme 'doom-rose-pine)        ; dark default
 
+(defun my/toggle-rose-pine ()
+  "Toggle Rosé Pine between dark and light (dawn)."
+  (interactive)
+  (if (custom-theme-enabled-p 'doom-rose-pine)
+      (progn (disable-theme 'doom-rose-pine) (load-theme 'doom-rose-pine-dawn t))
+    (progn (disable-theme 'doom-rose-pine-dawn) (load-theme 'doom-rose-pine t)))
+  (message "Rosé Pine: %s"
+           (if (custom-theme-enabled-p 'doom-rose-pine) "dark" "dawn (light)")))
 
-;; (setq +workspaces-on-switch-project-behavior nil)
-;; Here are some additional functions/macros that could help you configure Doom:
-;;
-;; - `load!' for loading external *.el files relative to this one
-;; - `use-package!' for configuring packages
-;; - `after!' for running code after a package has loaded
-;; - `add-load-path!' for adding directories to the `load-path', relative to
-;;   this file. Emacs searches the `load-path' when you load packages with
-;;   `require' or `use-package'.
-;; - `map!' for binding new keys
-;;
-;; To get information about any of these functions/macros, move the cursor over
-;; the highlighted symbol at press 'K' (non-evil users must press 'C-c c k').
-;; This will open documentation for it, including demos of how they are used.
-;;
-;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
-;; they are implemented.
+;; Bind C-c C-t on a *global minor-mode* keymap, not the global map. Minor-mode
+;; maps override major-mode maps, so the key keeps working in org-mode,
+;; prog-modes, etc. (which bind C-c C-t themselves). This is how the old
+;; cycle-themes-mode kept the key live in every buffer; plain global-set-key
+;; gets shadowed by those major modes.
+(defvar my/theme-toggle-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-t") #'my/toggle-rose-pine)
+    map)
+  "Keymap holding the global theme-toggle binding.")
 
-;; Setqs
-(setq projectile-project-search-path '("~/Documents"))
-;;
-;; (setq mode-require-final-newline nil)
+(define-minor-mode my/theme-toggle-mode
+  "Global minor mode that provides the Rosé Pine dark/light toggle key."
+  :global t
+  :keymap my/theme-toggle-map)
+(my/theme-toggle-mode 1)
 
-;; (global-prettify-symbols-mode -1)
-;; (prettify-symbols-mode -1)
-;; (setq rustic-flycheck-clippy-params "--message-format=json")
-;; (setq rustic-compile-directory-method 'rustic-buffer-workspace)
-;;
-;; (add-hook 'haskell-mode-hook #'lsp)
-;; (add-hook 'haskell-literate-mode-hook #'lsp)
-;; (after! lsp-haskell
-;;   (setq lsp-haskell-formatting-provider "brittany"))
-;;
-;; Languagetool for working with nix
-;; (setq langtool-java-bin "java")
-;; (setq langtool-bin "languagetool-commandline")
-;; (setq langtool-user-arguments '("--languagemodel" "/home/rafael/Downloads/ngram"))
-;; (setq langtool-server-user-arguments '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
-;; (setq langtool-default-language "en-US")
-;; Long line perfomance tweak
-;; (setq bidi-inhibit-bpa t)
-;; (setq global-so-long-mode t)
+;; doom-themes is loaded and configured by the `:ui doom' module, which already
+;; hooks `doom-themes-org-config' and enables bold/italic by default. Only add
+;; the extra it does not turn on: a flashing mode-line on errors.
+(after! doom-themes
+  (doom-themes-visual-bell-config))
 
-;; Flycheck configs
-;; (use-package! flycheck-golangci-lint :ensure t :hook (go-mode . flycheck-golangci-lint-setup))
-
-;; Minimap configs
-;; (setq minimap-update-delay 1)
-;; (setq minimap-automatically-delete-window t)
-;; (add-hook 'prog-mode-hook 'minimap-mode)
-
-;; Ace-window configs
+;; A big, hard-to-miss ace-window leading character.
 (custom-set-faces!
   '(aw-leading-char-face
     :foreground "white" :background "red"
     :weight bold :height 2.5 :box (:line-width 10 :color "red")))
 
-;; Hooks
-;; (add-hook 'prog-mode-hook #'lsp)
-;; (add-hook 'lsp-mode-hook 'lsp-ui-mode)
-;; (add-hook 'ruby-mode-hook 'chruby-use-corresponding)
-;; (add-hook 'prog-mode-hook 'origami-mode)
-;; (add-hook 'before-save-hook 'my-prog-nuke-trailing-whitespace)
-;; (add-hook 'lsp-mode-hook 'dynamic-completion-mode)
-;; (add-hook 'ruby-mode-hook 'highlight-indentation-current-column-mode)
+;; Full-width line-number gutter, and a fill-column indicator in prose buffers
+;; (fill-column already defaults to 80, set by Doom in doom-editor.el).
+(setq-default display-line-numbers-width 0)
+(add-hook 'text-mode-hook  #'display-fill-column-indicator-mode)
+(add-hook 'LaTeX-mode-hook #'display-fill-column-indicator-mode)
 
-;; Keys
-;; (with-eval-after-load 'evil
-;;   (define-key evil-motion-state-map (kbd "z a") 'origami-toggle-all-nodes))
-;; (with-eval-after-load 'evil
-;;   (define-key evil-motion-state-map (kbd "z c") 'origami-close-node))
-;; (with-eval-after-load 'evil
-;;   (define-key evil-motion-state-map (kbd "Z c") 'origami-close-node-recursively))
-;; (with-eval-after-load 'evil
-;;   (define-key evil-motion-state-map (kbd "z o") 'origami-open-node))
-;; (with-eval-after-load 'evil
-;;   (define-key evil-motion-state-map (kbd "Z o") 'origami-open-node-recursively))
-;; (defvar leader-states '(normal visual emacs)
-;;   "Evil states for the leader keybinding")
-;; (evil-define-key leader-states 'global (kbd "C-<down>") 'evil-window-down)
-;; (evil-define-key leader-states 'global (kbd "C-<up>") 'evil-window-up)
-;; (evil-define-key leader-states 'global (kbd "C-<left>") 'evil-window-left)
-;; (evil-define-key leader-states 'global (kbd "C-<right>") 'evil-window-right)
-(global-set-key (kbd "C-<down>") 'windmove-down)
-(global-set-key (kbd "C-<up>") 'windmove-up)
-(global-set-key (kbd "C-<right>") 'windmove-right)
-(global-set-key (kbd "C-<left>") 'windmove-left)
+;; Straight underline instead of the wavy default for flycheck highlights.
+(custom-set-faces!
+  '(flycheck-error   :underline (:style line))
+  '(flycheck-warning :underline (:style line))
+  '(flycheck-info    :underline (:style line)))
+
+
+;;; Modeline & workspaces
+;; Always show the Doom workspace list in the mode-line (bottom of the frame),
+;; instead of only transiently in the echo area when switching with M-<number>.
+;; init.el uses plain `modeline' (the `doom-modeline' package). Its default
+;; `main' layout already carries a `persp-name' segment on the right-hand side,
+;; but Doom sets `doom-modeline-persp-name' to nil (suppressed). We re-enable it
+;; and redefine what the segment renders: the full workspace tabline (every
+;; workspace, active one highlighted) via Doom's own `+workspace--tabline'.
+(after! doom-modeline
+  (setq doom-modeline-persp-name t
+        doom-modeline-display-default-persp-name t)
+  (doom-modeline-def-segment persp-name
+    (when (and (bound-and-true-p persp-mode)
+               (fboundp '+workspace--tabline))
+      (concat (doom-modeline-spc)
+              (+workspace--tabline)
+              (doom-modeline-spc)))))
+
+;; The workspace list now lives permanently in the modeline (above), so Doom's
+;; transient echo-area copy -- printed on every switch by `+workspace/display'
+;; (called from `+workspace/switch-to' at workspaces.el:375) -- is redundant and
+;; shows the list a second time in the minibuffer. Silence it when it's fired by
+;; a switch/cycle command, but keep the manual `+workspace/display' (SPC TAB TAB)
+;; working. We key off `this-command' rather than `called-interactively-p', which
+;; is unreliable when queried from inside advice.
+(defadvice! +workspaces-quiet-transient-display-a (orig-fn &rest args)
+  "Suppress the echo-area workspace tabline except on a direct `+workspace/display'."
+  :around #'+workspace/display
+  (if (eq this-command '+workspace/display)
+      (apply orig-fn args)
+    nil))
+
+
+;;; Editor behaviour
+;; Scroll line by line with the wheel.
+(setq scroll-step 1
+      scroll-conservatively 10000
+      mouse-wheel-scroll-amount '(1 ((shift) . 1))
+      mouse-wheel-progressive-speed nil)
+
+(after! which-key
+  (setq which-key-idle-delay 0.5))
+
+;; Route files through their tree-sitter major modes (this is what makes .java
+;; open in java-ts-mode, which drives the eglot-java hook further down).
+(setq major-mode-remap-alist major-mode-remap-defaults)
+
+;; custom.el (written by `M-x customize') loads AFTER config.el and silently
+;; overrides it -- that is what caused the fill-column=120 surprise. Point
+;; `custom-file' at a throwaway in the cache dir: once custom-file no longer
+;; equals its startup value, Doom skips loading doom.d/custom.el entirely (see
+;; profiles.el:410), so Customize can never clobber this file again.
+(setq custom-file (expand-file-name "custom.el" doom-cache-dir))
+(setq warning-suppress-log-types '((lsp-mode))
+      warning-suppress-types     '((doom-init-ui-hook) (defvaralias)))
+
+
+;;; Completion (company)
+(setq company-idle-delay 2
+      company-minimum-prefix-length 2)
+(set-company-backend! 'text-mode
+  '(:separate company-dabbrev company-yasnippet company-files company-ispell))
+(add-to-list '+latex--company-backends #'company-ispell)
+
+
+;;; Keybindings
+;; Window movement with C-<arrow>. Use Doom's `map!' instead of global-set-key
+;; so evil and major-mode maps don't shadow the bindings.
+(map! "C-<down>"  #'windmove-down
+      "C-<up>"    #'windmove-up
+      "C-<right>" #'windmove-right
+      "C-<left>"  #'windmove-left)
 (global-unset-key (kbd "C-x C-b"))
-;; (global-set-key (kbd "C-x b") 'project-switch-to-buffer)
-;; (global-set-key "\M-d" 'lsp-find-definition)
-;; (global-set-key "\M-r" 'lsp-ui-peek-find-references)
-;; (global-set-key "\M-m" 'rinari-find-model)
-;; (global-set-key "\M-v" 'rinari-find-view)
-;; (map! :leader (:prefix-map ("l" . "lsp") (:desc "Restart lsp workspace" "r" #'lsp-workspace-restart)))
-(global-set-key "\M-c" 'rinari-find-controller)
 
-;; Packages configs
+
+;;; Projects & Treemacs
+(setq projectile-project-search-path '("~/Documents"))
+
 (use-package! treemacs
   :init
   (with-eval-after-load 'winum
     (define-key winum-keymap (kbd "M-0") #'treemacs))
   :config
-  (progn
-    (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
-          treemacs-deferred-git-apply-delay      1.0
-          treemacs-directory-name-transformer    #'identity
-          treemacs-display-in-side-window        t
-          treemacs-eldoc-display                 t
-          treemacs-file-event-delay              5000
-          treemacs-file-extension-regex          treemacs-last-period-regex-value
-          treemacs-file-follow-delay             0.8
-          treemacs-file-name-transformer         #'identity
-          treemacs-follow-after-init             t
-          treemacs-git-command-pipe              ""
-          treemacs-goto-tag-strategy             'refetch-index
-          treemacs-indentation                   2
-          treemacs-indentation-string            " "
-          treemacs-is-never-other-window         nil
-          treemacs-max-git-entries               5000
-          treemacs-missing-project-action        'ask
-          treemacs-no-png-images                 nil
-          treemacs-no-delete-other-windows       t
-          treemacs-project-follow-cleanup        nil
-          ;; treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
-          treemacs-position                      'left
-          treemacs-recenter-distance             0.1
-          treemacs-recenter-after-file-follow    nil
-          treemacs-recenter-after-tag-follow     nil
-          treemacs-recenter-after-project-jump   'always
-          treemacs-recenter-after-project-expand 'on-distance
-          treemacs-show-cursor                   nil
-          treemacs-show-hidden-files             t
-          treemacs-silent-filewatch              nil
-          treemacs-silent-refresh                nil
-          treemacs-sorting                       'alphabetic-asc
-          treemacs-space-between-root-nodes      t
-          treemacs-tag-follow-cleanup            t
-          treemacs-tag-follow-delay              0.8
-          treemacs-width                         35)
-
-    (treemacs-follow-mode t)
-    (treemacs-filewatch-mode t)
-    (treemacs-fringe-indicator-mode t)
-    (pcase (cons (not (null (executable-find "git")))
-                 (not (null treemacs-python-executable)))
-      (`(t . t)
-       (treemacs-git-mode 'deferred))
-      (`(t . _)
-       (treemacs-git-mode 'simple))))
+  (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
+        treemacs-deferred-git-apply-delay      1.0
+        treemacs-directory-name-transformer    #'identity
+        treemacs-display-in-side-window        t
+        treemacs-eldoc-display                 t
+        treemacs-file-event-delay              5000
+        treemacs-file-extension-regex          treemacs-last-period-regex-value
+        treemacs-file-follow-delay             0.8
+        treemacs-file-name-transformer         #'identity
+        treemacs-follow-after-init             t
+        treemacs-git-command-pipe              ""
+        treemacs-goto-tag-strategy             'refetch-index
+        treemacs-indentation                   2
+        treemacs-indentation-string            " "
+        treemacs-is-never-other-window         nil
+        treemacs-max-git-entries               5000
+        treemacs-missing-project-action        'ask
+        treemacs-no-png-images                 nil
+        treemacs-no-delete-other-windows       t
+        treemacs-project-follow-cleanup        nil
+        treemacs-position                      'left
+        treemacs-recenter-distance             0.1
+        treemacs-recenter-after-file-follow    nil
+        treemacs-recenter-after-tag-follow     nil
+        treemacs-recenter-after-project-jump   'always
+        treemacs-recenter-after-project-expand 'on-distance
+        treemacs-show-cursor                   nil
+        treemacs-show-hidden-files             t
+        treemacs-silent-filewatch              nil
+        treemacs-silent-refresh                nil
+        treemacs-sorting                       'alphabetic-asc
+        treemacs-space-between-root-nodes      t
+        treemacs-tag-follow-cleanup            t
+        treemacs-tag-follow-delay              0.8
+        treemacs-width                         35)
+  (treemacs-follow-mode t)
+  (treemacs-filewatch-mode t)
+  (treemacs-fringe-indicator-mode t)
+  (pcase (cons (not (null (executable-find "git")))
+               (not (null treemacs-python-executable)))
+    (`(t . t)
+     (treemacs-git-mode 'deferred))
+    (`(t . _)
+     (treemacs-git-mode 'simple)))
   :bind
   (:map global-map
         ("M-0"       . treemacs)
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
-        ("C-x t M-t" . treemacs-find-tag))
-  )
-
-(use-package! treemacs-projectile
-  :after treemacs projectile
-  :ensure t)
-
-(use-package! treemacs-magit
-  :after treemacs magit
-  :ensure t)
-
-(use-package doom-themes
-  :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-nord t)
-
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-
-  ;; Enable custom neotree theme (all-the-icons must be installed!)
-  ;; (doom-themes-neotree-config)
-  ;; or for treemacs users
-  ;; (setq doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
-  ;; (doom-themes-treemacs-config)
-
-  ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config))
-
-;; (defun my-prog-nuke-trailing-whitespace ()
-;;   (when (derived-mode-p 'prog-mode)
-;;     (delete-trailing-whitespace)))
-
-;; (setq haskell-process-type 'cabal-new-repl)
-
-;; Isabelle setup
-;; (use-package! isar-mode
-;;   :mode "\\.thy\\'"
-;;   :config
-;;   ;; (add-hook 'isar-mode-hook 'turn-on-highlight-indentation-mode)
-;;   ;; (add-hook 'isar-mode-hook 'flycheck-mode)
-;;   (add-hook 'isar-mode-hook 'company-mode)
-;;   (add-hook 'isar-mode-hook
-;;             (lambda ()
-;;               (set (make-local-variable 'company-backends)
-;;                    '((company-dabbrev-code company-yasnippet)))))
-;;   (add-hook 'isar-mode-hook
-;;             (lambda ()
-;;               (set (make-local-variable 'indent-tabs-mode) nil)))
-;;   (add-hook 'isar-mode-hook
-;;             (lambda ()
-;;               (yas-minor-mode)))
-
-
-;;   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-add-help-echo t)))
-;;   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-mode t)))
-;;   (add-hook 'isar-mode-hook (lambda () (setq unicode-tokens-highlight-unicode t)))
-;;   ;; (add-hook 'isar-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
-;;   ;; (add-hook 'isar-goal-mode-hook (lambda () (setq doom-unicode-font (font-spec :family "Isabelle DejaVu Sans Mono"))))
-;;   ;; (add-hook 'isar-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
-;;   ;; (add-hook 'isar-goal-mode-hook (lambda () (face-remap-add-relative 'default :family "Isabelle DejaVu Sans Mono" :height 120)))
-;;   ;; (add-hook 'isar-mode-hook (lambda () (doom/reload-font)))
-;;   ;; (add-hook 'isar-mode-hook (lambda () (display-line-numbers-mode t)))
-;;   )
-
-;; (setq unicode-tokens-fontsymb-properties ())
-
-;; (use-package! lsp-isar-parse-args
-;;   :custom
-;;   (lsp-isar-parse-args-nollvm nil))
-
-(setq display-line-numbers-mode t)
-
-(after! which-key
-  (which-key-mode 1)
-  (setq which-key-idle-delay 0.5))
-
-;; (use-package! lsp-isar
-;;   :commands lsp-isar-define-client-and-start
-;;   :custom
-;;   (lsp-isar-output-time-before-printing-goal nil)
-;;   (lsp-isar-output-use-async t)
-;;   (lsp-isar-experimental t)
-;;   ;; (lsp-isar-decorations-delayed-printing t)
-;;   ;; (lsp-isar-progress--request-delay 8)
-;;   (lsp-isar-split-pattern 'lsp-isar-split-pattern-two-columns)
-;;   (lsp-isar-decorations-delayed-printing t)
-;;   :init
-;;   (add-hook 'lsp-isar-init-hook 'lsp-isar-open-output-and-progress-right-spacemacs)
-;;   (add-hook 'isar-mode-hook #'lsp-isar-define-client-and-start)
-
-;;   (push (concat "~/isabelle/Isabelle2021/src/Tools/emacs-lsp/yasnippet")
-;;         yas-snippet-dirs)
-
-;;   )
-
-;; (setq lsp-isabelle-options (list "-d" "~/Documents/Vespa/" "-R" "Dataplane"))
-
-;; (setq lsp-isar-path-to-isabelle "/nix/store/8n41f2i68mkj6xjmnyzrd8fcayjlwxib-isabelle-2022")
-;; (setq lsp-isabelle-options (list "-d" "~/Documents/afp-2022-02-13/thys"))
-
-;; (setq fancy-splash-image "~/nix-configs/home-manager/programs/doom/emacs.svg")
-
-;; (after! lsp-mode
-;;   (advice-remove #'lsp #'+lsp-dont-prompt-to-install-servers-maybe-a)
-;;   ;; LSP tweaks
-;;   (advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
-;;   (setq gc-cons-threshold 5000000000)
-;;   (add-hook 'focus-out-hook 'garbage-collect)
-;;   (run-with-idle-timer 5 t 'garbage-collect)
-;;   (setq read-process-output-max (* (* 1024 1024) 3))
-;;   (setq lsp-idle-delay 0.7)
-;;   (setq lsp-lens-enable nil)
-;;   (setq lsp-headerline-breadcrumb-enable nil)
-;;   (setq lsp-log-io nil)
-;;   (setq lsp-enable-folding nil)
-;;   (setq lsp-response-timeout 5)
-;;   (setq lsp-tcp-connection-timeout 5)
-;;   (setq lsp-sqls-timeout 5)
-
-;;   ;; (setq lsp-diagnostics-disabled-modes 'isar-mode)
-;;   ;; (setq lsp-use-plists t)
-;;   (setq lsp-completion-provider :comapany-capf)
-;;   ;; (setq lsp-enable-completion-at-point t)
-;;   (setq prettify-symbols-mode t)
-;;   (setq lsp-completion-show-detail t)
-;;   (setq lsp-enable-on-type-formatting t)
-;;   (setq doom-modeline-enable-word-count nil)
-;;   (setq scroll-conservatively 101)
-;;   (setq lsp-solargraph-use-bundler nil)
-;;   ;; (setq lsp-solargraph-library-directories '("/home/rafael/.gem/"))
-;;   (setq lsp-solargraph-multi-root t)
-;;   (setq company-minimum-prefix-length 2)
-;;   (setq company-idle-delay 0.3)
-;;   (setq lsp-ui-mode nil)
-;;   (setq lsp-ui-sideline-enable nil)
-;;   (setq lsp-lens-enable nil)
-;;   (setq lsp-headerline-breadcrumb-enable nil)
-;;   (setq lsp-ui-sideline-enable nil)
-;;   (setq lsp-modeline-code-actions-enable nil)
-;;   (setq lsp-signature-auto-activate nil)
-;;   (setq lsp-signature-render-documentation nil)
-;;   ;; (setq lsp-prefer-capf t)
-;;   )
-
-;; (require 'dap-cpptools)
-;; (setq gdb-many-windows t)
-
-;; (setq lsp-rust-unstable-features t)
-;; (setq gdb-show-main t
-;;       gdb-many-windows t)
-
-;; (after! rustic
-;;   (setq rustic-format-on-save t)
-;;   (after! dap-mode
-;;     (require 'dap-gdb-lldb)
-;;     (dap-register-debug-template
-;;      "Timely Dataflow 2 workers"
-;;      (list :type "gdb"
-;;            :arguments "-w2"
-;;            :request "launch"
-;;            :name "GDB::Run"
-;;            :gdbpath "rust-gdb"
-;;            :target nil
-;;            :cwd nil))
-;;     (dap-register-debug-template
-;;      "Rust::GDB Run Configuration"
-;;      (list :type "gdb"
-;;            :request "launch"
-;;            :name "GDB::Run"
-;;            :gdbpath "rust-gdb"
-;;            :target nil
-;;            :cwd nil))
-;;     )
-;;   )
-
-;; (use-package dap-mode
-;;   :ensure
-;;   :config
-;;   (dap-ui-mode)
-;;   (dap-ui-controls-mode 1)
-
-;;   (require 'dap-lldb)
-;;   (require 'dap-gdb-lldb)
-;;   ;; installs .extension/vscode
-;;   (dap-gdb-lldb-setup)
-;;   (dap-register-debug-template
-;;    "Rust::LLDB Run Configuration"
-;;    (list :type "lldb"
-;;          :request "launch"
-;;          :name "LLDB::Run"
-;;          :gdbpath "rust-lldb"
-;;          :target nil
-;;          :cwd nil)))
+        ("C-x t M-t" . treemacs-find-tag)))
 
 (defun modi/kill-non-project-buffers (&optional kill-special)
   "Kill buffers that do not belong to a `projectile' project.
@@ -417,230 +244,64 @@ With prefix argument (`C-u'), also kill the special buffers."
               (kill-buffer buf))))))))
 
 
-;; (use-package! nix-mode
-;;   :interpreter ("\\(?:cached-\\)?nix-shell" . +nix-shell-init-mode)
-;;   :mode "\\.nix\\'"
-;;   :init
-;;   (add-to-list 'auto-mode-alist
-;;                (cons "/flake\\.lock\\'"
-;;                      (if (featurep! :lang json)
-;;                          'json-mode
-;;                        'js-mode)))
-;;   :config
-;;   (after! lsp-mode
-;;     (add-to-list 'lsp-language-id-configuration '(nix-mode . "nix"))
+;;; Languages & LSP
+(add-hook 'java-ts-mode-hook 'eglot-java-mode)
 
-;;     (lsp-register-client
-;;      (make-lsp-client :new-connection (lsp-stdio-connection '("rnix-lsp"))
-;;                       :major-modes '(nix-mode)
-;;                       :server-id 'nix))
+;; Inlay hints off everywhere, except C/C++ where seeing inferred types inline
+;; is genuinely useful. Decided here (not in a mode hook) so it runs only once
+;; eglot has actually attached to the buffer.
+(add-hook 'eglot-managed-mode-hook
+          (lambda ()
+            (eglot-inlay-hints-mode
+             (if (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
+                 1 -1))))
 
-;;     )
-;;   (add-hook 'nix-mode-hook #'lsp!)
-
-;;   (set-popup-rule! "^\\*nixos-options-doc\\*$" :ttl 0 :quit t)
-
-;;   ;; (setq-hook! 'nix-mode-hook company-idle-delay nil)
-
-;;   (map! :localleader
-;;         :map nix-mode-map
-;;         "f" #'nix-update-fetch
-;;         "p" #'nix-format-buffer
-;;         "r" #'nix-repl-show
-;;         "s" #'nix-shell
-;;         "b" #'nix-build
-;;         "u" #'nix-unpack
-;;         "o" #'+nix/lookup-option))
+;; C/C++ (darktable et al.) via eglot + clangd. Doom's (cc +lsp) module runs
+;; eglot in c/c++ buffers; override the default clangd invocation so
+;; goto-definition works across the whole project (background index) and
+;; clang-tidy diagnostics show up inline.
+(after! eglot
+  (add-to-list 'eglot-server-programs
+               '((c-mode c-ts-mode c++-mode c++-ts-mode)
+                 . ("clangd"
+                    "--background-index"
+                    "--clang-tidy"
+                    "--completion-style=detailed"
+                    "--header-insertion=never"
+                    "--pch-storage=memory"
+                    "-j=4"))))
 
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")
 
 
-;; (setq lsp-java-workspace-cache-dir t
-;;       lsp-java-format-enabled t
-;;       lsp-java-format-comments-enabled t
-;;       lsp-java-save-action-organize-imports t
-;;       lsp-java-save-action-organize-imports t
-;;       lsp-java-import-gradle-enabled t
-;;       lsp-java-import-maven-enabled t
-;;       lsp-java-auto-build t
-;;       lsp-java-workspace-dir "/home/rafael/.cache/java-projects"
-;;       lsp-java-progress-report t
-;;       lsp-java-completion-guess-arguments t
-;;       lsp-java-enable-file-watch t
-;;       lsp-java-jdt-download-url "https://download.eclipse.org/jdtls/milestones/1.9.0/jdt-language-server-1.9.0-202203031534.tar.gz"
-;;       lsp-file-watch-ignored
-;;       '(".idea" ".ensime_cache" ".eunit" "node_modules"
-;;         ".git" ".hg" ".fslckout" "_FOSSIL_"
-;;         ".bzr" "_darcs" ".tox" ".svn" ".stack-work"
-;;         "build"))
-
-;; (use-package! flycheck-languagetool :hook (flycheck-mode . flycheck-languagetool-setup))
-
-;; (use-package! company-posframe
-;;   :ensure
-;;   :custom
-;;   (company-posframe-mode t)
-;;   )
-
-;; (defun toggle-maximize-buffer ()
-;;   "Maximize buffer."
-;;   (interactive)
-;;   (save-excursion
-;;     (if (and (= 1 (length (cl-remove-if
-;;                            (lambda (w)
-;;                              (or (and (fboundp 'treemacs-is-treemacs-window?)
-;;                                       (treemacs-is-treemacs-window? w))
-;;                                  (and (bound-and-true-p neo-global--window)
-;;                                       (eq neo-global--window w))))
-;;                            (window-list))))
-;;              (assoc ?_ register-alist))
-;;         (jump-to-register ?_)
-;;       (window-configuration-to-register ?_)
-;;       (delete-other-windows))))
-
-;; (global-set-key "\M-f" 'toggle-maximize-buffer)
-
-;; (custom-set-faces
-;;  '(lsp-isar-font-background-unprocessed1 ((t (:foreground "blue" :priority 5 :background "blue" :weight bold :height 2.5 :box (:line-width 10 :color "blue"))))))
-
-;; (custom-set-faces
-;;  '(lsp-isar-font-foreground-quoted ((t (:background nil)))))
-
-;; (after! flycheck
-;;   (setq flycheck-languagetool-server-jar "~/.nix-profile/bin/languagetool-server")
-;;   (setq flycheck-languagetool-server-args '("-p" "8081" "--allow-origin" "\"*\"" "--languageModel" "/home/rafael/Downloads/ngram"))
-;;   (setq flycheck-languagetool-active-modes '(latex-mode plain-tex-mode org-mode scribble-mode markdown-mode text-mode))
-;;   ;; (setq flycheck-posframe-mode nil)
-;;   ;; (setq flycheck-golangci-lint-tests t)
-;;   ;; (setq flycheck-golangci-lint-enable-all t)
-;;   (setq flycheck-idle-change-delay 1.5)
-;;   (custom-set-faces '(flycheck-duplicate ((t (:underline '(:style line)))))
-;;                     '(flycheck-incorrect ((t (:underline '(:style line)))))
-;;                     '(flycheck-error ((t (:underline '(:style line)))))
-;;                     '(flycheck-warning ((t (:underline '(:style line)))))
-;;                     '(flycheck-info ((t (:background nil :foreground nil :underline '(:style line))))))
-
-;;   (flycheck-popup-tip-mode -1)
-;;   (setq flycheck-global-modes '(not isar-mode))
-;;   )
-
-;; (with-eval-after-load 'flycheck-languagetool
-
-;; Vsync optimization
-;; (add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
-
-(setq ispell-alternate-dictionary (file-truename "/home/rafael/nix-configs/home-manager/programs/doom/american-english-exhaustive.txt"))
-
-(after! writegood-mode
-  (custom-set-faces!
-    '(writegood-duplicates-face
-      :underline '(:style line)
-      )
-    '(writegood-passive-voice-face
-      :underline '(:style line)
-      )
-    '(writegood-weasels-face
-      :underline '(:style line)
-      ))
-  )
-
-(setq company-idle-delay 2)
-(setq company-minimum-prefix-length 2)
-
-(set-company-backend! 'text-mode
-  '(:separate company-dabbrev company-yasnippet company-files company-ispell))
-
-;; (set-company-backend! 'org-mode
-;;   '(:separate company-dabbrev company-yasnippet company-files company-ispell))
-
-(add-to-list '+latex--company-backends #'company-ispell)
-
-;; (setq-hook! 'LaTeX-mode-local-vars-hook
-;;   (set-company-backend! 'latex-mode
-;;   '(:separate +latex--company-backends company-capf company-yasnippet company-dabbrev company-yasnippet company-files company-ispell)))
+;;; Org
+;; `org-directory' must be set before org loads, so keep it at top level.
+(setq org-directory "~/org/")
+(after! org
+  (setq org-agenda-files '("~/Documents/rafaelcgs10.github.io/todo.org")))
 
 
-(setq ispell-personal-dictionary "/home/rafael/nix-configs/home-manager/programs/doom/ispell.dict")
+;;; Writing & spell-checking
+(setq ispell-alternate-dictionary
+      (expand-file-name "doom/american-english-exhaustive.txt"
+                        (or (getenv "XDG_DATA_HOME") "~/.local/share"))
+      ispell-personal-dictionary
+      (expand-file-name "doom/ispell.dict"
+                        (or (getenv "XDG_DATA_HOME") "~/.local/share")))
 
-;; (use-package! eglot-ltex
-;;   :ensure t
-;;   :hook (text-mode . (lambda ()
-;;                        (require 'eglot-ltex)
-;;                        (eglot-ensure)))
-;;   :init
-;;   (setq eglot-ltex-server-path "~/.nix-profile"
-;;         eglot-ltex-communication-channel 'tcp))         ; 'stdio or 'tcp
-
-;; (use-package! eglot-java
-;;   :custom
-;;   ;; (eglot-java-eclipse-jdt-args '("-Xmx4G"
-;;   ;;                                "--add-modules=ALL-SYSTEM"
-;;   ;;                                "--add-opens"
-;;   ;;                                "java.base/java.util=ALL-UNNAMED"
-;;   ;;                                "--add-opens"
-;;   ;;                                "java.base/java.lang=ALL-UNNAMED"))
-;;   :hook ((java-mode
-;;           java-ts-mode)
-;;          . eglot-java-mode)
-;;   :preface
-;;   :config
-;;   (setq eglot-java-user-init-opts-fn 'beetleman--eglot-java-init-opts))
-(add-hook 'java-ts-mode-hook 'eglot-java-mode)
-
-(add-hook 'eglot-managed-mode-hook
-          (lambda () (eglot-inlay-hints-mode -1)))
-
-;; (add-hook 'java-mode-hook 'eglot-java-mode)
-;; (with-eval-after-load 'eglot-java
-;;   (define-key eglot-java-mode-map (kbd "C-c l n") #'eglot-java-file-new)
-;;   (define-key eglot-java-mode-map (kbd "C-c l x") #'eglot-java-run-main)
-;;   (define-key eglot-java-mode-map (kbd "C-c l t") #'eglot-java-run-test)
-;;   (define-key eglot-java-mode-map (kbd "C-c l N") #'eglot-java-project-new)
-;;   (define-key eglot-java-mode-map (kbd "C-c l T") #'eglot-java-project-build-task)
-;;   (define-key eglot-java-mode-map (kbd "C-c l R") #'eglot-java-project-build-refresh))
-
-;; (use-package! gptel
-;;  :config
-;; )
-;; (gptel-make-gpt4all "GPT4All"           ;Name of your choosing
-;;  :protocol "http"
-;;  :host "localhost:4891"                 ;Where it's running
-;;  :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf"))
-
-;; (setq
-;;  gptel-max-tokens 500
-;;  gptel-model "Meta-Llama-3-8B-Instruct.Q4_0.gguf"
-;;  gptel-backend (gptel-make-gpt4all "GPT4All"
-;;                  :protocol "http"
-;;                  :host "localhost:4891"
-;;                  :models '("Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf" "Meta-Llama-3-8B-Instruct.Q4_0.gguf")))
-;;
-
-(setq custom-safe-themes t)
-;; cycle-themes still calls the old `first' alias, which is not defined by
-;; default on newer Emacs versions.
-(unless (fboundp 'first)
-  (defalias 'first #'car))
-
-(use-package! cycle-themes
-  :ensure t
-  :init
-  (setq custom-safe-themes t)
-  (load-theme 'doom-one-light t nil)
-  (load-theme 'doom-one t nil)
-  (setq cycle-themes-theme-list '(doom-one doom-one-light))
+;; writegood-mode highlights weasel words, passive voice and duplicated words
+;; in prose buffers.
+(use-package! writegood-mode
+  :hook ((text-mode org-mode markdown-mode LaTeX-mode) . writegood-mode)
   :config
-  (cycle-themes-mode))
+  (custom-set-faces!
+    '(writegood-weasels-face       :underline (:style line))
+    '(writegood-passive-voice-face :underline (:style line))
+    '(writegood-duplicates-face    :underline (:style line))))
 
 
-
-(setq-default fill-column 80)
-(setq major-mode-remap-alist major-mode-remap-defaults)
-
-;; Wayland/pgtk optimizations for Nvidia
+;;; Platform (Wayland/pgtk on Nvidia)
 (when (eq window-system 'pgtk)
-  ;; Use native GTK input method support under pgtk
-  (setq x-gtk-use-native-input t)
-  ;; Reduce event loop latency (default is too high on Nvidia/Wayland)
-  (setq pgtk-wait-for-event-timeout 0.001))
+  (setq x-gtk-use-native-input t             ; native GTK input method under pgtk
+        pgtk-wait-for-event-timeout 0.001))  ; lower event-loop latency

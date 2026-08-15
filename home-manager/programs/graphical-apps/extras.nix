@@ -1,10 +1,29 @@
 { pkgs, lib, config, pkgsUnstable, pkgsLmstudio, spektrafilmPackages, ...}:
 
+let
+  # `darktable-spektrafilm-ai` is a symlinkJoin wrapper (it runtime-links the
+  # spektrafilm data pack and AI models) around the real darktable build, which
+  # it exposes through passthru as `.basePackage`. We patch that base to add a
+  # headless `--sync-xmp` mode that reconciles updated XMP sidecars into the
+  # library database without launching the GUI (darktable-headless-xmp-sync.patch).
+  # The data pack and AI models are already linked declaratively via home.file
+  # below, so the runtime wrapper is redundant here and we use the patched base
+  # package directly — one build, used for both the GUI and the sync timer.
+  darktable-xmp-sync =
+    spektrafilmPackages.darktable-spektrafilm-ai.basePackage.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ./darktable-headless-xmp-sync.patch ];
+    });
+in
 {
   home.packages = [
     pkgs.gimp3-with-plugins
+    pkgs.scribus
     pkgs.inkscape
     pkgs.krita
+    # Affinity v3 (unified Photo/Designer/Publisher app) via Wine, from the
+    # affinity-nix overlay. v2 apps also exist as affinity-photo/-designer/
+    # -publisher if ever needed.
+    pkgs.affinity-v3
     pkgs.lutris
     pkgs.gamescope
     pkgs.mangohud
@@ -21,23 +40,74 @@
     pkgsUnstable.freetube
 
     # darktable built from the spektrafilm PR branch (native C spektrafilm
-    # module). Replaces the stock pkgsDarktable.darktable; the runtime data pack
-    # and AI models are linked in via home.file below.
-    spektrafilmPackages.darktable-spektrafilm-ai
+    # module), patched to add the headless `--sync-xmp` mode driven by the
+    # systemd timer below. Replaces the stock pkgsDarktable.darktable; the
+    # runtime data pack and AI models are linked in via home.file below.
+    darktable-xmp-sync
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
+    pkgs.digikam
     pkgs.rapidraw
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
     pkgs.deluge
+
+    # Parabolic (Nickvision Tube Converter) — a GTK GUI over yt-dlp. Unlike the
+    # integrated YouTube-streaming apps (Spotube/Bloomee), which each ship their
+    # own extractor that YouTube keeps breaking, this rides yt-dlp — the one
+    # extractor that is patched within hours of any YouTube change — so it stays
+    # reliable. Paste a track/playlist/album URL; it downloads audio with tags
+    # and cover art to ~/Music, to be played by any local player.
+    pkgs.parabolic
+    pkgs.yt-dlp
+
+    # Elisa — clean, modern KDE/Kirigami music player for the beets-managed
+    # ~/Music (library browser, reads embedded tags/art/synced lyrics). Set as
+    # the default audio handler on these (COSMIC) hosts via xdg.mimeApps below.
+    pkgs.kdePackages.elisa
   ];
 
-  # Film & print data pack for the darktable spektrafilm module. The module
-  # reads pack.json + spectra_lut.f32 + profiles/ from this exact path
-  # (dt_loc_get_user_config_dir()/spektrafilm), so link the pinned pack in.
-  home.file.".config/darktable/spektrafilm".source =
+  # Parabolic's binary/desktop id is `org.nickvision.tubeconverter`; alias the
+  # short name so `parabolic` works in a terminal (the launcher shows "Parabolic").
+  home.shellAliases.parabolic = "org.nickvision.tubeconverter";
+
+  # Make Elisa the default music player. This lives in extras.nix (the default
+  # profile = the COSMIC desktop hosts) rather than the shared home.nix, so the
+  # tablet — which doesn't get Elisa — isn't pointed at a missing handler. The
+  # attrset merges with the (empty) defaultApplications in home.nix. COSMIC reads
+  # the standard XDG mimeapps.list, so this is what its "Default Applications"
+  # resolves to as well.
+  xdg.mimeApps.defaultApplications =
+    let elisa = "org.kde.elisa.desktop";
+    in lib.genAttrs [
+      "audio/mpeg"
+      "audio/mp4"
+      "audio/aac"
+      "audio/flac"
+      "audio/x-flac"
+      "audio/ogg"
+      "audio/x-vorbis+ogg"
+      "audio/opus"
+      "audio/x-opus+ogg"
+      "audio/x-m4a"
+      "audio/wav"
+      "audio/x-wav"
+      "audio/webm"
+      "audio/x-ms-wma"
+      "application/ogg"
+    ] (_: elisa);
+
+  # Film & print data pack for the darktable spektrafilm module. Newer builds
+  # can download this pack from within the UI into
+  # ~/.config/darktable/spektrafilm/packs/<lut_hash>/; we pre-install the pinned
+  # pack at that same hashed path so it works offline with no download, while
+  # leaving spektrafilm/ itself writable so the in-UI downloader still works for
+  # other tables. The resolver (src/common/spektra_fetch.c) picks this up for
+  # both fresh edits and edits recorded with this LUT hash. The hash comes from
+  # the pack derivation so it tracks pack bumps automatically.
+  home.file.".config/darktable/spektrafilm/packs/${spektrafilmPackages.spektrafilm-data-pack.lutHash}".source =
     spektrafilmPackages.spektrafilm-data-pack;
 
   # Offline AI models for darktable's AI modules (denoise / upscale / object
@@ -67,6 +137,78 @@
     fi
   '';
 
+  # ── Why Affinity's scratch folder has to live outside your home ──────────
+  # Affinity is installed read-only in the Nix store. So that it can still
+  # save things (its Wine prefix, settings, activation), affinity-nix stacks
+  # a *writable* folder on top of that read-only install using an "overlay"
+  # mount. By default that writable folder goes in your home:
+  #   ~/.local/share/affinity-v3   (the changes)  = overlay "upperdir"
+  #   ~/.local/state/affinity-v3   (its scratch)  = overlay "workdir"
+  #
+  # The catch: your home is encrypted with ecryptfs, and an overlay mount is
+  # not allowed to keep its writable layer on ecryptfs (that filesystem is
+  # missing features overlayfs needs — trusted xattrs, whiteouts). The kernel
+  # rejects the mount and Affinity dies at launch with a misleading
+  # "Cannot allocate memory (os error 12)". (A machine with an unencrypted
+  # home has no problem — that's why it "just works" elsewhere.)
+  #
+  # Fix: move ONLY those two folders onto the normal, unencrypted btrfs disk
+  # (/var/lib/affinity-nix, created by the tmpfiles rule in
+  # nixos/configuration.nix) and leave a symlink where Affinity looks for
+  # them. What moves out is just a throwaway scratch layer that rebuilds in
+  # seconds — your Affinity *preferences* ($XDG_DATA_HOME/affinity/) and your
+  # saved .afdesign documents still live in your encrypted home. It is the
+  # *filesystem*, not the path, that has to be non-ecryptfs; the symlinks
+  # themselves still sit in ~. If you ever disable home encryption, delete
+  # these two lines (and the tmpfiles rule) to return to the default.
+  home.file.".local/share/affinity-v3".source =
+    config.lib.file.mkOutOfStoreSymlink "/var/lib/affinity-nix/data";
+  home.file.".local/state/affinity-v3".source =
+    config.lib.file.mkOutOfStoreSymlink "/var/lib/affinity-nix/state";
+
+  # Affinity/Wine HiDPI: COSMIC (descale_xwayland=fractional) hands XWayland
+  # clients unscaled pixels and expects them to scale themselves, but Wine only
+  # does that when its registry DPI (LogPixels) is set — default 96 leaves the
+  # UI tiny on a 4K/150% display. Derive the DPI from the largest enabled
+  # output scale in cosmic-comp's state (150% -> 144) and patch it into the
+  # writable Affinity prefix. Runs only when the prefix already exists (first
+  # launch creates it) and Affinity is closed (wineserver rewrites user.reg on
+  # exit, undoing external edits). Re-applies on every switch, so a changed
+  # COSMIC scale is picked up at the next rebuild.
+  home.activation.setAffinityWineDpi = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    outputs_ron="$HOME/.local/state/cosmic-comp/outputs.ron"
+    user_reg="/var/lib/affinity-nix/data/user.reg"
+
+    if [ -f "$outputs_ron" ] && [ -f "$user_reg" ] \
+        && ! ${pkgs.procps}/bin/pgrep -f 'affinity-nix-prefi[x]' >/dev/null; then
+      dpi=$(${pkgs.gawk}/bin/gawk '
+        match($0, /scale: ([0-9.]+)/, m) { if (m[1] + 0 > s) s = m[1] + 0 }
+        END { if (s == 0) s = 1; printf "%d", 96 * s + 0.5 }' "$outputs_ron")
+      hex=$(printf 'dword:%08x' "$dpi")
+
+      if ! ${pkgs.gnugrep}/bin/grep -q "\"LogPixels\"=$hex" "$user_reg"; then
+        # Set LogPixels in both sections wine consults: the canonical
+        # Control Panel\Desktop (what winecfg writes) and the legacy
+        # Software\Wine\Fonts one the base prefix ships with 96 in.
+        ${pkgs.gawk}/bin/gawk -v h1='[Control Panel\\\\Desktop]' \
+          -v h2='[Software\\\\Wine\\\\Fonts]' \
+          -v kv="\"LogPixels\"=$hex" '
+          /^\[/ {
+            if (insec && !seen) print kv
+            insec = (index($0, h1) == 1 || index($0, h2) == 1)
+            seen = 0
+            print; next
+          }
+          insec && /^"LogPixels"=/ { print kv; seen = 1; next }
+          { print }
+          END { if (insec && !seen) print kv }
+        ' "$user_reg" > "$user_reg.hm-tmp"
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/mv "$user_reg.hm-tmp" "$user_reg"
+        ${pkgs.coreutils}/bin/rm -f "$user_reg.hm-tmp"
+      fi
+    fi
+  '';
+
   # Expose the raw-crop fields in the "raw black/white point" module. The
   # sensor holds more pixels than the official camera output (EOS RP:
   # 6264x4180 active area vs 6240x4160 JPEG); with this set the crop is
@@ -88,4 +230,111 @@
       fi
     fi
   '';
+
+  # digiKam metadata settings for darktable interoperability. digiKam does the
+  # local AI auto-tagging and must write those tags into the XMP *sidecar* that
+  # darktable already owns — never into the RAW — using the tag namespaces
+  # darktable reads. digiKam 9.x already writes both Xmp.dc.subject and
+  # Xmp.lr.hierarchicalSubject by default (the two darktable imports), so we only
+  # overlay the handful of keys that differ from digiKam's defaults, via
+  # kwriteconfig6 so digiKam's own state in digikamrc (collections, DB paths, UI)
+  # is preserved. Guarded on digiKam being closed: it rewrites digikamrc from
+  # memory on exit, which would undo an external edit.
+  #
+  #   Save Tags=true                  default is FALSE — digiKam writes no tags
+  #                                   to metadata at all until this is enabled.
+  #   Metadata Writing Mode=1         WRITE_TO_SIDECAR_ONLY: only ever touches
+  #                                   IMG.CR3.xmp, never the original image file.
+  #   Use XMP Sidecar For Reading     read the same sidecars back in digiKam.
+  #   Use Lazy Synchronization=false  write tags to the sidecar immediately, so
+  #                                   the flush is predictable and the "Write
+  #                                   Metadata" action is never greyed by a queue.
+  #
+  # The reverse direction (sidecar -> darktable library.db) is the
+  # darktable-xmp-sync service below, run on demand with the `dt-sync` alias.
+  home.activation.setDigikamMetadata = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/digikamrc"
+    kwriteconfig="${pkgs.kdePackages.kconfig}/bin/kwriteconfig6"
+    # digiKam is a nix-wrapped binary (comm is ".digikam-wrappe"), so `pgrep -x
+    # digikam` never matches a running instance — match the cmdline instead, or
+    # we'd rewrite digikamrc while it's open and it would clobber these keys
+    # again on exit.
+    if ! ${pkgs.procps}/bin/pgrep -f digikam >/dev/null; then
+      set_meta_key() {
+        "$kwriteconfig" --file "$config_file" --group "Metadata Settings" --key "$1" "$2"
+      }
+      set_meta_key "Save Tags"                   "true"
+      set_meta_key "Metadata Writing Mode"       "1"
+      set_meta_key "Use XMP Sidecar For Reading" "true"
+      set_meta_key "Use Lazy Synchronization"    "false"
+
+      # Keep the digiKam databases on the NVMe SSD (~/.local/share/digikam),
+      # NOT on the HDD alongside the 41k RAW files. With both on the spinning
+      # disk, SQLite writes (especially the ~1.2 GB thumbnails DB) thrash the
+      # drive head against the photo reads, dragging scans out for hours.
+      # Only repoint where the photo library actually lives (i.e. bbstation);
+      # the DB files themselves were copied over once by hand.
+      if [ -d /hdd/raw_photos ]; then
+        db_dir="${config.home.homeDirectory}/.local/share/digikam/"
+        for key in "Database Name" "Database Name Face" \
+                   "Database Name Similarity" "Database Name Thumbnails"; do
+          "$kwriteconfig" --file "$config_file" --group "Database Settings" --key "$key" "$db_dir"
+        done
+      fi
+    fi
+  '';
+
+  # Point Parabolic (the yt-dlp GUI) at ~/Music, where beets organizes downloads.
+  # Parabolic (.NET/Nickvision) remembers the last-used save folder in
+  # ~/.config/<AppName>/config.json under the "PreviousSaveFolder" key (default
+  # is ~/Downloads). The config dir name isn't stable across versions, so we find
+  # an existing Parabolic config by that telltale key and patch it; if none
+  # exists yet we create one at the conventional path (a later launch/switch
+  # self-corrects if the name differs). Guarded on Parabolic being closed, since
+  # it rewrites its config from memory on exit.
+  home.activation.setParabolicSaveFolder = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if ! ${pkgs.procps}/bin/pgrep -f 'nickvision.tubeconverter' >/dev/null; then
+      music="${config.home.homeDirectory}/Music"
+      cfg=""
+      for c in "${config.home.homeDirectory}/.config"/*/config.json; do
+        [ -f "$c" ] || continue
+        if ${pkgs.gnugrep}/bin/grep -q PreviousSaveFolder "$c" 2>/dev/null; then cfg="$c"; break; fi
+      done
+      [ -n "$cfg" ] || cfg="${config.home.homeDirectory}/.config/Nickvision Parabolic/config.json"
+      mkdir -p "$(dirname "$cfg")"
+      if [ -f "$cfg" ]; then
+        tmp="$(mktemp)"
+        ${pkgs.jq}/bin/jq --arg f "$music" '.PreviousSaveFolder = $f' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+      else
+        printf '{"PreviousSaveFolder":"%s"}\n' "$music" > "$cfg"
+      fi
+    fi
+  '';
+
+  # Every 4 hours, reconcile updated XMP sidecars (edited on another machine and
+  # synced in) into darktable's library database, headless — replacing the slow
+  # interactive startup crawler (disabled just below). If darktable is open the
+  # library lock is held: `darktable --sync-xmp` then aborts cleanly with exit 75
+  # (EX_TEMPFAIL) and no GUI, which we mark as success so the timer isn't flagged
+  # as failed. The next tick catches everything, so a skipped run is harmless.
+  systemd.user.services.darktable-xmp-sync = {
+    Unit.Description =
+      "Reconcile updated darktable XMP sidecars into the library database";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${darktable-xmp-sync}/bin/darktable --sync-xmp";
+      # 0 = synced; 75 = library locked (darktable open) — both are fine.
+      SuccessExitStatus = "0 75";
+    };
+  };
+
+  systemd.user.timers.darktable-xmp-sync = {
+    Unit.Description = "Periodic darktable XMP -> library DB sync (every 4h)";
+    Timer = {
+      OnBootSec = "15min";
+      OnUnitActiveSec = "4h";
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
 }

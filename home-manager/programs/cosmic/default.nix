@@ -1,6 +1,17 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, lib, ... }:
 
 let
+  # Rosé Pine theme for COSMIC (rose-pine/cosmic-desktop). Stylix has no COSMIC
+  # target, so we apply it declaratively through cosmic-manager: parse the
+  # upstream ThemeBuilder .ron with cosmic-manager's own RON parser and feed it
+  # to appearance.theme. Using fromRON avoids hand-transcribing the palette and
+  # stays faithful to upstream. main = dark (night), dawn = light (day).
+  cosmicLib = import "${inputs.cosmic-manager}/lib/extend-lib.nix" { inherit lib; };
+  rosePineCosmicDark = cosmicLib.cosmic.ron.fromRON
+    (builtins.readFile ./rose-pine-cosmic.ron);
+  rosePineCosmicLight = cosmicLib.cosmic.ron.fromRON
+    (builtins.readFile ./rose-pine-cosmic-light.ron);
+
   # Third-party CLI speaking COSMIC's zcosmic_toplevel_manager protocol.
   # cosmic-comp exposes neither wlr-foreign-toplevel nor a first-party window
   # CLI, so this is the only way to script activate/minimize/sticky.
@@ -23,6 +34,22 @@ let
     ${pkgs.cliphist}/bin/cliphist list \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt "forget> " --width 50 --lines 8 \
       | ${pkgs.cliphist}/bin/cliphist delete
+  '';
+
+  # --- Theme toggle (Super+Alt+T) --------------------------------------------
+
+  # Flip COSMIC between dark (Rosé Pine) and light (Dawn) by rewriting is_dark;
+  # cosmic watches the file and applies it live. is_dark is intentionally NOT
+  # managed declaratively (see the CosmicTheme.Mode comment below), so it stays
+  # writable. Note: with the day/night auto-switch enabled, a manual toggle
+  # lasts until the next sunrise/sunset boundary, when auto takes over again.
+  cosmic-theme-toggle = pkgs.writeShellScriptBin "cosmic-theme-toggle" ''
+    mode_file="$HOME/.config/cosmic/com.system76.CosmicTheme.Mode/v1/is_dark"
+    if [ -f "$mode_file" ] && ${pkgs.gnugrep}/bin/grep -q true "$mode_file"; then
+      printf 'false' > "$mode_file"
+    else
+      printf 'true' > "$mode_file"
+    fi
   '';
 
   # --- Scratchpad chats (Super+Shift+<key>) ---------------------------------
@@ -83,8 +110,89 @@ let
   floatingException = appid: ''(appid: "(?i)${appid}", title: "", enabled: true),'';
 in
 {
-  home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cos-cli ]
+  # Declarative COSMIC config via cosmic-manager. Apply Rosé Pine to the desktop
+  # and COSMIC apps: Main (dark) at night, Dawn (light) during the day.
+  wayland.desktopManager.cosmic = {
+    enable = true;
+    appearance.theme = {
+      # `mode` is intentionally left unset: setting it would hard-write a
+      # static is_dark. Instead we enable COSMIC's native day/night auto
+      # switch below, which flips between these two themes at sunrise/sunset.
+      # window_hint (border/hint around the active window) is set to Love
+      # (#eb6f92) directly in rose-pine-cosmic.ron.
+      dark = rosePineCosmicDark;    # Rosé Pine (night)
+      light = rosePineCosmicLight;  # Rosé Pine Dawn (day)
+    };
+
+    # UI fonts (com.system76.CosmicTk). Inter is designed for screens (the
+    # closest FOSS analog to Apple's SF) and is installed system-wide by
+    # nixos/font-rendering.nix; pin it explicitly rather than relying on
+    # COSMIC's compiled-in default. Monospace matches the terminal font so
+    # cosmic-edit/-term agree.
+    appearance.toolkit = let
+      normal = { __type = "enum"; variant = "Normal"; };
+      font = family: {
+        inherit family;
+        stretch = normal;
+        style = normal;
+        weight = normal;
+      };
+    in {
+      interface_font = font "Inter";
+      monospace_font = font "Hack Nerd Font Mono";
+    };
+
+    # Enable COSMIC's "Auto" appearance mode (follows the day/night cycle).
+    # cosmic-manager only exposes a static dark/light `mode`, so set
+    # `auto_switch` directly on com.system76.CosmicTheme.Mode via its generic
+    # configFile escape hatch.
+    # Only set auto_switch; leave is_dark for COSMIC to compute from the time
+    # of day, so a rebuild doesn't momentarily force one mode.
+    configFile."com.system76.CosmicTheme.Mode" = {
+      version = 1;
+      entries.auto_switch = true;
+    };
+
+    # COSMIC Terminal: font + Rosé Pine colour schemes. syntax_theme_dark /
+    # _light follow the system dark/light mode, so the terminal tracks the
+    # day/night auto switch too (Dawn by day, Main by night). The colour scheme
+    # maps are keyed by an integer ColorSchemeId, which a Nix attrset can't
+    # express, so build them via fromRON on the upstream scheme files.
+    configFile."com.system76.CosmicTerm" = {
+      version = 1;
+      entries = {
+        font_name = "Hack Nerd Font Mono";
+        syntax_theme_dark = "Rosé Pine";
+        syntax_theme_light = "Rosé Pine Dawn";
+        color_schemes_dark = cosmicLib.cosmic.ron.fromRON
+          "{0: ${builtins.readFile ./rose-pine-term-main.ron}}";
+        color_schemes_light = cosmicLib.cosmic.ron.fromRON
+          "{0: ${builtins.readFile ./rose-pine-term-dawn.ron}}";
+      };
+    };
+  };
+
+  home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cosmic-theme-toggle cos-cli ]
     ++ map (chat: chat.toggle) chats;
+
+  # Match GTK apps to the COSMIC interface font. Set here (not in home.nix)
+  # deliberately: this module is only imported by the COSMIC profile, so
+  # bbtablet's GNOME setup keeps Stylix's default sans-serif.
+  stylix.fonts.sansSerif = {
+    package = pkgs.inter;
+    name = "Inter";
+  };
+
+  xdg.configFile."autostart/synology-drive.desktop".text = ''
+    [Desktop Entry]
+    Name=Synology Drive Client
+    Comment=Synology Drive Client
+    Exec=synology-drive autostart
+    Icon=synology-drive
+    Terminal=false
+    Type=Application
+    Categories=Network;FileTransfer;
+  '';
 
   # cliphist watches the clipboard through the Wayland data-control protocol,
   # which cosmic-comp only exposes when COSMIC_DATA_CONTROL_ENABLED=1 (set in
@@ -103,6 +211,12 @@ in
     ];
   };
 
+  # The clipboard-picker / clipboard-forget scripts above display cliphist
+  # through fuzzel (--dmenu). Enable programs.fuzzel so home-manager writes
+  # fuzzel.ini, which Stylix's fuzzel target themes (Rosé Pine); the pickers
+  # read that default config since they pass no --config.
+  programs.fuzzel.enable = true;
+
   # Float-by-default rules ("floating window exceptions"). cosmic-comp watches
   # this file and applies changes live. COSMIC Settings writes the same file
   # from its Windows page; keep new exceptions here instead, or the read-only
@@ -112,6 +226,9 @@ in
         ${builtins.concatStringsSep "\n    " (map floatingException floatingAppIds)}
     ]
   '';
+
+  # (COSMIC Terminal font + colour schemes are managed via cosmic-manager in
+  # the wayland.desktopManager.cosmic block above.)
 
   # COSMIC custom shortcuts: Super+V opens the clipboard history picker,
   # Super+Shift+V opens the forget picker (deletes the chosen entry), and
@@ -134,6 +251,13 @@ in
             ],
             key: "v",
         ): Spawn("${clipboard-forget}/bin/clipboard-forget"),
+        (
+            modifiers: [
+                Super,
+                Alt,
+            ],
+            key: "t",
+        ): Spawn("${cosmic-theme-toggle}/bin/cosmic-theme-toggle"),
         ${builtins.concatStringsSep "\n    " (map chatShortcut chats)}
     }
   '';

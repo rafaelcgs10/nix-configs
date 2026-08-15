@@ -25,16 +25,48 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    emacs-overlay = {
-      url = "github:nix-community/emacs-overlay/9714d18e3b55f61531a42795779a941365cb2588";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/bc85cd944c32b8a1a96452aafdd3a5eb082fa50c";
+    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/d1ff13f11096f3ac8d6043853fbb89146cbed982";
 
     # CLI for COSMIC toplevel management (scratchpad chat toggles).
     # Unofficial but source-reviewed at this pin: no network/exec/fs access.
     cos-cli.url = "github:estin/cos-cli/fe8c52016888302d6239ef53f1dbf876d8552dc2";
+
+    # Stylix: system-wide base16 theming (Rosé Pine) across supported programs
+    # (neovim, fzf, tmux, gtk, qt, btop, fuzzel, opencode, ...).
+    stylix = {
+      url = "github:nix-community/stylix/release-26.05";  # match home-manager
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Packaged Firefox/LibreWolf add-ons (rycee) for declarative installation.
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Declarative COSMIC desktop configuration (used to apply the Rosé Pine
+    # COSMIC theme, since Stylix has no COSMIC target).
+    cosmic-manager = {
+      url = "github:HeitorAugustoLN/cosmic-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
+    # Affinity (Photo/Designer/Publisher) on Wine. Intentionally NOT following
+    # our nixpkgs: the prebuilt closures on cache.forall.systems are built
+    # against the flake's own pin, and overriding it would force a local
+    # wine build.
+    affinity-nix.url = "github:mrshmllow/affinity-nix";
+
+    # Doom Emacs built declaratively (no straight.el, no `doom sync`): the
+    # config in home-manager/programs/doom/doom.d and its whole package set are
+    # bundled into the resulting Emacs package. Only nixpkgs follows ours so
+    # Emacs uses the system libraries. Keep Unstraightened's own emacs-overlay
+    # pin: it supplies the package recipes tested against its pinned Doom inputs.
+    nix-doom-emacs-unstraightened = {
+      url = "github:marienz/nix-doom-emacs-unstraightened";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
@@ -53,6 +85,9 @@
       mkPkgs = system: import nixpkgs {
         inherit system;
         config = nixpkgsConfig;
+        # Affinity via overlay (see note in nixos/configuration.nix) — needed
+        # here too so the standalone homeConfigurations see pkgs.affinity-v3.
+        overlays = [ inputs.affinity-nix.overlays.default ];
       };
 
       mkHomeArgs = system:
@@ -69,12 +104,6 @@
           pkgsDarktable = importWithConfig inputs.nixpkgs-darktable;
           pkgsIsabelle = importWithConfig inputs.nixpkgs-isabelle;
           pkgsLmstudio = importWithConfig inputs.nixpkgs-lmstudio;
-          pkgsEmacs = import nixpkgs {
-            inherit system;
-            config = nixpkgsConfig;
-            overlays = [ inputs.emacs-overlay.overlays.default ];
-          };
-
           plasmaManager = inputs.plasma-manager;
           spektrafilmPackages = inputs.spektrafilm-art-darktable.packages.${system};
         };
@@ -87,6 +116,9 @@
       mkHomeModules = profile: [
         ./home-manager/home.nix
         homeProfiles.${profile}
+        inputs.stylix.homeModules.stylix
+        inputs.cosmic-manager.homeManagerModules.cosmic-manager
+        inputs.nix-doom-emacs-unstraightened.homeModule
       ];
 
       mkHome =
@@ -107,6 +139,52 @@
         home-manager.users.rafael = {
           imports = mkHomeModules profile;
         };
+      };
+
+      cosmicUnstableModule = { ... }: {
+        # Keep the stable NixOS module API, but replace its hard-coded COSMIC
+        # packages as one suite. Importing the unstable module would reference
+        # NixOS options that do not exist on the stable release.
+        nixpkgs.overlays = [
+          (_final: prev:
+            let
+              unstable = import inputs.nixpkgs-unstable {
+                inherit (prev.stdenv.hostPlatform) system;
+                config = nixpkgsConfig;
+              };
+              cosmicPackages = [
+                "cosmic-applets"
+                "cosmic-bg"
+                "cosmic-comp"
+                "cosmic-edit"
+                "cosmic-files"
+                "cosmic-greeter"
+                "cosmic-icons"
+                "cosmic-idle"
+                "cosmic-initial-setup"
+                "cosmic-launcher"
+                "cosmic-notifications"
+                "cosmic-osd"
+                "cosmic-panel"
+                "cosmic-player"
+                "cosmic-randr"
+                "cosmic-reader"
+                "cosmic-screenshot"
+                "cosmic-session"
+                "cosmic-settings"
+                "cosmic-settings-daemon"
+                "cosmic-store"
+                "cosmic-term"
+                "cosmic-wallpapers"
+                "cosmic-workspaces-epoch"
+                "xdg-desktop-portal-cosmic"
+              ];
+            in
+            prev.lib.genAttrs cosmicPackages (name: unstable.${name}) // {
+              # The stable module still uses the old attribute name.
+              cosmic-applibrary = unstable.cosmic-app-library;
+            })
+        ];
       };
 
       mkHost =
@@ -131,9 +209,12 @@
         bbstation = mkHost {
           homeProfile = "default";
           modules = [
+            cosmicUnstableModule
             ./nixos/bbstation/boot-loader.nix
             ./nixos/bbstation/hardware-configuration.nix
             ./nixos/io-performance.nix
+            ./nixos/font-rendering.nix
+            ./nixos/plymouth.nix
           ];
         };
 
@@ -142,15 +223,19 @@
           modules = [
             ./nixos/bbtablet/boot-loader.nix
             ./nixos/bbtablet/hardware-configuration.nix
+            ./nixos/plymouth.nix
           ];
         };
 
         thinkpad-e14 = mkHost {
           homeProfile = "default";
           modules = [
+            cosmicUnstableModule
             ./nixos/thinkpad-e14/boot-loader.nix
             ./nixos/thinkpad-e14/hardware-configuration.nix
             ./nixos/io-performance.nix
+            ./nixos/font-rendering.nix
+            ./nixos/plymouth.nix
           ];
         };
       };
@@ -178,5 +263,12 @@
         };
 
       };
+
+      # Per-project dev shells. Enter with `nix develop .#darktable` or, from a
+      # checkout, `echo 'use flake ~/nix-configs#darktable' > .envrc && direnv allow`.
+      devShells.x86_64-linux.darktable =
+        import ./nix-shells/c++/darktable/shell.nix {
+          pkgs = mkPkgs "x86_64-linux";
+        };
     };
 }

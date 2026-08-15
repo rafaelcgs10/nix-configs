@@ -1,0 +1,13 @@
+# Copy this to `.clangd` at the root of your darktable checkout.
+#
+# Points clangd at the CMake build directory so it finds compile_commands.json
+# without you having to symlink it to the source root.
+CompileFlags:
+  CompilationDatabase: build
+  # darktable is C with some C++; keep clangd from proposing C++-only fixes in .c
+Diagnostics:
+  ClangTidy:
+    Add: [performance-*, bugprone-*]
+    Remove: [bugprone-easily-swappable-parameters]
+Index:
+  Background: Build

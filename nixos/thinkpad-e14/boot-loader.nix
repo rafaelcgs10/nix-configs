@@ -8,6 +8,11 @@
     systemd-boot = {
       enable = true;
 
+      # systemd-boot keeps every generation's kernel + initrd on the ESP
+      # (~25MB each), so an unbounded list eventually fills the partition and
+      # breaks nixos-rebuild. Cap the menu; older generations are pruned on GC.
+      configurationLimit = 10;
+
       windows = {
         "windows" =
           let
@@ -27,5 +32,4 @@
       edk2-uefi-shell.sortKey = "z_edk2";
     };
   };
-  boot.loader.grub.useOSProber = true;
 }

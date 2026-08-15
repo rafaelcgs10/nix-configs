@@ -8,9 +8,10 @@
     ../programs/nvim/default.nix
     ../programs/cosmic/default.nix
     ../programs/jedit/default.nix
-    ../programs/X-themes/default.nix
     ../programs/graphical-apps/default.nix
+    ../programs/music/beets.nix
     ../programs/non-arm/default.nix
     ../programs/wine-apps/default.nix
+    ../programs/nix-configs-autoupdate.nix
   ];
 }

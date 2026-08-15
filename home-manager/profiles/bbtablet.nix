@@ -2,18 +2,15 @@
 
 {
   imports = [
-    # ../programs/xmonad/default.nix
-    # ../programs/hyprland/default.nix
     # Keep this tablet profile intentionally small. The shared language,
     # bundle pulls in a large compiler/TeX stack, which leaves too little
     # headroom for nixos-rebuild switch on the Surface Go SSD.
     ../programs/doom/default.nix
     ../programs/zsh/default.nix
     ../programs/nvim/default.nix
-    ../programs/copyq/default.nix
-    ../programs/X-themes/default.nix
     ../programs/graphical-apps/everyday.nix
     ../programs/non-arm/default.nix
+    ../programs/nix-configs-autoupdate.nix
   ];
 
   home.file.".config/autostart/synology-drive.desktop" = {
