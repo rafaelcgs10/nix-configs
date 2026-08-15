@@ -214,6 +214,7 @@
             ./nixos/bbstation/hardware-configuration.nix
             ./nixos/io-performance.nix
             ./nixos/font-rendering.nix
+            ./nixos/plymouth.nix
           ];
         };
 
@@ -222,6 +223,7 @@
           modules = [
             ./nixos/bbtablet/boot-loader.nix
             ./nixos/bbtablet/hardware-configuration.nix
+            ./nixos/plymouth.nix
           ];
         };
 
@@ -233,6 +235,7 @@
             ./nixos/thinkpad-e14/hardware-configuration.nix
             ./nixos/io-performance.nix
             ./nixos/font-rendering.nix
+            ./nixos/plymouth.nix
           ];
         };
       };
