@@ -36,6 +36,22 @@ let
       | ${pkgs.cliphist}/bin/cliphist delete
   '';
 
+  # --- Theme toggle (Super+Alt+T) --------------------------------------------
+
+  # Flip COSMIC between dark (Rosé Pine) and light (Dawn) by rewriting is_dark;
+  # cosmic watches the file and applies it live. is_dark is intentionally NOT
+  # managed declaratively (see the CosmicTheme.Mode comment below), so it stays
+  # writable. Note: with the day/night auto-switch enabled, a manual toggle
+  # lasts until the next sunrise/sunset boundary, when auto takes over again.
+  cosmic-theme-toggle = pkgs.writeShellScriptBin "cosmic-theme-toggle" ''
+    mode_file="$HOME/.config/cosmic/com.system76.CosmicTheme.Mode/v1/is_dark"
+    if [ -f "$mode_file" ] && ${pkgs.gnugrep}/bin/grep -q true "$mode_file"; then
+      printf 'false' > "$mode_file"
+    else
+      printf 'true' > "$mode_file"
+    fi
+  '';
+
   # --- Scratchpad chats (Super+Shift+<key>) ---------------------------------
 
   # Toggle a chat app like a scratchpad: launch it if not running, minimize it
@@ -156,7 +172,7 @@ in
     };
   };
 
-  home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cos-cli ]
+  home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cosmic-theme-toggle cos-cli ]
     ++ map (chat: chat.toggle) chats;
 
   # Match GTK apps to the COSMIC interface font. Set here (not in home.nix)
@@ -235,6 +251,13 @@ in
             ],
             key: "v",
         ): Spawn("${clipboard-forget}/bin/clipboard-forget"),
+        (
+            modifiers: [
+                Super,
+                Alt,
+            ],
+            key: "t",
+        ): Spawn("${cosmic-theme-toggle}/bin/cosmic-theme-toggle"),
         ${builtins.concatStringsSep "\n    " (map chatShortcut chats)}
     }
   '';
