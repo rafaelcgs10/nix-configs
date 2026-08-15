@@ -197,7 +197,7 @@ in
       # — which would mark the whole switch (and the daily nixos-upgrade) as
       # failed. _netdev alone only orders after network.target.
       mount_opts = "noauto,nofail,x-systemd.automount,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,x-systemd.requires=network-online.target,x-systemd.after=network-online.target";
-    in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" "noserverino" ];
+    in ["${mount_opts},credentials=/run/agenix/smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" "noserverino" ];
   };
 
   # fileSystems."/" =

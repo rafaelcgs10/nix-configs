@@ -67,6 +67,15 @@
       url = "github:marienz/nix-doom-emacs-unstraightened";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # age-encrypted secrets. Secrets are committed encrypted under ./secrets and
+    # decrypted at activation into /run/agenix using each machine's own SSH host
+    # key, so no key material has to be distributed by hand. See secrets/README.
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
@@ -236,6 +245,9 @@
             ./nixos/io-performance.nix
             ./nixos/font-rendering.nix
             ./nixos/plymouth.nix
+            # Only hosts whose key is a recipient in secrets/secrets.nix may
+            # import this; bbstation/bbtablet follow once they are reachable.
+            ./nixos/agenix.nix
           ];
         };
       };

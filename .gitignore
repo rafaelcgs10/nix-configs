@@ -1,2 +1,8 @@
 **/.direnv/*
+
+# Never commit plaintext secrets. agenix's *.age files are encrypted, and its
+# rules/docs contain only public keys, so those are explicitly allowed through.
 **/secrets/*
+!**/secrets/*.age
+!**/secrets/secrets.nix
+!**/secrets/README.md
