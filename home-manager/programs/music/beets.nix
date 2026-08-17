@@ -1,11 +1,18 @@
 { config, lib, pkgs, osConfig ? null, ... }:
 
 # beets — the music library manager that keeps ~/Music organized and tagged.
-# Parabolic (yt-dlp) downloads land as loose files directly in ~/Music; beets
-# fingerprints them (AcoustID/chroma), matches against MusicBrainz, fetches
-# cover art, and MOVES each into ~/Music/<AlbumArtist>/<Album>/… . Only the
-# loose top-level files are imported each run, so the already-organized subtree
-# is never needlessly re-scanned.
+# Parabolic (yt-dlp) downloads into a dedicated STAGING folder, ~/Music/inbox
+# (single tracks land loose; playlists land in per-playlist subfolders). beets
+# imports the inbox RECURSIVELY, fingerprints (AcoustID/chroma), matches against
+# MusicBrainz, embeds art/lyrics/replaygain, and MOVES each track OUT of the
+# inbox into ~/Music/<AlbumArtist>/<Album>/… (singles → ~/Music/Singles/…).
+#
+# Why a separate inbox rather than importing ~/Music directly: if the download
+# folder and the organized library are the same directory, `beet import`
+# re-walks its own moved output every run (the move destinations aren't in
+# beets' incremental history), re-fingerprinting everything endlessly. Keeping
+# the inbox separate means the import source empties as tracks are organized, so
+# nothing is ever analyzed twice.
 #
 # The library database lives OUTSIDE ~/Music (in ~/.local/share/beets) on
 # purpose: it is a SQLite DB and must never be Syncthing-shared — only the
@@ -18,33 +25,120 @@ let
   hostName = if osConfig == null then "" else osConfig.networking.hostName or "";
   isBbstation = hostName == "bbstation";
   musicDir = "${config.home.homeDirectory}/Music";
+  inboxDir = "${musicDir}/inbox";
   beetsData = "${config.home.homeDirectory}/.local/share/beets";
 
-  # The automated importer. Parabolic drops loose files into ~/Music, then yt-dlp
-  # post-processes them (extract audio, embed tags/art). So: (1) if anything at
-  # the top level changed in the last 5 min a download is still in flight — wait
-  # for the next tick; (2) otherwise singleton-import ONLY the loose top-level
-  # audio files (organized tracks already live in subfolders and stay put).
+  # yt-dlp writes the whole YouTube video title into the file's title tag
+  # ("New Slang [OFFICIAL VIDEO]", "Ghost Town [Official HD Remastered Video]"),
+  # and the uploader/channel into the artist tag ("SubPopRecords", "… - Topic").
+  # That promo junk inflates beets' string distance so a CORRECT MusicBrainz
+  # match scores "medium" instead of "strong" — and quiet mode only auto-applies
+  # STRONG matches, so the track is silently dumped as `asis` (untagged). This
+  # pre-import pass rewrites title/artist from the (cleaned) filename so matching
+  # sees "The Shins" / "New Slang", not the video title. It runs over the inbox
+  # right before `beet import`. Conservative: it only rewrites a file when the
+  # name has a clear "Artist - Title" split or when it actually stripped junk —
+  # otherwise the file is left untouched, so already-clean tags aren't clobbered.
+  tagCleanerPy = pkgs.writeText "clean-inbox-tags.py" ''
+    import sys, os, re
+    from mutagen import File
+
+    # Bracketed/parenthesised promo noise that never helps a catalog match.
+    JUNK = re.compile(
+        r"\s*[\(\[]\s*("
+        r"official(\s+(music\s+)?video|\s+audio|\s+lyrics?(\s+video)?)?"
+        r"|lyrics?(\s+video)?|audio|visuali[sz]er|video|hd|4k|hq"
+        r"|remaster(ed)?(\s+\d{4})?|\d{4}\s+remaster|explicit|clean"
+        r"|full\s+album|enhanced[^)\]]*|promo[^)\]]*|colou?r\s+coded[^)\]]*"
+        r")\s*[\)\]]", re.I)
+
+    EXTS = (".mp3", ".m4a", ".opus", ".flac", ".ogg", ".oga", ".webm")
+
+    def clean(stem):
+        n = JUNK.sub("", stem)
+        n = re.sub(r"\s*\|\s*.*$", "", n)      # drop "| Stages"-style tails
+        n = re.sub(r"\s{2,}", " ", n).strip(" -_")
+        return n
+
+    root = sys.argv[1]
+    for dp, _, fns in os.walk(root):
+        for fn in fns:
+            if not fn.lower().endswith(EXTS):
+                continue
+            stem = os.path.splitext(fn)[0]
+            name = clean(stem)
+            base = re.sub(r"\s{2,}", " ", stem).strip()
+            had_junk = name != base
+            if " - " in name:
+                artist, title = (x.strip() for x in name.split(" - ", 1))
+            elif had_junk:
+                artist, title = None, name
+            else:
+                continue                        # nothing to fix; leave as-is
+            p = os.path.join(dp, fn)
+            try:
+                f = File(p, easy=True)
+                if f is None:
+                    continue
+                if title:
+                    f["title"] = [title]
+                if artist:
+                    f["artist"] = [artist]
+                f.save()
+                print("cleaned: %s -> %s / %s" % (fn, artist, title))
+            except Exception as e:                # noqa: BLE001
+                sys.stderr.write("skip %s: %s\n" % (fn, e))
+  '';
+  # mutagen ships with beets, but expose a small env so the cleaner runs
+  # standalone from the import script and the timer's service.
+  tagCleanerEnv = pkgs.python3.withPackages (ps: [ ps.mutagen ]);
+
+  # The `music-import` command (also used by the timer).
+  #   music-import        interactive: review each match, no cleanup.
+  #   music-import -q      hands-off: auto-accept / import-as-is, then DELETE
+  #                        whatever remains in the inbox. After a quiet import
+  #                        with quiet_fallback=asis, beets has imported+moved
+  #                        every track it could — so anything left is a track
+  #                        already in the library (a re-downloaded duplicate) or
+  #                        non-audio cruft (thumbnails, .json). Clearing it drains
+  #                        the inbox so duplicates aren't re-examined next run.
+  # Cleanup runs ONLY in -q mode and ONLY if the import exited 0 (set -e), so a
+  # Ctrl-C or error never deletes anything, and interactively-skipped tracks
+  # (which may be deliberate) are preserved.
+  musicImport = pkgs.writeShellScriptBin "music-import" ''
+    set -eu
+    inbox="${inboxDir}"
+    [ -d "$inbox" ] || exit 0
+    quiet=""
+    [ "''${1:-}" = "-q" ] && quiet="-q"
+    # Clean yt-dlp's polluted title/artist tags so beets can actually match.
+    ${tagCleanerEnv}/bin/python ${tagCleanerPy} "$inbox" || true
+    ${pkgs.beets}/bin/beet import $quiet -s "$inbox"
+    if [ -n "$quiet" ]; then
+      ${pkgs.findutils}/bin/find "$inbox" -mindepth 1 -type f -delete
+      ${pkgs.findutils}/bin/find "$inbox" -mindepth 1 -type d -empty -delete
+    fi
+  '';
+
+  # The timer's entry point: import only once the inbox has settled (nothing
+  # touched for 5 min = no download in flight), then run the hands-off
+  # import+cleanup. Playlist subfolders are handled (beet imports recursively).
   autoImport = pkgs.writeShellScript "beets-autoimport" ''
     set -eu
-    music="${musicDir}"
-    [ -d "$music" ] || exit 0
-    # A download may still be writing — bail if the top level changed recently.
-    if ${pkgs.findutils}/bin/find "$music" -maxdepth 1 -type f -mmin -5 | ${pkgs.gnugrep}/bin/grep -q .; then
+    inbox="${inboxDir}"
+    [ -d "$inbox" ] || exit 0
+    [ -n "$(${pkgs.coreutils}/bin/ls -A "$inbox" 2>/dev/null)" ] || exit 0
+    if ${pkgs.findutils}/bin/find "$inbox" -type f -mmin -5 | ${pkgs.gnugrep}/bin/grep -q .; then
       exit 0
     fi
-    # Import just the loose top-level audio files (--no-run-if-empty = no-op when none).
-    ${pkgs.findutils}/bin/find "$music" -maxdepth 1 -type f \
-      \( -iname '*.mp3' -o -iname '*.m4a' -o -iname '*.opus' -o -iname '*.flac' \
-         -o -iname '*.ogg' -o -iname '*.webm' -o -iname '*.aac' -o -iname '*.wav' \) \
-      -print0 | ${pkgs.findutils}/bin/xargs -0 --no-run-if-empty ${pkgs.beets}/bin/beet import -qs
+    exec ${musicImport}/bin/music-import -q
   '';
 in
 {
   # fpcalc (from chromaprint) is the fingerprinter the `chroma` plugin shells out
   # to, and ffmpeg is the `replaygain` loudness backend — both must be on PATH
   # for interactive and automated import.
-  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg ];
+  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg musicImport ];
 
   programs.beets = {
     enable = true;
@@ -62,7 +156,7 @@ in
       };
 
       import = {
-        move = true;        # move the loose file into the organized tree
+        move = true;        # move out of the inbox into the organized tree
         write = true;       # write corrected tags back into the file
         resume = true;
         incremental = true; # remember imported dirs, skip them next run
@@ -77,46 +171,46 @@ in
       # MUST be listed or nothing matches. `chroma` (AcoustID fingerprinting)
       # only produces candidates when `musicbrainz` is on, and rescues rips
       # whose durations differ from the release. Matching is tuned to accept:
-      #   strong_rec_thresh 0.10  auto-accept looser matches in -q (default 0.04)
+      #   strong_rec_thresh 0.20  auto-accept medium-strength matches in -q
+      #                           (default 0.04). Raised from 0.10: yt-dlp rips
+      #                           of a slightly different edit/remaster land in
+      #                           the 0.10-0.20 band, and with the tag cleaner
+      #                           feeding clean artist/title + AcoustID backing,
+      #                           these are almost always the right recording —
+      #                           so auto-apply them instead of dumping to asis.
       #   track_length 0.3        a padded duration shouldn't sink a clear match
       match = {
-        strong_rec_thresh = 0.10;
+        strong_rec_thresh = 0.20;
         medium_rec_thresh = 0.30;
         distance_weights.track_length = 0.3;
       };
 
       plugins = "musicbrainz chroma fetchart embedart lyrics lastgenre scrub replaygain duplicates";
 
-      # Everything below is written INTO the file tags (import.write = true above),
-      # so Strawberry and any other player read it directly — nothing is locked in
-      # a beets-only store. Cover art is additionally saved as a per-album cover
-      # file, which players also use for folder thumbnails.
+      # Everything below is written INTO the file tags (import.write = true), so
+      # Strawberry/Elisa and any other player read it directly — nothing is
+      # locked in a beets-only store. Cover art is also saved as a per-album file
+      # for folder thumbnails.
       fetchart = {
         auto = true;
-        maxwidth = 1200;                     # fetch large art, then embed/store
+        maxwidth = 1200;
         cover_names = "cover front folder album";
       };
-      embedart.auto = true;                  # embed the art into each track
+      embedart.auto = true;
 
       lastgenre = {
         auto = true;
-        count = 3;                           # up to 3 genres
+        count = 3;
       };
 
       lyrics = {
         auto = true;
-        synced = true;                       # prefer time-synced (LRC) lyrics from
-                                             # LRCLIB — Strawberry shows these as a
-                                             # scrolling/karaoke view. Embedded in
-                                             # the file's lyrics tag on write.
+        synced = true;
         # LRCLIB only: free, no API key, no rate limits, and the source that
-        # actually provides synced lyrics. Genius was dropped — without a paid
-        # API key it throttles every request with HTTP 429.
+        # provides synced lyrics. Genius throttles every request with HTTP 429.
         sources = "lrclib";
       };
 
-      # Loudness normalization tags (ReplayGain), computed via ffmpeg's ebur128.
-      # Strawberry (and most players) use these to even out volume across tracks.
       replaygain = {
         auto = true;
         backend = "ffmpeg";
@@ -125,24 +219,22 @@ in
   };
 
   home.shellAliases = {
-    # Manual imports of ~/Music. Downloads are mostly loose singles, so the
-    # default is SINGLETON mode (-s). `music-import` reviews each match
-    # interactively; `-auto` is the hands-off variant the timer runs;
-    # `music-import-album` groups a folder as one album for a full-album drop.
-    music-import = "beet import -s ${musicDir}";
-    music-import-auto = "beet import -qs ${musicDir}";
-    music-import-album = "beet import ${musicDir}";
+    # `music-import` (interactive, no delete) is the command installed above.
+    # `music-import-auto` is the hands-off variant: import + drain the inbox
+    # (delete already-in-library duplicates and cruft). `music-inbox` lists it.
+    music-import-auto = "music-import -q";
+    music-inbox = "ls -la ${inboxDir}";
   };
 
-  # Make sure ~/Music exists so Parabolic can write downloads into it.
-  home.activation.ensureMusicDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    mkdir -p ${musicDir}
+  # Make sure the inbox exists so Parabolic can write downloads into it.
+  home.activation.ensureMusicInbox = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    mkdir -p ${inboxDir}
   '';
 
   # bbstation owns automatic import: a timer ticks every 10 minutes and the
-  # service imports only settled loose downloads (nothing touched for 5 min).
+  # service imports only a settled inbox (nothing touched for 5 min).
   systemd.user.services.beets-autoimport = lib.mkIf isBbstation {
-    Unit.Description = "Import & organize settled downloads in ~/Music via beets";
+    Unit.Description = "Import & organize settled downloads from ~/Music/inbox via beets";
     Service = {
       Type = "oneshot";
       # beet shells out to fpcalc (chromaprint) and ffmpeg (replaygain).
@@ -152,7 +244,7 @@ in
   };
 
   systemd.user.timers.beets-autoimport = lib.mkIf isBbstation {
-    Unit.Description = "Periodically import settled ~/Music downloads";
+    Unit.Description = "Periodically import settled ~/Music/inbox downloads";
     Timer = {
       OnBootSec = "5min";
       OnUnitActiveSec = "10min";
