@@ -229,7 +229,8 @@ let
   # partial playlist and skip what's already organized), --continue/--retries. It
   # also skips items longer than MUSIC_DL_MAX_SECS (default 2 h; --no-limit or
   # MUSIC_DL_MAX_SECS=0 disables it) and collapses endless YouTube radio mixes
-  # (list=RD…) to just their seed track — see below.
+  # (list=RD…) to just their seed track, unless --mix[=N] is given to grab the
+  # first N of the mix — see below.
   #
   # YouTube now 403s ANONYMOUS media requests (the mid-2026 "PO token" wall), so
   # yt-dlp authenticates using the logged-in LibreWolf profile's cookies — the
@@ -251,18 +252,24 @@ let
     # for yt-dlp. --no-limit (aliases -A / --full) drops the max-duration filter
     # for this run, so items of ANY length download.
     no_limit=0
+    mix=0
+    mix_max="''${MUSIC_DL_MIX_MAX:-50}"
     urls=()
     for a in "$@"; do
       case "$a" in
         --no-limit|--full|-A) no_limit=1 ;;
+        --mix) mix=1 ;;
+        --mix=*) mix=1; mix_max="''${a#--mix=}" ;;
         *) urls+=("$a") ;;
       esac
     done
     set -- "''${urls[@]}"
+    case "$mix_max" in ""|*[!0-9]*) mix_max=50 ;; esac
 
     if [ "$#" -lt 1 ]; then
-      echo "usage: music-dl [--no-limit] <url> [url...]   # download + organize into ~/Music" >&2
+      echo "usage: music-dl [--no-limit] [--mix[=N]] <url> [url...]   # download + organize into ~/Music" >&2
       echo "       --no-limit (-A, --full)   download items of any length (ignore the max-duration filter)" >&2
+      echo "       --mix[=N]                 for a YouTube radio/mix (list=RD…), grab the first N items (default 50)" >&2
       exit 2
     fi
 
@@ -315,8 +322,13 @@ let
     pl_args=()
     case " $* " in
       *"list=RD"*|*"start_radio=1"*)
-        pl_args=(--no-playlist)
-        echo "music-dl: YouTube radio/mix detected — downloading only the seed track, not the endless mix." >&2
+        if [ "$mix" -eq 1 ]; then
+          pl_args=(--yes-playlist --playlist-items "1:$mix_max")
+          echo "music-dl: YouTube radio/mix — downloading the first $mix_max items (--mix)." >&2
+        else
+          pl_args=(--no-playlist)
+          echo "music-dl: YouTube radio/mix detected — downloading only the seed track (the mix is auto-generated and endless). Pass --mix (or --mix=N) to grab the first $mix_max instead." >&2
+        fi
         ;;
     esac
 
