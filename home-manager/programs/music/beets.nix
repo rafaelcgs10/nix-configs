@@ -233,11 +233,13 @@ let
   # YouTube now 403s ANONYMOUS media requests (the mid-2026 "PO token" wall), so
   # yt-dlp authenticates using the logged-in LibreWolf profile's cookies — the
   # one reliable user-side bypass (a newer yt-dlp does NOT help; even the current
-  # release 403s without cookies). This is BEST-EFFORT: if no browser profile is
-  # found we still attempt the download anonymously (and say so) rather than
-  # failing outright — plenty of non-YouTube sources need no auth. Override the
-  # cookie source with MUSIC_DL_COOKIES set to a yt-dlp --cookies-from-browser
-  # spec, e.g. MUSIC_DL_COOKIES=chromium or MUSIC_DL_COOKIES=firefox:/path/to/profile.
+  # release 403s without cookies). YouTube also ROTATES those cookies mid-batch,
+  # invalidating yt-dlp's snapshot; the download loop handles that by re-reading
+  # the browser's fresh cookies and resuming (see below). This is BEST-EFFORT: if
+  # no browser profile is found we still attempt the download anonymously (and say
+  # so) rather than failing outright — plenty of non-YouTube sources need no auth.
+  # Override with MUSIC_DL_COOKIES = a cookies.txt path OR a --cookies-from-browser
+  # spec (e.g. MUSIC_DL_COOKIES=chromium or firefox:/path/to/profile).
   musicDl = pkgs.writeShellScriptBin "music-dl" ''
     set -eu
     inbox="${inboxDir}"
@@ -271,8 +273,7 @@ let
       echo "music-dl: using exported cookies file ($cookie_file)"
     elif [ -d "$librewolf" ]; then
       cookie_args=(--cookies-from-browser "firefox:$librewolf")
-      echo "music-dl: authenticating with LibreWolf cookies ($librewolf)."
-      echo "music-dl: NOTE if YouTube reports invalid/rotated cookies mid-run, export a cookies.txt from a PRIVATE window to $cookie_file (yt-dlp wiki: Exporting YouTube cookies) — it won't rotate." >&2
+      echo "music-dl: authenticating with LibreWolf cookies ($librewolf). If YouTube rotates them mid-batch, the download loop below re-reads fresh cookies and resumes automatically — keep LibreWolf open and logged in. (For a hands-off setup, drop a cookies.txt at $cookie_file.)"
     else
       echo "music-dl: WARNING no cookies — downloading anonymously; YouTube may return HTTP 403. Provide $cookie_file or set MUSIC_DL_COOKIES." >&2
     fi
@@ -298,29 +299,72 @@ let
         ;;
     esac
 
-    # "''${cookie_args[@]}" expands to zero words when empty (bash [@] rule), so
-    # the anonymous path passes no stray argument. || true keeps a partial
-    # playlist (some entries failed) from aborting before the import step.
-    ${pkgs.yt-dlp}/bin/yt-dlp \
-      "''${cookie_args[@]}" \
-      "''${filter_args[@]}" \
-      "''${pl_args[@]}" \
-      --ignore-errors \
-      --no-abort-on-error \
-      --continue \
-      --retries 10 \
-      --fragment-retries 10 \
-      --concurrent-fragments 4 \
-      --download-archive "$data/yt-dlp-archive.txt" \
-      --ffmpeg-location ${pkgs.ffmpeg}/bin \
-      --extract-audio \
-      --audio-quality 0 \
-      --embed-thumbnail \
-      --embed-metadata \
-      --paths "$inbox" \
-      --output "%(title)s.%(ext)s" \
-      --exec "after_move:${musicImportOne}/bin/music-import-one %(filepath)q" \
-      "$@" || true
+    # Download with automatic recovery from cookie rotation. YouTube periodically
+    # rotates the account cookies in the browser as a security measure, which
+    # invalidates the snapshot yt-dlp read at startup — the rest of a long batch
+    # then 403s. But the BROWSER now holds the fresh, valid cookies, so we just
+    # re-run: --cookies-from-browser re-reads them, and --download-archive makes
+    # the rerun skip everything already fetched and resume where it stopped. Loop
+    # until a clean run, or until a whole attempt downloads NOTHING new (genuinely
+    # dead cookies / network / all-unavailable — no point spinning). "$@" and the
+    # arg arrays expand to zero words when empty (bash [@] rule).
+    archive="$data/yt-dlp-archive.txt"
+    attempt=0
+    max_attempts=8
+    while :; do
+      attempt=$((attempt + 1))
+      before=$(${pkgs.coreutils}/bin/wc -l < "$archive" 2>/dev/null || echo 0)
+
+      set +e
+      ${pkgs.yt-dlp}/bin/yt-dlp \
+        "''${cookie_args[@]}" \
+        "''${filter_args[@]}" \
+        "''${pl_args[@]}" \
+        --ignore-errors \
+        --no-abort-on-error \
+        --continue \
+        --retries 10 \
+        --fragment-retries 10 \
+        --concurrent-fragments 4 \
+        --download-archive "$archive" \
+        --ffmpeg-location ${pkgs.ffmpeg}/bin \
+        --extract-audio \
+        --audio-quality 0 \
+        --embed-thumbnail \
+        --embed-metadata \
+        --paths "$inbox" \
+        --output "%(title)s.%(ext)s" \
+        --exec "after_move:${musicImportOne}/bin/music-import-one %(filepath)q" \
+        "$@"
+      rc=$?
+      set -e
+
+      # rc 0 = yt-dlp finished with no errors → done.
+      if [ "$rc" -eq 0 ]; then
+        break
+      fi
+
+      after=$(${pkgs.coreutils}/bin/wc -l < "$archive" 2>/dev/null || echo 0)
+      if [ "$attempt" -ge "$max_attempts" ]; then
+        echo "music-dl: still failing after $attempt attempts — stopping (already-downloaded tracks are kept; rerun later to resume)." >&2
+        break
+      fi
+      if [ "$after" -gt "$before" ]; then
+        # Progress was made, then it broke → classic mid-batch cookie rotation.
+        # Pause a moment for the browser to settle, then resume with fresh cookies.
+        got=$((after - before))
+        echo "music-dl: attempt $attempt downloaded $got track(s) then failed (likely YouTube rotated the cookies). Re-reading fresh cookies and resuming…" >&2
+        ${pkgs.coreutils}/bin/sleep 5
+        continue
+      fi
+      # No progress at all this attempt.
+      if [ "$attempt" -ge 2 ]; then
+        echo "music-dl: no tracks downloaded across $attempt attempts — the cookies are probably invalid. Log into YouTube in LibreWolf, or provide $cookie_file (see the cookies.txt note above)." >&2
+        break
+      fi
+      echo "music-dl: first attempt failed with no downloads; re-reading cookies and retrying once…" >&2
+      ${pkgs.coreutils}/bin/sleep 5
+    done
 
     # Each track was already imported as it finished (the --exec hook above), so
     # this final pass just mops up: import any straggler beets couldn't take
