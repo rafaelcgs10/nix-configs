@@ -120,32 +120,54 @@ let
     fi
   '';
 
-  # `music-dl <url>...` — a robust, headless replacement for the Parabolic GUI.
-  # Parabolic (a GTK front-end over this same yt-dlp) tends to freeze/crash and,
-  # worst of all, aborts a whole PLAYLIST when one entry is deleted/geo-blocked/
-  # private — so you silently lose the rest. This wrapper drives yt-dlp directly
-  # into the SAME ~/Music/inbox staging folder beets watches, so the downstream
-  # pipeline is identical; only the front-end changes. The robustness knobs:
-  #   --ignore-errors / --no-abort-on-error  a dead entry is skipped, not fatal —
-  #                        the rest of the playlist still downloads.
-  #   --download-archive   records every completed video id; re-running the same
-  #                        playlist URL grabs only what's still missing (resume a
-  #                        flaky download) and never re-fetches what beets already
-  #                        organized. Delete a line to force a re-download.
-  #   --continue / --retries / --fragment-retries  survive dropped connections.
-  # Audio is extracted WITHOUT re-encoding (native opus/m4a → best quality), with
-  # the thumbnail and source metadata embedded as a fallback for beets. Files land
-  # flat in the inbox named "%(title)s.ext"; the tag-cleaner + beets do the rest.
+  # `music-dl <url>...` — ONE command that downloads AND organizes. It fetches
+  # audio with yt-dlp into ~/Music/inbox, then immediately runs the beets import
+  # (tag-clean → MusicBrainz match → art/lyrics/replaygain → move into the
+  # library), so a single invocation turns a URL into a fully-tagged track under
+  # ~/Music/…. Handles single videos, playlists and albums (yt-dlp recurses).
+  #
+  # It replaces the flaky Parabolic GUI, which freezes/crashes and aborts a whole
+  # PLAYLIST on one dead entry. Robustness knobs: --ignore-errors/--no-abort-on-
+  # error (skip a dead entry, keep going), --download-archive (re-run to resume a
+  # partial playlist and skip what's already organized), --continue/--retries.
+  #
+  # YouTube now 403s ANONYMOUS media requests (the mid-2026 "PO token" wall), so
+  # yt-dlp authenticates using the logged-in LibreWolf profile's cookies — the
+  # one reliable user-side bypass (a newer yt-dlp does NOT help; even the current
+  # release 403s without cookies). This is BEST-EFFORT: if no browser profile is
+  # found we still attempt the download anonymously (and say so) rather than
+  # failing outright — plenty of non-YouTube sources need no auth. Override the
+  # cookie source with MUSIC_DL_COOKIES set to a yt-dlp --cookies-from-browser
+  # spec, e.g. MUSIC_DL_COOKIES=chromium or MUSIC_DL_COOKIES=firefox:/path/to/profile.
   musicDl = pkgs.writeShellScriptBin "music-dl" ''
     set -eu
     inbox="${inboxDir}"
     data="${beetsData}"
     mkdir -p "$inbox" "$data"
     if [ "$#" -lt 1 ]; then
-      echo "usage: music-dl <url> [url...]   # downloads audio into ${inboxDir}" >&2
+      echo "usage: music-dl <url> [url...]   # download + organize into ~/Music" >&2
       exit 2
     fi
-    exec ${pkgs.yt-dlp}/bin/yt-dlp \
+
+    # Choose a cookie source so authenticated requests clear YouTube's 403 wall.
+    # Explicit override wins; else the LibreWolf profile if present; else none.
+    cookie_args=()
+    librewolf="${config.home.homeDirectory}/.librewolf"
+    if [ -n "''${MUSIC_DL_COOKIES:-}" ]; then
+      cookie_args=(--cookies-from-browser "''${MUSIC_DL_COOKIES}")
+      echo "music-dl: authenticating with cookies from ''${MUSIC_DL_COOKIES}"
+    elif [ -d "$librewolf" ]; then
+      cookie_args=(--cookies-from-browser "firefox:$librewolf")
+      echo "music-dl: authenticating with LibreWolf cookies ($librewolf)"
+    else
+      echo "music-dl: WARNING no browser profile for cookies — downloading anonymously; YouTube may return HTTP 403. Set MUSIC_DL_COOKIES=<browser> to authenticate." >&2
+    fi
+
+    # "''${cookie_args[@]}" expands to zero words when empty (bash [@] rule), so
+    # the anonymous path passes no stray argument. || true keeps a partial
+    # playlist (some entries failed) from aborting before the import step.
+    ${pkgs.yt-dlp}/bin/yt-dlp \
+      "''${cookie_args[@]}" \
       --ignore-errors \
       --no-abort-on-error \
       --continue \
@@ -160,7 +182,12 @@ let
       --embed-metadata \
       --paths "$inbox" \
       --output "%(title)s.%(ext)s" \
-      "$@"
+      "$@" || true
+
+    # Organize everything just downloaded: clean tags, match+tag with beets, and
+    # move each track out of the inbox into the library (also drains leftover
+    # thumbnails/cruft from failed entries).
+    exec ${musicImport}/bin/music-import -q
   '';
 
   # The timer's entry point: import only once the inbox has settled (nothing
