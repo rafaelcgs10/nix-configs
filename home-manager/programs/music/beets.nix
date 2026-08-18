@@ -101,6 +101,75 @@ let
   # standalone from the import script and the timer's service.
   tagCleanerEnv = pkgs.python3.withPackages (ps: [ ps.mutagen ]);
 
+  # beets embeds synced lyrics INTO each file (USLT/LYRICS tag), which Elisa
+  # reads directly — but phones and other players often want a portable ".lrc"
+  # sidecar next to the audio. This exporter reads the embedded lyrics and, when
+  # they're SYNCED (contain [mm:ss] timestamps), writes "<track>.lrc" beside the
+  # file. Idempotent: it skips any track that already has a .lrc, so re-running
+  # over the whole library only touches new/changed tracks. Plain (un-timestamped)
+  # lyrics are left embedded-only — a sidecar without timings adds nothing.
+  lrcSyncPy = pkgs.writeText "lrc-sync.py" ''
+    import sys, os, re
+    from mutagen import File
+
+    EXTS = (".mp3", ".m4a", ".mp4", ".aac", ".opus", ".flac", ".ogg", ".oga")
+    TS = re.compile(r"\[\d{1,2}:\d{2}(?:[.:]\d{1,3})?\]")   # an LRC timestamp
+
+    def lyrics_of(f):
+        tags = getattr(f, "tags", None)
+        if not tags:
+            return None
+        keys = list(tags.keys())
+        for k in keys:                       # ID3 (un)synced lyrics frame
+            if str(k).upper().startswith("USLT"):
+                fr = tags[k]
+                return str(getattr(fr, "text", fr))
+        for k in keys:                       # vorbis LYRICS, mp4 \xa9lyr, etc.
+            if "LYR" in str(k).upper():
+                v = tags[k]
+                if isinstance(v, list):
+                    v = v[0] if v else ""
+                return str(v)
+        return None
+
+    def handle(p):
+        if os.path.splitext(p)[1].lower() not in EXTS:
+            return
+        lrc = os.path.splitext(p)[0] + ".lrc"
+        if os.path.exists(lrc):
+            return
+        try:
+            f = File(p)
+        except Exception:
+            return
+        lyr = lyrics_of(f)
+        if not lyr or not TS.search(lyr):
+            return                           # no synced lyrics -> no sidecar
+        try:
+            with open(lrc, "w", encoding="utf-8") as out:
+                out.write(lyr.strip() + "\n")
+            print("lrc: %s" % os.path.basename(lrc))
+        except Exception as e:               # noqa: BLE001
+            sys.stderr.write("skip %s: %s\n" % (lrc, e))
+
+    for arg in sys.argv[1:] or ["."]:
+        if os.path.isfile(arg):
+            handle(arg)
+        elif os.path.isdir(arg):
+            for dp, _, fns in os.walk(arg):
+                for fn in fns:
+                    handle(os.path.join(dp, fn))
+  '';
+
+  # `music-lrc-sync [path]` — export .lrc sidecars for a file/dir (default: the
+  # whole library). Wired into both import paths so new tracks get a sidecar.
+  lrcSync = pkgs.writeShellScriptBin "music-lrc-sync" ''
+    set -eu
+    root="''${1:-${musicDir}}"
+    [ -e "$root" ] || exit 0
+    ${tagCleanerEnv}/bin/python ${lrcSyncPy} "$root"
+  '';
+
   # The `music-import` command (also used by the timer).
   #   music-import        interactive: review each match, no cleanup.
   #   music-import -q      hands-off: auto-accept / import-as-is, then DELETE
@@ -126,6 +195,8 @@ let
       ${pkgs.findutils}/bin/find "$inbox" -mindepth 1 -type f -delete
       ${pkgs.findutils}/bin/find "$inbox" -mindepth 1 -type d -empty -delete
     fi
+    # Export .lrc lyric sidecars for anything newly organized.
+    ${lrcSync}/bin/music-lrc-sync "${musicDir}" || true
   '';
 
   # `music-import-one <file>` — import a SINGLE just-downloaded track. music-dl
@@ -141,6 +212,8 @@ let
     [ -f "$f" ] || exit 0
     ${tagCleanerEnv}/bin/python ${tagCleanerPy} "$f" || true
     ${pkgs.beets}/bin/beet import -q -s "$f" || true
+    # Export a .lrc lyric sidecar for the track just organized.
+    ${lrcSync}/bin/music-lrc-sync "${musicDir}" || true
   '';
 
   # `music-dl <url>...` — ONE command that downloads AND organizes. It fetches
@@ -176,17 +249,32 @@ let
     fi
 
     # Choose a cookie source so authenticated requests clear YouTube's 403 wall.
-    # Explicit override wins; else the LibreWolf profile if present; else none.
+    # Preference: explicit override > an exported cookies.txt > LibreWolf profile
+    # > anonymous. A cookies.txt is the ROBUST option: YouTube ROTATES and
+    # invalidates cookies read live from a logged-in browser (yt-dlp then 403s
+    # partway through a batch, warning "cookies are no longer valid"), whereas a
+    # file exported from a PRIVATE window that is then closed stays valid. See the
+    # yt-dlp wiki "Exporting YouTube cookies" and drop the file at $cookie_file.
+    # MUSIC_DL_COOKIES may be a cookies.txt path OR a --cookies-from-browser spec.
     cookie_args=()
+    cookie_file="${config.home.homeDirectory}/.config/yt-dlp/cookies.txt"
     librewolf="${config.home.homeDirectory}/.librewolf"
     if [ -n "''${MUSIC_DL_COOKIES:-}" ]; then
-      cookie_args=(--cookies-from-browser "''${MUSIC_DL_COOKIES}")
-      echo "music-dl: authenticating with cookies from ''${MUSIC_DL_COOKIES}"
+      if [ -f "''${MUSIC_DL_COOKIES}" ]; then
+        cookie_args=(--cookies "''${MUSIC_DL_COOKIES}")
+      else
+        cookie_args=(--cookies-from-browser "''${MUSIC_DL_COOKIES}")
+      fi
+      echo "music-dl: using cookies from ''${MUSIC_DL_COOKIES}"
+    elif [ -f "$cookie_file" ]; then
+      cookie_args=(--cookies "$cookie_file")
+      echo "music-dl: using exported cookies file ($cookie_file)"
     elif [ -d "$librewolf" ]; then
       cookie_args=(--cookies-from-browser "firefox:$librewolf")
-      echo "music-dl: authenticating with LibreWolf cookies ($librewolf)"
+      echo "music-dl: authenticating with LibreWolf cookies ($librewolf)."
+      echo "music-dl: NOTE if YouTube reports invalid/rotated cookies mid-run, export a cookies.txt from a PRIVATE window to $cookie_file (yt-dlp wiki: Exporting YouTube cookies) — it won't rotate." >&2
     else
-      echo "music-dl: WARNING no browser profile for cookies — downloading anonymously; YouTube may return HTTP 403. Set MUSIC_DL_COOKIES=<browser> to authenticate." >&2
+      echo "music-dl: WARNING no cookies — downloading anonymously; YouTube may return HTTP 403. Provide $cookie_file or set MUSIC_DL_COOKIES." >&2
     fi
 
     # Skip absurdly long items — a "song" is short; 10-hour lofi streams and DJ
@@ -258,7 +346,7 @@ in
   # fpcalc (from chromaprint) is the fingerprinter the `chroma` plugin shells out
   # to, and ffmpeg is the `replaygain` loudness backend — both must be on PATH
   # for interactive and automated import.
-  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg pkgs.yt-dlp musicImport musicImportOne musicDl ];
+  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg pkgs.yt-dlp musicImport musicImportOne musicDl lrcSync ];
 
   programs.beets = {
     enable = true;
