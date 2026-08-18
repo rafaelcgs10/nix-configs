@@ -120,6 +120,49 @@ let
     fi
   '';
 
+  # `music-dl <url>...` — a robust, headless replacement for the Parabolic GUI.
+  # Parabolic (a GTK front-end over this same yt-dlp) tends to freeze/crash and,
+  # worst of all, aborts a whole PLAYLIST when one entry is deleted/geo-blocked/
+  # private — so you silently lose the rest. This wrapper drives yt-dlp directly
+  # into the SAME ~/Music/inbox staging folder beets watches, so the downstream
+  # pipeline is identical; only the front-end changes. The robustness knobs:
+  #   --ignore-errors / --no-abort-on-error  a dead entry is skipped, not fatal —
+  #                        the rest of the playlist still downloads.
+  #   --download-archive   records every completed video id; re-running the same
+  #                        playlist URL grabs only what's still missing (resume a
+  #                        flaky download) and never re-fetches what beets already
+  #                        organized. Delete a line to force a re-download.
+  #   --continue / --retries / --fragment-retries  survive dropped connections.
+  # Audio is extracted WITHOUT re-encoding (native opus/m4a → best quality), with
+  # the thumbnail and source metadata embedded as a fallback for beets. Files land
+  # flat in the inbox named "%(title)s.ext"; the tag-cleaner + beets do the rest.
+  musicDl = pkgs.writeShellScriptBin "music-dl" ''
+    set -eu
+    inbox="${inboxDir}"
+    data="${beetsData}"
+    mkdir -p "$inbox" "$data"
+    if [ "$#" -lt 1 ]; then
+      echo "usage: music-dl <url> [url...]   # downloads audio into ${inboxDir}" >&2
+      exit 2
+    fi
+    exec ${pkgs.yt-dlp}/bin/yt-dlp \
+      --ignore-errors \
+      --no-abort-on-error \
+      --continue \
+      --retries 10 \
+      --fragment-retries 10 \
+      --concurrent-fragments 4 \
+      --download-archive "$data/yt-dlp-archive.txt" \
+      --ffmpeg-location ${pkgs.ffmpeg}/bin \
+      --extract-audio \
+      --audio-quality 0 \
+      --embed-thumbnail \
+      --embed-metadata \
+      --paths "$inbox" \
+      --output "%(title)s.%(ext)s" \
+      "$@"
+  '';
+
   # The timer's entry point: import only once the inbox has settled (nothing
   # touched for 5 min = no download in flight), then run the hands-off
   # import+cleanup. Playlist subfolders are handled (beet imports recursively).
@@ -138,7 +181,7 @@ in
   # fpcalc (from chromaprint) is the fingerprinter the `chroma` plugin shells out
   # to, and ffmpeg is the `replaygain` loudness backend — both must be on PATH
   # for interactive and automated import.
-  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg musicImport ];
+  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg pkgs.yt-dlp musicImport musicDl ];
 
   programs.beets = {
     enable = true;
@@ -219,6 +262,8 @@ in
   };
 
   home.shellAliases = {
+    # `music-dl <url>...` (installed above) is the robust downloader that replaces
+    # the Parabolic GUI — it writes into the same inbox beets watches.
     # `music-import` (interactive, no delete) is the command installed above.
     # `music-import-auto` is the hands-off variant: import + drain the inbox
     # (delete already-in-library duplicates and cruft). `music-inbox` lists it.
