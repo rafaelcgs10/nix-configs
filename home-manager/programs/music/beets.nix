@@ -60,34 +60,42 @@ let
         n = re.sub(r"\s{2,}", " ", n).strip(" -_")
         return n
 
-    root = sys.argv[1]
-    for dp, _, fns in os.walk(root):
-        for fn in fns:
-            if not fn.lower().endswith(EXTS):
-                continue
-            stem = os.path.splitext(fn)[0]
-            name = clean(stem)
-            base = re.sub(r"\s{2,}", " ", stem).strip()
-            had_junk = name != base
-            if " - " in name:
-                artist, title = (x.strip() for x in name.split(" - ", 1))
-            elif had_junk:
-                artist, title = None, name
-            else:
-                continue                        # nothing to fix; leave as-is
-            p = os.path.join(dp, fn)
-            try:
-                f = File(p, easy=True)
-                if f is None:
-                    continue
-                if title:
-                    f["title"] = [title]
-                if artist:
-                    f["artist"] = [artist]
-                f.save()
-                print("cleaned: %s -> %s / %s" % (fn, artist, title))
-            except Exception as e:                # noqa: BLE001
-                sys.stderr.write("skip %s: %s\n" % (fn, e))
+    def handle(p):
+        fn = os.path.basename(p)
+        if not fn.lower().endswith(EXTS):
+            return
+        stem = os.path.splitext(fn)[0]
+        name = clean(stem)
+        base = re.sub(r"\s{2,}", " ", stem).strip()
+        had_junk = name != base
+        if " - " in name:
+            artist, title = (x.strip() for x in name.split(" - ", 1))
+        elif had_junk:
+            artist, title = None, name
+        else:
+            return                              # nothing to fix; leave as-is
+        try:
+            f = File(p, easy=True)
+            if f is None:
+                return
+            if title:
+                f["title"] = [title]
+            if artist:
+                f["artist"] = [artist]
+            f.save()
+            print("cleaned: %s -> %s / %s" % (fn, artist, title))
+        except Exception as e:                  # noqa: BLE001
+            sys.stderr.write("skip %s: %s\n" % (fn, e))
+
+    # Accept any mix of files and directories: import-one passes ONE file as each
+    # download finishes; the batch path passes the whole inbox directory.
+    for arg in sys.argv[1:]:
+        if os.path.isfile(arg):
+            handle(arg)
+        elif os.path.isdir(arg):
+            for dp, _, fns in os.walk(arg):
+                for fn in fns:
+                    handle(os.path.join(dp, fn))
   '';
   # mutagen ships with beets, but expose a small env so the cleaner runs
   # standalone from the import script and the timer's service.
@@ -120,11 +128,27 @@ let
     fi
   '';
 
+  # `music-import-one <file>` — import a SINGLE just-downloaded track. music-dl
+  # wires this into yt-dlp's --exec hook so each track is cleaned, matched and
+  # moved into the library the moment its download finishes, rather than waiting
+  # for the whole playlist. Best-effort (|| true): a track beets can't handle is
+  # left in the inbox for the final `music-import -q` sweep to mop up. PATH is set
+  # explicitly because yt-dlp's --exec environment may lack fpcalc/ffmpeg.
+  musicImportOne = pkgs.writeShellScriptBin "music-import-one" ''
+    set -eu
+    export PATH=${lib.makeBinPath [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg ]}:$PATH
+    f="''${1:-}"
+    [ -f "$f" ] || exit 0
+    ${tagCleanerEnv}/bin/python ${tagCleanerPy} "$f" || true
+    ${pkgs.beets}/bin/beet import -q -s "$f" || true
+  '';
+
   # `music-dl <url>...` — ONE command that downloads AND organizes. It fetches
-  # audio with yt-dlp into ~/Music/inbox, then immediately runs the beets import
-  # (tag-clean → MusicBrainz match → art/lyrics/replaygain → move into the
-  # library), so a single invocation turns a URL into a fully-tagged track under
-  # ~/Music/…. Handles single videos, playlists and albums (yt-dlp recurses).
+  # audio with yt-dlp into ~/Music/inbox and, via yt-dlp's --exec hook, imports
+  # each track (tag-clean → MusicBrainz match → art/lyrics/replaygain → move into
+  # the library) THE MOMENT its download finishes — so on a long playlist tracks
+  # land in ~/Music/… incrementally instead of all at the end. A final sweep mops
+  # up. Handles single videos, playlists and albums (yt-dlp recurses).
   #
   # It replaces the flaky Parabolic GUI, which freezes/crashes and aborts a whole
   # PLAYLIST on one dead entry. Robustness knobs: --ignore-errors/--no-abort-on-
@@ -182,11 +206,12 @@ let
       --embed-metadata \
       --paths "$inbox" \
       --output "%(title)s.%(ext)s" \
+      --exec "after_move:${musicImportOne}/bin/music-import-one %(filepath)q" \
       "$@" || true
 
-    # Organize everything just downloaded: clean tags, match+tag with beets, and
-    # move each track out of the inbox into the library (also drains leftover
-    # thumbnails/cruft from failed entries).
+    # Each track was already imported as it finished (the --exec hook above), so
+    # this final pass just mops up: import any straggler beets couldn't take
+    # mid-download and drain leftover thumbnails/cruft from failed entries.
     exec ${musicImport}/bin/music-import -q
   '';
 
@@ -208,7 +233,7 @@ in
   # fpcalc (from chromaprint) is the fingerprinter the `chroma` plugin shells out
   # to, and ffmpeg is the `replaygain` loudness backend — both must be on PATH
   # for interactive and automated import.
-  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg pkgs.yt-dlp musicImport musicDl ];
+  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg pkgs.yt-dlp musicImport musicImportOne musicDl ];
 
   programs.beets = {
     enable = true;
