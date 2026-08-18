@@ -153,7 +153,9 @@ let
   # It replaces the flaky Parabolic GUI, which freezes/crashes and aborts a whole
   # PLAYLIST on one dead entry. Robustness knobs: --ignore-errors/--no-abort-on-
   # error (skip a dead entry, keep going), --download-archive (re-run to resume a
-  # partial playlist and skip what's already organized), --continue/--retries.
+  # partial playlist and skip what's already organized), --continue/--retries. It
+  # also skips items longer than MUSIC_DL_MAX_SECS (default 30 min) and collapses
+  # endless YouTube radio mixes (list=RD…) to just their seed track — see below.
   #
   # YouTube now 403s ANONYMOUS media requests (the mid-2026 "PO token" wall), so
   # yt-dlp authenticates using the logged-in LibreWolf profile's cookies — the
@@ -187,11 +189,34 @@ let
       echo "music-dl: WARNING no browser profile for cookies — downloading anonymously; YouTube may return HTTP 403. Set MUSIC_DL_COOKIES=<browser> to authenticate." >&2
     fi
 
+    # Skip absurdly long items — a "song" is short; 10-hour lofi streams and DJ
+    # sets are not what this tool is for and each eats hundreds of MB. Ceiling in
+    # seconds, overridable with MUSIC_DL_MAX_SECS (set to 0 to disable entirely).
+    max_secs="''${MUSIC_DL_MAX_SECS:-1800}"
+    case "$max_secs" in ""|*[!0-9]*) max_secs=1800 ;; esac
+    filter_args=()
+    if [ "$max_secs" -gt 0 ]; then
+      filter_args=(--match-filter "duration < $max_secs")
+    fi
+
+    # YouTube "radio" mixes (list=RD…, start_radio=1) are auto-generated and
+    # effectively endless — this one expanded to 2065 items. Grab only the seed
+    # track from those. Real playlists (list=PL…, albums, channels) download full.
+    pl_args=()
+    case " $* " in
+      *"list=RD"*|*"start_radio=1"*)
+        pl_args=(--no-playlist)
+        echo "music-dl: YouTube radio/mix detected — downloading only the seed track, not the endless mix." >&2
+        ;;
+    esac
+
     # "''${cookie_args[@]}" expands to zero words when empty (bash [@] rule), so
     # the anonymous path passes no stray argument. || true keeps a partial
     # playlist (some entries failed) from aborting before the import step.
     ${pkgs.yt-dlp}/bin/yt-dlp \
       "''${cookie_args[@]}" \
+      "''${filter_args[@]}" \
+      "''${pl_args[@]}" \
       --ignore-errors \
       --no-abort-on-error \
       --continue \
