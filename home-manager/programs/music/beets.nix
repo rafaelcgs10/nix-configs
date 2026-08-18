@@ -346,6 +346,17 @@ let
         ;;
     esac
 
+    # Format: --extract-audio's default (bestaudio/best) can fall back to `best`
+    # — a full-resolution MUXED video — when no audio-only format is offered, and
+    # YouTube's mid-2026 PO-token wall now HIDES the audio-only (DASH 251/140)
+    # formats under every client that still works with cookies, leaving only muxed
+    # HLS (91–96). That fallback once pulled a 1080p, multi-GB .mp4 just to demux
+    # its audio. So pin the selection: prefer a true audio-only stream (returned
+    # again once a PO token is available), else the small 360p muxed format 18
+    # (AAC-LC — good audio, tiny video), else any muxed ≤480p, else best. audio is
+    # then demuxed with no re-encode, and the video discarded. (For full audio-only
+    # quality, run a PO-token provider — yt-dlp wiki "PO-Token-Guide".)
+    #
     # Download with automatic recovery from cookie rotation. YouTube periodically
     # rotates the account cookies in the browser as a security measure, which
     # invalidates the snapshot yt-dlp read at startup — the rest of a long batch
@@ -375,6 +386,7 @@ let
         --concurrent-fragments 4 \
         --download-archive "$archive" \
         --ffmpeg-location ${pkgs.ffmpeg}/bin \
+        --format "bestaudio[vcodec=none]/18/best[height<=?480]/best" \
         --extract-audio \
         --audio-quality 0 \
         --embed-thumbnail \
