@@ -28,6 +28,20 @@ let
   inboxDir = "${musicDir}/inbox";
   beetsData = "${config.home.homeDirectory}/.local/share/beets";
 
+  # beets 2.13.1's lyrics plugin crashes with
+  #   AttributeError: 'NoneType' object has no attribute 'splitlines'
+  # when LRCLIB returns a result whose plain-text body is None: util/lyrics.py
+  # does `self.text.splitlines()` unguarded. It's an UNHANDLED exception, so it
+  # aborts the entire `beet import` batch (not just the one track). Patch that one
+  # line to treat missing text as empty until the fix is packaged upstream.
+  beetsPkg = pkgs.beets.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace beets/util/lyrics.py \
+        --replace-fail "for line in self.text.splitlines()" \
+                       "for line in (self.text or \"\").splitlines()"
+    '';
+  });
+
   # yt-dlp writes the whole YouTube video title into the file's title tag
   # ("New Slang [OFFICIAL VIDEO]", "Ghost Town [Official HD Remastered Video]"),
   # and the uploader/channel into the artist tag ("SubPopRecords", "… - Topic").
@@ -190,7 +204,7 @@ let
     [ "''${1:-}" = "-q" ] && quiet="-q"
     # Clean yt-dlp's polluted title/artist tags so beets can actually match.
     ${tagCleanerEnv}/bin/python ${tagCleanerPy} "$inbox" || true
-    ${pkgs.beets}/bin/beet import $quiet -s "$inbox"
+    ${beetsPkg}/bin/beet import $quiet -s "$inbox"
     if [ -n "$quiet" ]; then
       ${pkgs.findutils}/bin/find "$inbox" -mindepth 1 -type f -delete
       ${pkgs.findutils}/bin/find "$inbox" -mindepth 1 -type d -empty -delete
@@ -207,11 +221,11 @@ let
   # explicitly because yt-dlp's --exec environment may lack fpcalc/ffmpeg.
   musicImportOne = pkgs.writeShellScriptBin "music-import-one" ''
     set -eu
-    export PATH=${lib.makeBinPath [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg ]}:$PATH
+    export PATH=${lib.makeBinPath [ beetsPkg pkgs.chromaprint pkgs.ffmpeg ]}:$PATH
     f="''${1:-}"
     [ -f "$f" ] || exit 0
     ${tagCleanerEnv}/bin/python ${tagCleanerPy} "$f" || true
-    ${pkgs.beets}/bin/beet import -q -s "$f" || true
+    ${beetsPkg}/bin/beet import -q -s "$f" || true
     # Export a .lrc lyric sidecar for the track just organized.
     ${lrcSync}/bin/music-lrc-sync "${musicDir}" || true
   '';
@@ -423,11 +437,11 @@ in
   # fpcalc (from chromaprint) is the fingerprinter the `chroma` plugin shells out
   # to, and ffmpeg is the `replaygain` loudness backend — both must be on PATH
   # for interactive and automated import.
-  home.packages = [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg pkgs.yt-dlp musicImport musicImportOne musicDl lrcSync ];
+  home.packages = [ beetsPkg pkgs.chromaprint pkgs.ffmpeg pkgs.yt-dlp musicImport musicImportOne musicDl lrcSync ];
 
   programs.beets = {
     enable = true;
-    package = pkgs.beets;
+    package = beetsPkg;
     settings = {
       directory = musicDir;
       library = "${beetsData}/library.db";
@@ -525,7 +539,7 @@ in
     Service = {
       Type = "oneshot";
       # beet shells out to fpcalc (chromaprint) and ffmpeg (replaygain).
-      Environment = [ "PATH=${lib.makeBinPath [ pkgs.beets pkgs.chromaprint pkgs.ffmpeg ]}" ];
+      Environment = [ "PATH=${lib.makeBinPath [ beetsPkg pkgs.chromaprint pkgs.ffmpeg ]}" ];
       ExecStart = "${autoImport}";
     };
   };
