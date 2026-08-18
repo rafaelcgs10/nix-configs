@@ -227,8 +227,9 @@ let
   # PLAYLIST on one dead entry. Robustness knobs: --ignore-errors/--no-abort-on-
   # error (skip a dead entry, keep going), --download-archive (re-run to resume a
   # partial playlist and skip what's already organized), --continue/--retries. It
-  # also skips items longer than MUSIC_DL_MAX_SECS (default 30 min) and collapses
-  # endless YouTube radio mixes (list=RD…) to just their seed track — see below.
+  # also skips items longer than MUSIC_DL_MAX_SECS (default 2 h; --no-limit or
+  # MUSIC_DL_MAX_SECS=0 disables it) and collapses endless YouTube radio mixes
+  # (list=RD…) to just their seed track — see below.
   #
   # YouTube now 403s ANONYMOUS media requests (the mid-2026 "PO token" wall), so
   # yt-dlp authenticates using the logged-in LibreWolf profile's cookies — the
@@ -245,8 +246,23 @@ let
     inbox="${inboxDir}"
     data="${beetsData}"
     mkdir -p "$inbox" "$data"
+
+    # Pull music-dl's own flags out of the argument list; everything else is a URL
+    # for yt-dlp. --no-limit (aliases -A / --full) drops the max-duration filter
+    # for this run, so items of ANY length download.
+    no_limit=0
+    urls=()
+    for a in "$@"; do
+      case "$a" in
+        --no-limit|--full|-A) no_limit=1 ;;
+        *) urls+=("$a") ;;
+      esac
+    done
+    set -- "''${urls[@]}"
+
     if [ "$#" -lt 1 ]; then
-      echo "usage: music-dl <url> [url...]   # download + organize into ~/Music" >&2
+      echo "usage: music-dl [--no-limit] <url> [url...]   # download + organize into ~/Music" >&2
+      echo "       --no-limit (-A, --full)   download items of any length (ignore the max-duration filter)" >&2
       exit 2
     fi
 
@@ -278,11 +294,16 @@ let
       echo "music-dl: WARNING no cookies — downloading anonymously; YouTube may return HTTP 403. Provide $cookie_file or set MUSIC_DL_COOKIES." >&2
     fi
 
-    # Skip absurdly long items — a "song" is short; 10-hour lofi streams and DJ
-    # sets are not what this tool is for and each eats hundreds of MB. Ceiling in
-    # seconds, overridable with MUSIC_DL_MAX_SECS (set to 0 to disable entirely).
-    max_secs="''${MUSIC_DL_MAX_SECS:-1800}"
-    case "$max_secs" in ""|*[!0-9]*) max_secs=1800 ;; esac
+    # Skip over-long items — 10-hour lofi streams / endless DJ sets aren't what
+    # this tool is for and each eats hundreds of MB. Default ceiling 2 hours,
+    # overridable with MUSIC_DL_MAX_SECS (0 disables it); --no-limit disables it
+    # for a single run.
+    max_secs="''${MUSIC_DL_MAX_SECS:-7200}"
+    case "$max_secs" in ""|*[!0-9]*) max_secs=7200 ;; esac
+    if [ "$no_limit" -eq 1 ]; then
+      max_secs=0
+      echo "music-dl: --no-limit set — downloading items of any length."
+    fi
     filter_args=()
     if [ "$max_secs" -gt 0 ]; then
       filter_args=(--match-filter "duration < $max_secs")
