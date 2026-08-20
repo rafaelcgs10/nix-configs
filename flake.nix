@@ -105,11 +105,40 @@
             inherit system;
             config = nixpkgsConfig;
           };
+
+          # curl-cffi's test suite is stale relative to the curl in nixpkgs: it
+          # asserts on the old "SSL certificate problem" wording and on cookie
+          # handling for IP-literal hosts, so 4 tests fail and the build dies.
+          # That takes gallery-dl (and anything else pulling curl-cffi) with it,
+          # which in turn blocks the whole home-manager generation.
+          #
+          # Only nixpkgs-unstable is affected: it defaults to python 3.14, where
+          # curl-cffi is 0.15.0. Stable is on python 3.13 / curl-cffi 0.14.0 and
+          # builds fine, so the override is scoped to this one input to avoid
+          # invalidating every other python package set.
+          #
+          # Drop this once nixpkgs fixes the tests upstream.
+          curlCffiTestFix = _final: prev: {
+            pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+              (_pfinal: pprev: {
+                curl-cffi = pprev.curl-cffi.overridePythonAttrs (old: {
+                  disabledTests = (old.disabledTests or [ ]) ++ [
+                    "test_verify"
+                    "test_delete_cookies"
+                  ];
+                });
+              })
+            ];
+          };
         in
         {
           inherit inputs;
 
-          pkgsUnstable = importWithConfig inputs.nixpkgs-unstable;
+          pkgsUnstable = import inputs.nixpkgs-unstable {
+            inherit system;
+            config = nixpkgsConfig;
+            overlays = [ curlCffiTestFix ];
+          };
           pkgsDarktable = importWithConfig inputs.nixpkgs-darktable;
           pkgsIsabelle = importWithConfig inputs.nixpkgs-isabelle;
           pkgsLmstudio = importWithConfig inputs.nixpkgs-lmstudio;
