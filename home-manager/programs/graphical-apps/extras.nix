@@ -264,6 +264,50 @@ in
     fi
   '';
 
+  # darktable performance: use the GPU, and stop tiling the pixelpipe.
+  #
+  # Neither setting changes the rendered result — same kernels, same maths — they
+  # only decide *where* and *in how many pieces* the pipeline runs:
+  #
+  #   opencl           darktable ships its own ICD loader but finds zero
+  #                    platforms unless a vendor ICD is installed, and then
+  #                    silently runs everything on the CPU. rusticl (this
+  #                    laptop's iGPU) is additionally gated behind its own
+  #                    clplatform_ key because darktable disables it by default.
+  #   resourcelevel    "large" raises the share of RAM darktable may use
+  #                    (700/16/128/900 vs default 512/8/128/700). More memory
+  #                    means fewer tiles, and upstream measures tiling as up to
+  #                    10x slower. Safe here because this file is only imported
+  #                    by the default profile (thinkpad-e14, bbstation) —
+  #                    bbtablet takes everyday.nix and keeps darktable's default.
+  #
+  # opencl is only switched on if darktable's own darktable-cltest reports the
+  # device as usable on this machine, so a host without a working runtime keeps
+  # its CPU pipeline instead of failing at every darkroom interaction. Guarded
+  # on darktable being closed: it rewrites darktablerc from memory on exit.
+  home.activation.setDarktablePerformance = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
+
+    set_key() {
+      if ${pkgs.gnugrep}/bin/grep -q "^$1=" "$config_file"; then
+        ${pkgs.gnused}/bin/sed -i "s|^$1=.*|$1=$2|" "$config_file"
+      else
+        printf '%s=%s\n' "$1" "$2" >> "$config_file"
+      fi
+    }
+
+    if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
+      # Ask darktable itself whether OpenCL actually works here. --conf keeps
+      # the probe out of darktablerc, so a failed probe leaves no trace.
+      if darktable-cltest --conf opencl=TRUE --conf clplatform_rusticl=TRUE 2>&1 \
+           | ${pkgs.gnugrep}/bin/grep -q 'is AVAILABLE and ENABLED'; then
+        set_key opencl TRUE
+        set_key clplatform_rusticl TRUE
+      fi
+      set_key resourcelevel large
+    fi
+  '';
+
   # digiKam metadata settings for darktable interoperability. digiKam does the
   # local AI auto-tagging and must write those tags into the XMP *sidecar* that
   # darktable already owns — never into the RAW — using the tag namespaces

@@ -70,11 +70,15 @@ in
   # '';
   # services.tlp.enable = true;
 
-  # hardware.graphics.extraPackages = with pkgs; [
-  #   amdvlk
-  #   # rocm-opencl-icd
-  #   # rocm-opencl-runtime
-  # ];
+  # OpenCL for the Vega iGPU, via Mesa's rusticl (mesa.opencl ships
+  # etc/OpenCL/vendors/rusticl.icd). Without a vendor ICD darktable finds zero
+  # platforms and silently runs its whole pixelpipe on the CPU.
+  #
+  # ROCm is the alternative but does not officially support this gfx90c APU and
+  # needs an HSA_OVERRIDE_GFX_VERSION fudge; rusticl drives radeonsi directly.
+  # rusticl only exposes drivers named in RUSTICL_ENABLE, hence the env var.
+  hardware.graphics.extraPackages = [ pkgs.mesa.opencl ];
+  environment.sessionVariables.RUSTICL_ENABLE = "radeonsi";
 
   # hardware.graphics.extraPackages32 = with pkgs; [
   #   driversi686Linux.amdvlk
