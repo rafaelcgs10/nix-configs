@@ -14,6 +14,49 @@ let
       patches = (old.patches or [ ]) ++ [ ./darktable-headless-xmp-sync.patch ];
     });
 
+  # DT Pro theme pack from darktable.info (DT-Pro-orange and its siblings).
+  # Not in nixpkgs and there is no upstream git repo — the author distributes a
+  # single archive from the site, so fetch that and expose the CSS + SVG tree
+  # for linking into ~/.config/darktable/themes.
+  #
+  # Despite being advertised as a ZIP it is really a 7z archive, hence p7zip and
+  # the explicit unpackPhase. DT-Pro-orange.css @imports darktable.css, and
+  # icon.css pulls the SVG/ directory, so the whole tree has to be installed —
+  # not just the one file.
+  #
+  # The download URL carries a per-file key; if the author rotates it the fetch
+  # fails loudly with a hash/404 error rather than silently going stale.
+  dt-pro-themes = pkgs.stdenvNoCC.mkDerivation {
+    pname = "darktable-dt-pro-themes";
+    version = "0-unstable-2026-08-20";
+
+    src = pkgs.fetchurl {
+      name = "DT-Pro-Theme-Pack.7z";
+      url = "https://darktable.info/sdc_download/13401/?key=5mm66ed41kvuaj5dagt5zaprkgvx31";
+      hash = "sha256-UGqb3MRugNZfivEMlj3JLhtSiJe5HUOzYcLFvtkVaRQ=";
+    };
+
+    nativeBuildInputs = [ pkgs.p7zip ];
+    unpackPhase = ''
+      runHook preUnpack
+      7z x "$src"
+      runHook postUnpack
+    '';
+
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out"
+      cp -r ./*.css SVG "$out"/
+      runHook postInstall
+    '';
+
+    meta = {
+      description = "DT Pro theme pack for darktable";
+      homepage = "https://darktable.info/en/system-ui-2/darktable-themes-overview/darktable-themes-overview-2/";
+      platforms = lib.platforms.all;
+    };
+  };
+
   # `dt-sync` — start the headless XMP -> library sync and show LIVE per-file
   # progress. The service logs "[crawler] synced XMP -> DB for `<file>'" per
   # image (via -d control on the unit); we count those against the number of
@@ -305,6 +348,24 @@ in
         set_key clplatform_rusticl TRUE
       fi
       set_key resourcelevel large
+    fi
+  '';
+
+  # DT-Pro-orange theme. The pack is linked read-only into darktable's user
+  # theme directory (darktable only ever reads from there; its own built-in
+  # themes live in the package's share/ tree, so nothing is shadowed), and the
+  # selection itself is a darktablerc key. The value is the CSS filename without
+  # its extension. Same closed-darktable guard as the settings above.
+  xdg.configFile."darktable/themes".source = dt-pro-themes;
+
+  home.activation.setDarktableTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
+    if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
+      if ${pkgs.gnugrep}/bin/grep -q '^ui_last/theme=' "$config_file"; then
+        ${pkgs.gnused}/bin/sed -i 's|^ui_last/theme=.*|ui_last/theme=DT-Pro-orange|' "$config_file"
+      else
+        printf 'ui_last/theme=%s\n' "DT-Pro-orange" >> "$config_file"
+      fi
     fi
   '';
 
