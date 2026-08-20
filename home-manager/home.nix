@@ -270,7 +270,12 @@ in {
     pkgs.aircrack-ng
     pkgs.john
     pkgs.bully
-    pkgsUnstable.gallery-dl
+    # Deliberately stable, not unstable: gallery-dl propagates yt-dlp, and on
+    # unstable that resolves against python 3.14 / curl-cffi 0.15.0, whose test
+    # suite is stale and fails the build (taking the whole home-manager
+    # generation with it). Stable is python 3.13 / curl-cffi 0.14.0, and using
+    # it also drops a second, redundant copy of yt-dlp from the closure.
+    pkgs.gallery-dl
     # pkgs.youtube-dl
     pkgs.fuse
     pkgs.sshfs
