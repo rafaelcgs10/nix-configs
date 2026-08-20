@@ -54,15 +54,6 @@ in
   #   '';
   # };
 
-  services.autorandr.enable = true;
-  systemd.services.autorandr = {
-    startLimitIntervalSec = lib.mkForce 10;
-    startLimitBurst = lib.mkForce 5;
-    serviceConfig = {
-      ExecStart = lib.mkForce "${pkgs.autorandr}/bin/autorandr -c --batch";
-      Type = lib.mkForce "simple";
-    };
-  };
   # services.xserver.libinput.touchpad.tappingDragLock = false;
   # services.xserver.libinput.touchpad.tapping = false;
   # services.xserver.libinput.mouse.tapping = false;
@@ -143,6 +134,25 @@ in
     partOf = [ "graphical-session.target" ];
   };
   # For mount.cifs, required unless domain name resolution is not needed.
+
+  # Never garbage-collect while the eCryptfs home is still locked.
+  #
+  # nix.gc's timer is Persistent, so a run missed while the laptop was off fires
+  # immediately at boot — concurrently with home-manager-rafael.service, and
+  # before anyone has logged in. With the home locked, the home-manager gcroots
+  # (which live under /home/rafael/.local/state) don't resolve, so the GC treats
+  # them as stale, removes them, and deletes the home-manager generations they
+  # protect. That destroyed 11 of 12 HM generations and failed the HM service on
+  # every boot.
+  #
+  # /home/rafael is a mountpoint *only* once eCryptfs is unlocked, so this
+  # condition cleanly defers the GC to a run where the roots are visible. A
+  # skipped run is recorded as "condition failed", not a failure, and
+  # nix.settings.min-free still handles emergency disk pressure.
+  #
+  # Host-specific on purpose: on bbstation/bbtablet /home/rafael is not a
+  # mountpoint at all, so this condition there would block GC forever.
+  systemd.services.nix-gc.unitConfig.ConditionPathIsMountPoint = "/home/rafael";
 
   # Auto-mount existing eCryptfs private home using ecryptfs-utils from nixpkgs 25.11.
   security.pam.enableFscrypt = false;
