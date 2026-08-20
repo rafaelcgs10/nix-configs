@@ -94,12 +94,6 @@
       gp = "git push";
       gl = "git pull";
       glog = "git log --oneline --graph --decorate";
-
-      # Pull XMP sidecar changes (e.g. digiKam AI tags) into darktable's library
-      # DB on demand, headless, without the slow startup crawler. Run after a
-      # digiKam tagging session and before opening darktable. Exits cleanly if
-      # darktable is open (library locked); the tail shows the result either way.
-      dt-sync = "systemctl --user start darktable-xmp-sync.service; journalctl --user -u darktable-xmp-sync.service -n 3 --no-pager";
     };
   };
 

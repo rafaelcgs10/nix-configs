@@ -13,6 +13,38 @@ let
     spektrafilmPackages.darktable-spektrafilm-ai.basePackage.overrideAttrs (old: {
       patches = (old.patches or [ ]) ++ [ ./darktable-headless-xmp-sync.patch ];
     });
+
+  # `dt-sync` — start the headless XMP -> library sync and show LIVE per-file
+  # progress. The service logs "[crawler] synced XMP -> DB for `<file>'" per
+  # image (via -d control on the unit); we count those against the number of
+  # images in darktable's library for a running [n/total %] bar with the current
+  # filename. For the big post-tagging sync (all sidecars changed) that total is
+  # exact; for routine incremental runs only a few files change, so the % is a
+  # loose upper bound — but those finish in seconds anyway. Ctrl-C stops watching;
+  # the sync keeps running in the background (it's a systemd service).
+  dtSync = pkgs.writeShellScriptBin "dt-sync" ''
+    export XDG_RUNTIME_DIR="/run/user/$(${pkgs.coreutils}/bin/id -u)"
+    svc="darktable-xmp-sync.service"
+    lib="$HOME/.config/darktable/library.db"
+    total=$(${pkgs.sqlite}/bin/sqlite3 "file:$lib?immutable=1" \
+              "SELECT count(*) FROM images;" 2>/dev/null || echo 0)
+    echo "darktable XMP -> DB sync: reconciling updated sidecars (~$total images)…"
+    # Start following the log FIRST so a fast (few-file) sync's "done" line is
+    # never missed, then trigger the service and wait for the follower to end.
+    { ${pkgs.systemd}/bin/journalctl --user -u "$svc" -f -n 0 -o cat 2>/dev/null \
+        | ${pkgs.gawk}/bin/awk -v total="$total" '
+            /synced XMP -> DB/ {
+              n++; f = $0; sub(/.*for `/, "", f); sub(/.$/, "", f);
+              p = (total > 0) ? (100.0 * n / total) : 0;
+              printf "\r[%d/%d %3.0f%%] %s\033[K", n, total, p, f; fflush(); next
+            }
+            /headless XMP -> DB sync done/ { printf "\n%s\n", $0; fflush(); exit }
+            /FAILED to sync/               { printf "\n%s\n", $0; fflush() }
+          '; } &
+    follower=$!
+    ${pkgs.systemd}/bin/systemctl --user start --no-block "$svc"
+    wait "$follower"
+  '';
 in
 {
   home.packages = [
@@ -44,6 +76,7 @@ in
     # systemd timer below. Replaces the stock pkgsDarktable.darktable; the
     # runtime data pack and AI models are linked in via home.file below.
     darktable-xmp-sync
+    dtSync # `dt-sync` command: run the sync with a live progress bar
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
@@ -243,6 +276,23 @@ in
   #
   #   Save Tags=true                  default is FALSE — digiKam writes no tags
   #                                   to metadata at all until this is enabled.
+  #                                   This alone already covers face *names*:
+  #                                   People/<Name> are ordinary tags in the tag
+  #                                   tree, so they land in Xmp.dc.subject and
+  #                                   Xmp.lr.hierarchicalSubject (as
+  #                                   "People|<Name>"), the two keys darktable
+  #                                   imports (src/common/exif.cc, FIND_XMP_TAG).
+  #   Save FaceTags=true              NOTE: no space in the key name, unlike the
+  #                                   others. Writes the face *rectangles* to
+  #                                   Xmp.mwg-rs.Regions; default is FALSE. Not
+  #                                   needed for tags (see above) — darktable
+  #                                   never imports regions as tags. Its only
+  #                                   mwg-rs code is _transform_face_tags(),
+  #                                   called on *export* to re-map the boxes
+  #                                   through the pixelpipe so they stay aligned
+  #                                   after crop/rotate. So this keeps face boxes
+  #                                   correct in exported files for other
+  #                                   face-aware tools (incl. re-import here).
   #   Metadata Writing Mode=1         WRITE_TO_SIDECAR_ONLY: only ever touches
   #                                   IMG.CR3.xmp, never the original image file.
   #   Use XMP Sidecar For Reading     read the same sidecars back in digiKam.
@@ -264,6 +314,15 @@ in
         "$kwriteconfig" --file "$config_file" --group "Metadata Settings" --key "$1" "$2"
       }
       set_meta_key "Save Tags"                   "true"
+      set_meta_key "Save FaceTags"               "true"
+      # Ratings (0-5 stars) go to Xmp.xmp.Rating — the key darktable reads. Off
+      # by default, which is why AI *tags* synced to darktable but *ratings*
+      # never did: they stayed in digiKam's DB and were never written to the
+      # sidecar. Pick/Color labels likewise (Xmp.digiKam.PickLabel /
+      # Xmp.xmp.Label) so the quality-sort flags also persist in the XMP.
+      set_meta_key "Save Rating"                 "true"
+      set_meta_key "Save Pick Label"             "true"
+      set_meta_key "Save Color Label"            "true"
       set_meta_key "Metadata Writing Mode"       "1"
       set_meta_key "Use XMP Sidecar For Reading" "true"
       set_meta_key "Use Lazy Synchronization"    "false"
@@ -284,7 +343,9 @@ in
     fi
   '';
 
-  # Point Parabolic (the yt-dlp GUI) at ~/Music, where beets organizes downloads.
+  # Point Parabolic (the yt-dlp GUI) at ~/Music/inbox — the staging folder beets
+  # imports from (keeping downloads separate from the organized library so beets
+  # never re-scans its own output; see programs/music/beets.nix).
   # Parabolic (.NET/Nickvision) remembers the last-used save folder in
   # ~/.config/<AppName>/config.json under the "PreviousSaveFolder" key (default
   # is ~/Downloads). The config dir name isn't stable across versions, so we find
@@ -294,7 +355,7 @@ in
   # it rewrites its config from memory on exit.
   home.activation.setParabolicSaveFolder = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if ! ${pkgs.procps}/bin/pgrep -f 'nickvision.tubeconverter' >/dev/null; then
-      music="${config.home.homeDirectory}/Music"
+      music="${config.home.homeDirectory}/Music/inbox"
       cfg=""
       for c in "${config.home.homeDirectory}/.config"/*/config.json; do
         [ -f "$c" ] || continue
@@ -322,7 +383,10 @@ in
       "Reconcile updated darktable XMP sidecars into the library database";
     Service = {
       Type = "oneshot";
-      ExecStart = "${darktable-xmp-sync}/bin/darktable --sync-xmp";
+      # -d control makes the crawler log one line per synced image
+      # ("[crawler] synced XMP -> DB for `<file>'"), which the `dt-sync` script
+      # turns into a live per-file progress bar.
+      ExecStart = "${darktable-xmp-sync}/bin/darktable -d control --sync-xmp";
       # 0 = synced; 75 = library locked (darktable open) — both are fine.
       SuccessExitStatus = "0 75";
     };

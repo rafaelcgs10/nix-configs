@@ -291,11 +291,23 @@
   hardware.enableAllFirmware = true;
 
 
+  # ssh_config is read by every user including root (the nix-daemon's UID).
+  # Point at /etc/nix/nixbuild_ed25519 rather than /home/rafael/.ssh/id_ed25519
+  # so the daemon isn't reaching into a per-user home dir; the file needs to be
+  # provisioned once out-of-band (see the assertion + activation script below).
+  # `User rafael` matters here: nix-daemon builds get the user from the
+  # `ssh-ng://rafael@...` URI baked into /etc/nix/machines, but manual
+  # invocations like `nix store info --store ssh-ng://eu.nixbuild.net` have
+  # no user in the URI and would otherwise default to `root`, failing with
+  # `root@eu.nixbuild.net: Permission denied (publickey)`. Setting it here
+  # covers both call sites. (nixbuild.net ignores the username and identifies
+  # clients purely by SSH key.)
   programs.ssh.extraConfig = ''
   Host eu.nixbuild.net
+  User rafael
   PubkeyAcceptedKeyTypes ssh-ed25519
   ServerAliveInterval 60
-  IdentityFile /home/rafael/.ssh/id_ed25519
+  IdentityFile /etc/nix/nixbuild_ed25519
 '';
 
   programs.ssh.knownHosts = {
@@ -307,12 +319,41 @@
 
   nix = {
     distributedBuilds = true;
+    # Have nixbuild.net's builders fetch from public substituters directly
+    # instead of streaming closures back through this tablet's uplink.
+    extraOptions = ''
+      builders-use-substitutes = true
+    '';
     buildMachines = [
       { hostName = "eu.nixbuild.net";
+        # nixbuild.net identifies clients by SSH key, not username; any user
+        # name works. Pinning it here avoids the daemon falling back to `root`
+        # (which would then look for /root/.ssh/config, not /etc/ssh/ssh_config
+        # in some code paths).
+        sshUser = "rafael";
+        sshKey = "/etc/nix/nixbuild_ed25519";
+        # ssh-ng is required for nixbuild.net's remote-store protocol; the plain
+        # `ssh` protocol works too but ssh-ng streams derivations more
+        # efficiently and is what nixbuild's docs recommend.
+        protocol = "ssh-ng";
         system = "x86_64-linux";
         maxJobs = 100;
-        supportedFeatures = [ "benchmark" "big-parallel" ];
+        supportedFeatures = [ "benchmark" "big-parallel" "kvm" ];
       }
     ];
   };
+
+  # Fail the rebuild early with a clear message if the key isn't in place, so
+  # we don't ship a config where every build silently falls back to local.
+  # The source is ~/.ssh/my-nixbuild-key, NOT id_ed25519 — the latter is a
+  # personal key that isn't registered on nixbuild.net.
+  # First-time setup on this host:
+  #     sudo install -m 0600 -o root -g root \
+  #       /home/rafael/.ssh/my-nixbuild-key /etc/nix/nixbuild_ed25519
+  system.activationScripts.checkNixbuildKey.text = ''
+    if [ ! -r /etc/nix/nixbuild_ed25519 ]; then
+      echo "WARN: /etc/nix/nixbuild_ed25519 missing — remote builds to eu.nixbuild.net will fail." >&2
+      echo "      Install with: sudo install -m 0600 -o root -g root /home/rafael/.ssh/my-nixbuild-key /etc/nix/nixbuild_ed25519" >&2
+    fi
+  '';
 }
