@@ -271,6 +271,14 @@ With prefix argument (`C-u'), also kill the special buffers."
                     "--pch-storage=memory"
                     "-j=4"))))
 
+
+;;; C# / .NET via eglot + csharp-ls. The server binary is not installed
+;; globally; it comes from each project's nix flake devshell, which the
+;; direnv module puts on the buffer's PATH before eglot starts.
+(after! eglot
+  (add-to-list 'eglot-server-programs
+               '((csharp-mode csharp-ts-mode) . ("csharp-ls"))))
+
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")
 
