@@ -24,6 +24,11 @@ in {
     };
     targets.starship.enable = false;  # keep the hand-built powerline preset
     targets.librewolf.profileNames = [ "default" ];  # theme the managed profile
+    # gtksourceview theming works via an overlay that changes the package hash,
+    # which forces Inkscape (and anything else depending on gtksourceview) to
+    # compile from source on every nixpkgs bump instead of using the binary
+    # cache. Cosmetic loss is tiny (source-view widget colors); build cost huge.
+    targets.gtksourceview.enable = false;
   };
 
   # opencode is a custom package (not programs.opencode), so Stylix can't theme
