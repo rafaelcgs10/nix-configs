@@ -112,7 +112,6 @@ in
     pkgs.handbrake # ghb
     pkgs.upscayl
     pkgsLmstudio.lmstudio
-    pkgsUnstable.freetube
 
     # darktable built from the spektrafilm PR branch (native C spektrafilm
     # module), patched to add the headless `--sync-xmp` mode driven by the
