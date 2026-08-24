@@ -290,6 +290,12 @@
   # Pull in non-redistributable firmware as well (covers IPU3 cameras).
   hardware.enableAllFirmware = true;
 
+  services.syncthing = {
+    user = "rafael";
+    group = "users";
+    dataDir = "/home/rafael";
+    enable = true;
+  };
 
   # ssh_config is read by every user including root (the nix-daemon's UID).
   # Point at /etc/nix/nixbuild_ed25519 rather than /home/rafael/.ssh/id_ed25519
