@@ -218,6 +218,18 @@ in {
   # Set your time zone.
   time.timeZone = "Europe/Copenhagen";
 
+  # Time sync must not depend on DNS. `services.resolved` below runs strict
+  # DNS-over-TLS, so a wrong clock makes every resolver certificate look
+  # "not yet valid" and kills DNS outright -- and then timesyncd cannot
+  # resolve *.nixos.pool.ntp.org to repair the clock. A host whose RTC
+  # resets (dead coin cell) stays wedged forever. Appending time.cloudflare.com
+  # by literal IP breaks that deadlock: NTP is unauthenticated anyway, so
+  # there is nothing to validate against the bad clock.
+  services.timesyncd.servers = config.networking.timeServers ++ [
+    "162.159.200.1"
+    "162.159.200.123"
+  ];
+
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
