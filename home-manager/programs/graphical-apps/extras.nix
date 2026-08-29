@@ -176,13 +176,15 @@ in
 
   # Film & print data pack for the darktable spektrafilm module. Newer builds
   # can download this pack from within the UI into
-  # ~/.config/darktable/spektrafilm/packs/<lut_hash>/; we pre-install the pinned
-  # pack at that same hashed path so it works offline with no download, while
-  # leaving spektrafilm/ itself writable so the in-UI downloader still works for
-  # other tables. The resolver (src/common/spektra_fetch.c) picks this up for
-  # both fresh edits and edits recorded with this LUT hash. The hash comes from
-  # the pack derivation so it tracks pack bumps automatically.
-  home.file.".config/darktable/spektrafilm/packs/${spektrafilmPackages.spektrafilm-data-pack.lutHash}".source =
+  # ~/.local/share/darktable/spektrafilm/packs/<lut_hash>/; we pre-install the
+  # pinned pack at that same hashed path so it works offline with no download,
+  # while leaving spektrafilm/ itself writable so the in-UI downloader still
+  # works for other tables. The resolver (src/common/spektra_fetch.c) picks this
+  # up for both fresh edits and edits recorded with this LUT hash. The hash
+  # comes from the pack derivation so it tracks pack bumps automatically.
+  # (Moved from ~/.config/darktable in the 2026-08 module update: packs now
+  # resolve via g_get_user_data_dir(), next to the AI models below.)
+  home.file.".local/share/darktable/spektrafilm/packs/${spektrafilmPackages.spektrafilm-data-pack.lutHash}".source =
     spektrafilmPackages.spektrafilm-data-pack;
 
   # Offline AI models for darktable's AI modules (denoise / upscale / object

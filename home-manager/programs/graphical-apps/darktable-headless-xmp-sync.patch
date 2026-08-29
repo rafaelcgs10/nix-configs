@@ -1,8 +1,8 @@
 diff --git a/src/control/crawler.c b/src/control/crawler.c
-index 37ee42e..1655f61 100644
+index 8bdd5de7e..b1bbd1fb6 100644
 --- a/src/control/crawler.c
 +++ b/src/control/crawler.c
-@@ -699,6 +699,50 @@ static gchar* str_time_delta(const int time_delta)
+@@ -1489,6 +1489,50 @@ static gchar* str_time_delta(const int time_delta)
    return g_strdup_printf(_("%id %02dh %02dm %02ds"), days, hours, minutes, seconds);
  }
  
@@ -51,15 +51,15 @@ index 37ee42e..1655f61 100644
 +}
 +
  // show a popup window with a list of updated images/xmp files and allow the user to tell dt what to do about them
- void dt_control_crawler_show_image_list(GList *images)
+ static void _crawler_show_image_list(GList *images, const gboolean modal)
  {
 diff --git a/src/control/crawler.h b/src/control/crawler.h
-index 68f86cf..fac3ff5 100644
+index 06e9c21f1..340ec1884 100644
 --- a/src/control/crawler.h
 +++ b/src/control/crawler.h
-@@ -36,6 +36,13 @@ GList *dt_control_crawler_run();
- // show a popup with the images, let the user decide what to do and free the list afterwards
- void dt_control_crawler_show_image_list(GList *images);
+@@ -48,6 +48,13 @@ void dt_control_crawler_ensure_filmroll(const dt_filmid_t filmid);
+ // ask the background crawler to stop, optionally waiting for it to do so
+ void dt_control_crawler_stop(const gboolean wait);
  
 +// headless XMP -> database synchronisation, for a scheduled/service run.
 +// runs dt_control_crawler_run() and, for every image whose sidecar is newer
@@ -72,7 +72,7 @@ index 68f86cf..fac3ff5 100644
  void dt_update_thumbs_thread(void *ptr);
  void dt_set_backthumb_time(const double offset);
 diff --git a/src/main.c b/src/main.c
-index 366413e..0874913 100644
+index 366413e38..0874913a2 100644
 --- a/src/main.c
 +++ b/src/main.c
 @@ -21,8 +21,10 @@
