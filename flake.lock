@@ -277,11 +277,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788010856,
-        "narHash": "sha256-eZTgZ4VH/7CpUd1kE5ljPFr5QOgcCLcUhTPnEGLRbZg=",
+        "lastModified": 1788096781,
+        "narHash": "sha256-qRCs4RWy1AKmDgKELMbI9wQu8jRbEfuYAYlkmFk5urg=",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "5aae030f3ae325b7110a9b6c564d0217d1605cec",
+        "rev": "53a80cc7aca5627601d17084e4091ac9b5e5dfd0",
         "type": "github"
       },
       "original": {
@@ -321,11 +321,11 @@
       },
       "locked": {
         "dir": "pkgs/firefox-addons",
-        "lastModified": 1788062878,
-        "narHash": "sha256-rcVVm6aHB0uUy0W4IE/Pbs8E7YVONklftB2v3vUqsd0=",
+        "lastModified": 1788148965,
+        "narHash": "sha256-1CNXzumVKWLmcWlZlryXhr9W9DbpuwchQ8KQZ91NQhM=",
         "owner": "rycee",
         "repo": "nur-expressions",
-        "rev": "b1ad358290dcf751d364b80f50bb706e30327f7b",
+        "rev": "a8b90bdf8c7680604c600965a13224c22dfc68da",
         "type": "gitlab"
       },
       "original": {
@@ -598,11 +598,11 @@
         "systems": "systems_3"
       },
       "locked": {
-        "lastModified": 1788090468,
-        "narHash": "sha256-/DnWzHkNYZ1cBSCLpqKYpxt4CC+3a1v8483XnDCucPs=",
+        "lastModified": 1788157263,
+        "narHash": "sha256-p8ZNcuO/8TYKPVZEXtjqz4HsB6yMLLSzTFBeiFcQGUo=",
         "owner": "marienz",
         "repo": "nix-doom-emacs-unstraightened",
-        "rev": "3340d17436e7a698bcdb17c9bda8dfcbc7a8279e",
+        "rev": "48e9cf335cfb371a88d52f68fa37b25295f51137",
         "type": "github"
       },
       "original": {
