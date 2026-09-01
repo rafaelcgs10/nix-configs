@@ -11,7 +11,9 @@
     pkgs.libappindicator
     pkgs.gdk-pixbuf
     pkgs.file-roller
-    pkgs.gparted
+    # Partitioning via udisks2 (system service) instead of gparted's
+    # run-GUI-as-root pkexec dance, which is fragile under Wayland.
+    pkgs.gnome-disk-utility
     pkgs.lshw-gui
     pkgs.seahorse
     pkgs.freerdp
