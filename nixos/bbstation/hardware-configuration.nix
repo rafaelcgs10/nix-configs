@@ -87,6 +87,22 @@
     in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" ];
   };
 
+  # Back the `fsc` mount option on /rafael_mounts with a real FS-Cache backend.
+  # Without cachefilesd the `fsc` above is inert: the cachefiles module is never
+  # loaded and /var/cache/fscache never exists, so every browse re-reads the
+  # same bytes over the network. Same block as bbtablet and thinkpad-e14.
+  services.cachefilesd = {
+    enable = true;
+    extraConfig = ''
+      brun 10%
+      bcull 7%
+      bstop 3%
+      frun 10%
+      fcull 7%
+      fstop 3%
+    '';
+  };
+
   # systemd = {
   #   extraConfig = "DefaultTimeoutStopSec=10s";
   # };
