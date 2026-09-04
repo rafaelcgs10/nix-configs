@@ -349,13 +349,12 @@ in
     }
 
     if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
-      # Ask darktable itself whether OpenCL actually works here. --conf keeps
-      # the probe out of darktablerc, so a failed probe leaves no trace.
-      if darktable-cltest --conf opencl=TRUE --conf clplatform_rusticl=TRUE 2>&1 \
-           | ${pkgs.gnugrep}/bin/grep -q 'is AVAILABLE and ENABLED'; then
-        set_key opencl TRUE
-        set_key clplatform_rusticl TRUE
-      fi
+      # OpenCL disabled 2026-09-05: rusticl on this AMD iGPU hard-resets the
+      # GPU mid-render ("amdgpu: context lost", SIGABRT in darktable:cs0) —
+      # confirmed with a gdb backtrace while opening a duplicate in darkroom.
+      # The old cltest probe passed and still crashed in real use, so force
+      # it off rather than probing.
+      set_key opencl FALSE
       set_key resourcelevel large
       # Rafael's chosen darkroom defaults (2026-09): the AgX workflow is what
       # the native-DCP validation and all the RP styles assume as tone mapper.
