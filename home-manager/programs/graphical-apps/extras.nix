@@ -349,12 +349,19 @@ in
     }
 
     if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
-      # OpenCL disabled 2026-09-05: rusticl on this AMD iGPU hard-resets the
-      # GPU mid-render ("amdgpu: context lost", SIGABRT in darktable:cs0) —
-      # confirmed with a gdb backtrace while opening a duplicate in darkroom.
-      # The old cltest probe passed and still crashed in real use, so force
-      # it off rather than probing.
-      set_key opencl FALSE
+      # OpenCL only on NVIDIA (bbstation). rusticl on the thinkpad's AMD
+      # iGPU hard-resets the GPU mid-render ("amdgpu: context lost", SIGABRT
+      # in darktable:cs0; gdb-confirmed 2026-09-05 while opening a duplicate
+      # in darkroom) — and its cltest probe passes anyway, so probing alone
+      # cannot be trusted on AMD. NVIDIA's proprietary OpenCL has no such
+      # history here.
+      cl_probe="$(darktable-cltest --conf opencl=TRUE 2>&1 || true)"
+      if printf '%s' "$cl_probe" | ${pkgs.gnugrep}/bin/grep -qi 'nvidia' \
+         && printf '%s' "$cl_probe" | ${pkgs.gnugrep}/bin/grep -q 'is AVAILABLE and ENABLED'; then
+        set_key opencl TRUE
+      else
+        set_key opencl FALSE
+      fi
       set_key resourcelevel large
       # Rafael's chosen darkroom defaults (2026-09): the AgX workflow is what
       # the native-DCP validation and all the RP styles assume as tone mapper.
