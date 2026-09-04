@@ -11,7 +11,7 @@ index 0079f432e6..6734edb8d2 100644
    "common/curve_tools.c"
    "common/custom_primaries.c"
 diff --git a/src/common/colorspaces.c b/src/common/colorspaces.c
-index c3fc7d6d8b..f90f46d4a2 100644
+index c3fc7d6d8b..b70ece571a 100644
 --- a/src/common/colorspaces.c
 +++ b/src/common/colorspaces.c
 @@ -18,6 +18,7 @@
@@ -22,7 +22,7 @@ index c3fc7d6d8b..f90f46d4a2 100644
  #include "common/colormatrices.c"
  #include "common/darktable.h"
  #include "common/debug.h"
-@@ -1353,6 +1354,65 @@ static gint _sort_profiles(gconstpointer a, gconstpointer b)
+@@ -1353,6 +1354,70 @@ static gint _sort_profiles(gconstpointer a, gconstpointer b)
    return result;
  }
  
@@ -58,7 +58,12 @@ index c3fc7d6d8b..f90f46d4a2 100644
 +            calloc(1, sizeof(dt_colorspaces_color_profile_t));
 +          if(prof)
 +          {
-+            if(dcp->name[0])
++            // prefix the camera model so profiles for several cameras can
++            // be told apart in the input profile list
++            if(dcp->name[0] && dcp->camera_model[0])
++              g_snprintf(prof->name, sizeof(prof->name), "%s: %s",
++                         dcp->camera_model, dcp->name);
++            else if(dcp->name[0])
 +              g_snprintf(prof->name, sizeof(prof->name), "%s", dcp->name);
 +            else
 +              g_snprintf(prof->name, sizeof(prof->name), "%s", d_name);
@@ -88,7 +93,7 @@ index c3fc7d6d8b..f90f46d4a2 100644
  static GList *load_profile_from_dir(const char *subdir)
  {
    GList *temp_profiles = NULL;
-@@ -1641,6 +1701,15 @@ dt_colorspaces_t *dt_colorspaces_init()
+@@ -1641,6 +1706,15 @@ dt_colorspaces_t *dt_colorspaces_init()
    }
    res->profiles = g_list_concat(res->profiles, temp_profiles);
  
@@ -104,7 +109,7 @@ index c3fc7d6d8b..f90f46d4a2 100644
    // read {conf,data}dir/color/out/*.icc
    temp_profiles = load_profile_from_dir("out");
    for(GList *iter = temp_profiles; iter; iter = g_list_next(iter))
-@@ -1819,6 +1888,8 @@ const char *dt_colorspaces_get_name(dt_colorspaces_color_profile_type_t type,
+@@ -1819,6 +1893,8 @@ const char *dt_colorspaces_get_name(dt_colorspaces_color_profile_type_t type,
         return _("HLG P3");
       case DT_COLORSPACE_DISPLAY_P3:
         return _("Display P3");
@@ -113,7 +118,7 @@ index c3fc7d6d8b..f90f46d4a2 100644
       case DT_COLORSPACE_LAST:
         break;
    }
-@@ -2638,6 +2709,7 @@ gboolean dt_colorspaces_profile_is_wide_gamut(const dt_colorspaces_color_profile
+@@ -2638,6 +2714,7 @@ gboolean dt_colorspaces_profile_is_wide_gamut(const dt_colorspaces_color_profile
      case DT_COLORSPACE_EXPORT:
      case DT_COLORSPACE_SOFTPROOF:
      case DT_COLORSPACE_WORK:
@@ -1129,7 +1134,7 @@ index 0000000000..9cb46d5d91
 +// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
 +// clang-format on
 diff --git a/src/iop/colorin.c b/src/iop/colorin.c
-index 60fea1819a..77e1bb12f9 100644
+index 60fea1819a..cd9ee35f35 100644
 --- a/src/iop/colorin.c
 +++ b/src/iop/colorin.c
 @@ -21,6 +21,7 @@
@@ -1140,7 +1145,18 @@ index 60fea1819a..77e1bb12f9 100644
  #include "common/colorspaces_inline_conversions.h"
  #include "common/image_cache.h"
  #include "common/opencl.h"
-@@ -114,6 +115,13 @@ typedef struct dt_iop_colorin_data_t
+@@ -87,8 +88,10 @@ typedef struct dt_iop_colorin_params_t
+ typedef struct dt_iop_colorin_gui_data_t
+ {
+   GtkWidget *profile_combobox, *clipping_combobox, *work_combobox;
++  GtkWidget *camera_filter_btn;
+   GList *image_profiles;
+   int n_image_profiles;
++  int profile_sel_idx;   // combobox index of the profile in params, -1 if absent
+ } dt_iop_colorin_gui_data_t;
+ 
+ typedef struct dt_iop_colorin_global_data_t
+@@ -114,6 +117,13 @@ typedef struct dt_iop_colorin_data_t
    gboolean nonlinearlut;
    dt_colorspaces_color_profile_type_t type;
    dt_colorspaces_color_profile_type_t type_work;
@@ -1154,7 +1170,91 @@ index 60fea1819a..77e1bb12f9 100644
    char filename[DT_IOP_COLOR_ICC_LEN];
    char filename_work[DT_IOP_COLOR_ICC_LEN];
  } dt_iop_colorin_data_t;
-@@ -645,6 +653,8 @@ int process_cl(dt_iop_module_t *self,
+@@ -493,34 +503,62 @@ void cleanup_global(dt_iop_module_so_t *self)
+   self->data = NULL;
+ }
+ 
++static gboolean _conf_only_camera_profiles(void)
++{
++  return dt_conf_key_exists("plugins/darkroom/colorin/only_camera_profiles")
++    ? dt_conf_get_bool("plugins/darkroom/colorin/only_camera_profiles") : TRUE;
++}
++
++// case-insensitive substring
++static gboolean _strcasestr(const char *haystack, const char *needle)
++{
++  if(!haystack || !needle || !needle[0]) return FALSE;
++  gchar *h = g_ascii_strdown(haystack, -1);
++  gchar *n = g_ascii_strdown(needle, -1);
++  const gboolean found = strstr(h, n) != NULL;
++  g_free(h);
++  g_free(n);
++  return found;
++}
++
++// camera-specific profiles (.icc files from color/in and .dcp profiles) are
++// hidden when they don't mention the image's camera; built-in colorspaces
++// always show
++static gboolean _profile_matches_camera(dt_iop_module_t *self,
++                                        const dt_colorspaces_color_profile_t *prof)
++{
++  if(prof->type != DT_COLORSPACE_FILE && prof->type != DT_COLORSPACE_DCP)
++    return TRUE;
++  const dt_image_t *img = &self->dev->image_storage;
++  if(!img->camera_makermodel[0] && !img->camera_model[0]) return TRUE;
++  const char *base = prof->filename[0] ? g_strrstr(prof->filename, "/") : NULL;
++  base = base ? base + 1 : prof->filename;
++  if(img->camera_makermodel[0]
++     && (_strcasestr(prof->name, img->camera_makermodel)
++         || _strcasestr(base, img->camera_makermodel)))
++    return TRUE;
++  if(img->camera_model[0]
++     && (_strcasestr(prof->name, img->camera_model)
++         || _strcasestr(base, img->camera_model)))
++    return TRUE;
++  return FALSE;
++}
++
+ static void _profile_changed(GtkWidget *widget, dt_iop_module_t *self)
+ {
+   DT_GUARD_GUI_UPDATE();
+   dt_iop_request_focus(self);
+   dt_iop_colorin_params_t *p = self->params;
+-  dt_iop_colorin_gui_data_t *g = self->gui_data;
+-  int pos = dt_bauhaus_combobox_get(widget);
+-  GList *prof;
+-  if(pos < g->n_image_profiles)
+-    prof = g->image_profiles;
+-  else
+-  {
+-    prof = darktable.color_profiles->profiles;
+-    pos -= g->n_image_profiles;
+-  }
+-  for(; prof; prof = g_list_next(prof))
++  const dt_colorspaces_color_profile_t *pp = dt_bauhaus_combobox_get_data(widget);
++  if(pp)
+   {
+-    dt_colorspaces_color_profile_t *pp = prof->data;
+-    if(pp->in_pos == pos)
+-    {
+-      p->type = pp->type;
+-      memcpy(p->filename, pp->filename, sizeof(p->filename));
+-      dt_dev_add_history_item(darktable.develop, self, TRUE);
++    p->type = pp->type;
++    memcpy(p->filename, pp->filename, sizeof(p->filename));
++    dt_dev_add_history_item(darktable.develop, self, TRUE);
+ 
+-      DT_CONTROL_SIGNAL_RAISE(DT_SIGNAL_CONTROL_PROFILE_USER_CHANGED,
+-                              DT_COLORSPACES_PROFILE_TYPE_INPUT);
+-      return;
+-    }
++    DT_CONTROL_SIGNAL_RAISE(DT_SIGNAL_CONTROL_PROFILE_USER_CHANGED,
++                            DT_COLORSPACES_PROFILE_TYPE_INPUT);
++    return;
+   }
+   // should really never happen.
+   dt_print(DT_DEBUG_ALWAYS,
+@@ -645,6 +683,8 @@ int process_cl(dt_iop_module_t *self,
    const int width = roi_in->width;
    const int height = roi_in->height;
  
@@ -1163,7 +1263,7 @@ index 60fea1819a..77e1bb12f9 100644
    if(d->type == DT_COLORSPACE_LAB)
    {
      const size_t region[2] = { width, height };
-@@ -657,7 +667,7 @@ int process_cl(dt_iop_module_t *self,
+@@ -657,7 +697,7 @@ int process_cl(dt_iop_module_t *self,
                                  corrected ? chr->D65coeffs[1] / chr->as_shot[1] : 1.0f,
                                  corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                  corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
@@ -1172,7 +1272,7 @@ index 60fea1819a..77e1bb12f9 100644
    {
      for_four_channels(k)
      {
-@@ -1184,6 +1194,75 @@ static void process_lcms2_proper(dt_iop_module_t *self,
+@@ -1184,6 +1224,75 @@ static void process_lcms2_proper(dt_iop_module_t *self,
    dt_free_align(scratchlines);
  }
  
@@ -1248,7 +1348,7 @@ index 60fea1819a..77e1bb12f9 100644
  void process(dt_iop_module_t *self,
               dt_dev_pixelpipe_iop_t *piece,
               const void *const ivoid,
-@@ -1204,7 +1283,7 @@ void process(dt_iop_module_t *self,
+@@ -1204,7 +1313,7 @@ void process(dt_iop_module_t *self,
                                        corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                        corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
    dt_dev_pixelpipe_t *pipe = piece->pipe;
@@ -1257,7 +1357,7 @@ index 60fea1819a..77e1bb12f9 100644
    {
      for_four_channels(k)
      {
-@@ -1223,7 +1302,31 @@ void process(dt_iop_module_t *self,
+@@ -1223,7 +1332,31 @@ void process(dt_iop_module_t *self,
    const gboolean blue_mapping =
      d->blue_mapping && dt_image_is_matrix_correction_supported(&pipe->image);
  
@@ -1290,7 +1390,7 @@ index 60fea1819a..77e1bb12f9 100644
    {
      dt_iop_image_copy_by_size(ovoid, ivoid, roi_out->width, roi_out->height, piece->colors);
    }
-@@ -1319,6 +1422,76 @@ void commit_params(dt_iop_module_t *self,
+@@ -1319,6 +1452,85 @@ void commit_params(dt_iop_module_t *self,
    d->nonlinearlut = FALSE;
    piece->process_cl_ready = TRUE;
  
@@ -1308,11 +1408,20 @@ index 60fea1819a..77e1bb12f9 100644
 +    d->dcp = dt_dcp_load(p->filename);
 +    if(d->dcp)
 +    {
-+      // camera neutral = response to the scene white = 1 / white balance
++      // camera neutral = response to the scene white = 1 / white balance.
++      // Use the coefficients the white balance module actually set, so the
++      // WB module acts as the "scene illuminant" control for the DCP the
++      // same way it does in ART and Lightroom: moving it re-estimates the
++      // illuminant and re-blends the profile's matrices/tables (the pixel
++      // scaling itself is normalized away in process()). Falls back to the
++      // as-shot values when WB is disabled.
 +      const dt_dev_chroma_t *chr = &self->dev->chroma;
 +      double neutral[3] = { 1.0, 1.0, 1.0 };
 +      for(int k = 0; k < 3; k++)
-+        if(chr->as_shot[k] > 0.0) neutral[k] = 1.0 / chr->as_shot[k];
++      {
++        if(chr->wb_coeffs[k] > 0.0f) neutral[k] = 1.0 / chr->wb_coeffs[k];
++        else if(chr->as_shot[k] > 0.0) neutral[k] = 1.0 / chr->as_shot[k];
++      }
 +
 +      // A DCP describes the whole camera->XYZ rendering including the
 +      // adaptation of the scene illuminant, exactly as Adobe's converter and
@@ -1367,7 +1476,7 @@ index 60fea1819a..77e1bb12f9 100644
    dt_colorspaces_color_profile_type_t type = p->type;
    if(type == DT_COLORSPACE_LAB) // we keep the runtime in process for safety
    {
-@@ -1597,6 +1770,12 @@ void cleanup_pipe(dt_iop_module_t *self,
+@@ -1597,6 +1809,12 @@ void cleanup_pipe(dt_iop_module_t *self,
                    dt_dev_pixelpipe_iop_t *piece)
  {
    dt_iop_colorin_data_t *d = piece->data;
@@ -1380,3 +1489,146 @@ index 60fea1819a..77e1bb12f9 100644
    if(d->input && d->clear_input) dt_colorspaces_cleanup_profile(d->input);
    if(d->xform_cam_Lab)
    {
+@@ -1625,6 +1843,20 @@ void gui_update(dt_iop_module_t *self)
+ 
+   dt_bauhaus_combobox_set(g->clipping_combobox, p->normalize);
+ 
++  if(g->camera_filter_btn)
++  {
++    g_signal_handlers_block_matched(g->camera_filter_btn, G_SIGNAL_MATCH_DATA,
++                                    0, 0, NULL, NULL, self);
++    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(g->camera_filter_btn),
++                                 _conf_only_camera_profiles());
++    g_signal_handlers_unblock_matched(g->camera_filter_btn, G_SIGNAL_MATCH_DATA,
++                                      0, 0, NULL, NULL, self);
++  }
++  // refill both profile lists first: the entry for the active input profile
++  // must be present even when the camera filter would hide it, and the
++  // work list must be repopulated before its selection below
++  update_profile_list(self);
++
+   // working profile
+   int idx = -1;
+   for(const GList *prof = darktable.color_profiles->profiles;
+@@ -1651,37 +1883,9 @@ void gui_update(dt_iop_module_t *self)
+   }
+   dt_bauhaus_combobox_set(g->work_combobox, idx);
+ 
+-  for(const GList *prof = g->image_profiles;
+-      prof;
+-      prof = g_list_next(prof))
+-  {
+-    dt_colorspaces_color_profile_t *pp = prof->data;
+-    if(pp->type == p->type
+-       && (pp->type != DT_COLORSPACE_FILE
+-           || dt_colorspaces_is_profile_equal(pp->filename, p->filename)))
+-    {
+-      dt_bauhaus_combobox_set(g->profile_combobox, pp->in_pos);
+-      return;
+-    }
+-  }
+-
+-  for(const GList *prof = darktable.color_profiles->profiles;
+-      prof;
+-      prof = g_list_next(prof))
+-  {
+-    dt_colorspaces_color_profile_t *pp = prof->data;
+-    if(pp->in_pos > -1
+-       && pp->type == p->type
+-       && (pp->type != DT_COLORSPACE_FILE
+-           || dt_colorspaces_is_profile_equal(pp->filename, p->filename)))
+-    {
+-      dt_bauhaus_combobox_set(g->profile_combobox, pp->in_pos + g->n_image_profiles);
+-      return;
+-    }
+-  }
+-  dt_bauhaus_combobox_set(g->profile_combobox, 0);
+-
+-  dt_print(DT_DEBUG_PIPE, "[gui colorin] using default instead of `%s'",
++  dt_bauhaus_combobox_set(g->profile_combobox, MAX(g->profile_sel_idx, 0));
++  if(g->profile_sel_idx < 0)
++    dt_print(DT_DEBUG_PIPE, "[gui colorin] using default instead of `%s'",
+              dt_colorspaces_get_name(p->type, p->filename));
+ }
+ 
+@@ -2018,16 +2222,39 @@ static void update_profile_list(dt_iop_module_t *self)
+ 
+   // update the gui
+   dt_bauhaus_combobox_clear(g->profile_combobox);
++  g->profile_sel_idx = -1;
++
++  const dt_iop_colorin_params_t *p = self->params;
++  const gboolean only_camera = _conf_only_camera_profiles();
++  int idx_in = 0;
+ 
+   for(GList *l = g->image_profiles; l; l = g_list_next(l))
+   {
+     dt_colorspaces_color_profile_t *prof = l->data;
+-    dt_bauhaus_combobox_add(g->profile_combobox, prof->name);
++    dt_bauhaus_combobox_add_full(g->profile_combobox, prof->name,
++                                 DT_BAUHAUS_COMBOBOX_ALIGN_RIGHT,
++                                 prof, NULL, TRUE);
++    if(g->profile_sel_idx < 0 && prof->type == p->type)
++      g->profile_sel_idx = idx_in;
++    idx_in++;
+   }
+   for(GList *l = darktable.color_profiles->profiles; l; l = g_list_next(l))
+   {
+     dt_colorspaces_color_profile_t *prof = l->data;
+-    if(prof->in_pos > -1) dt_bauhaus_combobox_add(g->profile_combobox, prof->name);
++    if(prof->in_pos <= -1) continue;
++    const gboolean is_current =
++      prof->type == p->type
++      && ((prof->type != DT_COLORSPACE_FILE && prof->type != DT_COLORSPACE_DCP)
++          || dt_colorspaces_is_profile_equal(prof->filename, p->filename));
++    // hide camera-specific profiles of other cameras, but never the active one
++    if(only_camera && !is_current && !_profile_matches_camera(self, prof))
++      continue;
++    dt_bauhaus_combobox_add_full(g->profile_combobox, prof->name,
++                                 DT_BAUHAUS_COMBOBOX_ALIGN_RIGHT,
++                                 prof, NULL, TRUE);
++    if(g->profile_sel_idx < 0 && is_current)
++      g->profile_sel_idx = idx_in;
++    idx_in++;
+   }
+ 
+   // working profile
+@@ -2054,6 +2281,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
+         on ? "blue mode detected in colorin module" : NULL);
+ }
+ 
++static void _camera_filter_toggled(GtkToggleButton *btn, dt_iop_module_t *self)
++{
++  dt_iop_colorin_gui_data_t *g = self->gui_data;
++  dt_conf_set_bool("plugins/darkroom/colorin/only_camera_profiles",
++                   gtk_toggle_button_get_active(btn));
++  ++darktable.gui->reset;
++  update_profile_list(self);
++  dt_bauhaus_combobox_set(g->profile_combobox, MAX(g->profile_sel_idx, 0));
++  --darktable.gui->reset;
++}
++
+ void gui_init(dt_iop_module_t *self)
+ {
+   // pthread_mutex_lock(&darktable.plugin_threadsafe);
+@@ -2067,7 +2305,19 @@ void gui_init(dt_iop_module_t *self)
+   g->work_combobox = dt_bauhaus_combobox_new(self);
+   dt_bauhaus_widget_set_label(g->work_combobox, NULL, N_("working profile"));
+ 
+-  self->widget = dt_gui_vbox(g->profile_combobox, g->work_combobox);
++  g->camera_filter_btn =
++    gtk_check_button_new_with_label(_("only profiles for this camera"));
++  gtk_widget_set_tooltip_text
++    (g->camera_filter_btn,
++     _("hide .icc/.dcp input profiles whose name does not mention\n"
++       "this image's camera model; built-in colorspaces always show"));
++  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(g->camera_filter_btn),
++                               _conf_only_camera_profiles());
++  g_signal_connect(G_OBJECT(g->camera_filter_btn), "toggled",
++                   G_CALLBACK(_camera_filter_toggled), self);
++
++  self->widget = dt_gui_vbox(g->profile_combobox, g->camera_filter_btn,
++                             g->work_combobox);
+ 
+   dt_bauhaus_combobox_set(g->profile_combobox, 0);
+   // We do not set the tooltip for the input profile widget because
