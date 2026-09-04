@@ -11,7 +11,7 @@ index 0079f432e6..6734edb8d2 100644
    "common/curve_tools.c"
    "common/custom_primaries.c"
 diff --git a/src/common/colorspaces.c b/src/common/colorspaces.c
-index c3fc7d6d8b..6906231196 100644
+index c3fc7d6d8b..b8caafee6c 100644
 --- a/src/common/colorspaces.c
 +++ b/src/common/colorspaces.c
 @@ -18,6 +18,7 @@
@@ -51,7 +51,7 @@ index c3fc7d6d8b..6906231196 100644
 +        if(g_ascii_strcasecmp(d_name + MAX(0, (int)strlen(d_name) - 4), ".dcp"))
 +          continue;
 +        char *filename = g_build_filename(dirname, d_name, NULL);
-+        dt_dcp_t *dcp = dt_dcp_load(filename);
++        dt_dcp_t *dcp = dt_dcp_load_ex(filename, TRUE);
 +        if(dcp)
 +        {
 +          dt_colorspaces_color_profile_t *prof =
@@ -149,10 +149,10 @@ index 9b01c35057..7fe04af0de 100644
  typedef enum dt_colorspaces_color_mode_t
 diff --git a/src/common/dcp.c b/src/common/dcp.c
 new file mode 100644
-index 0000000000..878655489a
+index 0000000000..e0b8dc1ff1
 --- /dev/null
 +++ b/src/common/dcp.c
-@@ -0,0 +1,816 @@
+@@ -0,0 +1,834 @@
 +/*
 +    This file is part of darktable,
 +    Copyright (C) 2026 darktable developers.
@@ -486,12 +486,21 @@ index 0000000000..878655489a
 +
 +dt_dcp_t *dt_dcp_load(const char *filename)
 +{
++  return dt_dcp_load_ex(filename, FALSE);
++}
++
++/* header_only: for enumeration. Reads only the head of the file (names,
++   matrices and dims live there in DNG-Converter output) and skips the bulky
++   hue/sat tables. Falls back to a full parse for unusual layouts. */
++dt_dcp_t *dt_dcp_load_ex(const char *filename, const gboolean header_only)
++{
 +  FILE *f = g_fopen(filename, "rb");
 +  if(!f) return NULL;
 +  fseek(f, 0, SEEK_END);
-+  const long sz = ftell(f);
++  const long fsz = ftell(f);
 +  fseek(f, 0, SEEK_SET);
-+  if(sz < 16 || sz > 256 * 1024 * 1024) { fclose(f); return NULL; }
++  if(fsz < 16 || fsz > 256 * 1024 * 1024) { fclose(f); return NULL; }
++  const long sz = header_only ? MIN(fsz, 262144) : fsz;
 +  uint8_t *buf = malloc(sz);
 +  if(!buf) { fclose(f); return NULL; }
 +  if(fread(buf, 1, sz, f) != (size_t)sz) { free(buf); fclose(f); return NULL; }
@@ -591,15 +600,18 @@ index 0000000000..878655489a
 +      default: break;
 +    }
 +  }
-+  if(hsm_dims_off && hsm1_off)
-+    _read_table(&r, &p->hsm[0], hsm_dims_off, hsm_dims_t, hsm_dims_c,
-+                hsm1_off, hsm1_t, hsm1_c);
-+  if(hsm_dims_off && hsm2_off)
-+    _read_table(&r, &p->hsm[1], hsm_dims_off, hsm_dims_t, hsm_dims_c,
-+                hsm2_off, hsm2_t, hsm2_c);
-+  if(look_dims_off && look_off)
-+    _read_table(&r, &p->look, look_dims_off, look_dims_t, look_dims_c,
-+                look_off, look_t, look_c);
++  if(!header_only)
++  {
++    if(hsm_dims_off && hsm1_off)
++      _read_table(&r, &p->hsm[0], hsm_dims_off, hsm_dims_t, hsm_dims_c,
++                  hsm1_off, hsm1_t, hsm1_c);
++    if(hsm_dims_off && hsm2_off)
++      _read_table(&r, &p->hsm[1], hsm_dims_off, hsm_dims_t, hsm_dims_c,
++                  hsm2_off, hsm2_t, hsm2_c);
++    if(look_dims_off && look_off)
++      _read_table(&r, &p->look, look_dims_off, look_dims_t, look_dims_c,
++                  look_off, look_t, look_c);
++  }
 +
 +  free(buf);
 +
@@ -607,7 +619,13 @@ index 0000000000..878655489a
 +  p->temperature[1] = _illuminant_temperature(p->illuminant[1]);
 +  p->valid = p->has_forward_matrix[0] || p->has_forward_matrix[1]
 +             || p->has_color_matrix[0] || p->has_color_matrix[1];
-+  if(!p->valid) { dt_dcp_free(p); return NULL; }
++  if(!p->valid)
++  {
++    dt_dcp_free(p);
++    // truncated header read missed the tags -- parse the whole file
++    if(header_only && sz < fsz) return dt_dcp_load_ex(filename, FALSE);
++    return NULL;
++  }
 +
 +  dt_print(DT_DEBUG_IMAGEIO,
 +           "[dcp] loaded '%s' (%s): FM %d/%d, CM %d/%d, HSM %dx%dx%d, "
@@ -971,10 +989,10 @@ index 0000000000..878655489a
 +// clang-format on
 diff --git a/src/common/dcp.h b/src/common/dcp.h
 new file mode 100644
-index 0000000000..9cb46d5d91
+index 0000000000..6e16250383
 --- /dev/null
 +++ b/src/common/dcp.h
-@@ -0,0 +1,165 @@
+@@ -0,0 +1,167 @@
 +/*
 +    This file is part of darktable,
 +    Copyright (C) 2026 darktable developers.
@@ -1066,6 +1084,8 @@ index 0000000000..9cb46d5d91
 +
 +/** Load and parse a .dcp file. Returns NULL on failure. */
 +dt_dcp_t *dt_dcp_load(const char *filename);
++/** header_only skips the hue/sat tables -- fast path for enumeration. */
++dt_dcp_t *dt_dcp_load_ex(const char *filename, const gboolean header_only);
 +void dt_dcp_free(dt_dcp_t *dcp);
 +
 +/** Prepare the per-image transform.
