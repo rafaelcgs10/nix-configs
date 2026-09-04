@@ -1161,7 +1161,7 @@ index 0000000000..6e16250383
 +// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
 +// clang-format on
 diff --git a/src/iop/colorin.c b/src/iop/colorin.c
-index 60fea1819a..cd9ee35f35 100644
+index 60fea1819a..1d82746024 100644
 --- a/src/iop/colorin.c
 +++ b/src/iop/colorin.c
 @@ -21,6 +21,7 @@
@@ -1503,7 +1503,24 @@ index 60fea1819a..cd9ee35f35 100644
    dt_colorspaces_color_profile_type_t type = p->type;
    if(type == DT_COLORSPACE_LAB) // we keep the runtime in process for safety
    {
-@@ -1597,6 +1809,12 @@ void cleanup_pipe(dt_iop_module_t *self,
+@@ -1583,13 +1795,15 @@ void init_pipe(dt_iop_module_t *self,
+                dt_dev_pixelpipe_t *pipe,
+                dt_dev_pixelpipe_iop_t *piece)
+ {
+-  piece->data = malloc(sizeof(dt_iop_colorin_data_t));
++  piece->data = calloc(1, sizeof(dt_iop_colorin_data_t));
+   dt_iop_colorin_data_t *d = piece->data;
+   d->input = NULL;
+   d->nrgb = NULL;
+   d->xform_cam_Lab = NULL;
+   d->xform_cam_nrgb = NULL;
+   d->xform_nrgb_Lab = NULL;
++  // dcp, dcp_prep and use_dcp rely on the zeroed allocation: commit_params
++  // and cleanup_pipe free whatever they find in there
+ }
+ 
+ void cleanup_pipe(dt_iop_module_t *self,
+@@ -1597,6 +1811,12 @@ void cleanup_pipe(dt_iop_module_t *self,
                    dt_dev_pixelpipe_iop_t *piece)
  {
    dt_iop_colorin_data_t *d = piece->data;
@@ -1516,7 +1533,7 @@ index 60fea1819a..cd9ee35f35 100644
    if(d->input && d->clear_input) dt_colorspaces_cleanup_profile(d->input);
    if(d->xform_cam_Lab)
    {
-@@ -1625,6 +1843,20 @@ void gui_update(dt_iop_module_t *self)
+@@ -1625,6 +1845,20 @@ void gui_update(dt_iop_module_t *self)
  
    dt_bauhaus_combobox_set(g->clipping_combobox, p->normalize);
  
@@ -1537,7 +1554,7 @@ index 60fea1819a..cd9ee35f35 100644
    // working profile
    int idx = -1;
    for(const GList *prof = darktable.color_profiles->profiles;
-@@ -1651,37 +1883,9 @@ void gui_update(dt_iop_module_t *self)
+@@ -1651,37 +1885,9 @@ void gui_update(dt_iop_module_t *self)
    }
    dt_bauhaus_combobox_set(g->work_combobox, idx);
  
@@ -1578,7 +1595,7 @@ index 60fea1819a..cd9ee35f35 100644
               dt_colorspaces_get_name(p->type, p->filename));
  }
  
-@@ -2018,16 +2222,39 @@ static void update_profile_list(dt_iop_module_t *self)
+@@ -2018,16 +2224,39 @@ static void update_profile_list(dt_iop_module_t *self)
  
    // update the gui
    dt_bauhaus_combobox_clear(g->profile_combobox);
@@ -1620,7 +1637,7 @@ index 60fea1819a..cd9ee35f35 100644
    }
  
    // working profile
-@@ -2054,6 +2281,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
+@@ -2054,6 +2283,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
          on ? "blue mode detected in colorin module" : NULL);
  }
  
@@ -1638,7 +1655,7 @@ index 60fea1819a..cd9ee35f35 100644
  void gui_init(dt_iop_module_t *self)
  {
    // pthread_mutex_lock(&darktable.plugin_threadsafe);
-@@ -2067,7 +2305,19 @@ void gui_init(dt_iop_module_t *self)
+@@ -2067,7 +2307,19 @@ void gui_init(dt_iop_module_t *self)
    g->work_combobox = dt_bauhaus_combobox_new(self);
    dt_bauhaus_widget_set_label(g->work_combobox, NULL, N_("working profile"));
  
