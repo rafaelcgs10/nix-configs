@@ -357,6 +357,9 @@ in
         set_key clplatform_rusticl TRUE
       fi
       set_key resourcelevel large
+      # Rafael's chosen darkroom defaults (2026-09): the AgX workflow is what
+      # the native-DCP validation and all the RP styles assume as tone mapper.
+      set_key 'plugins/darkroom/workflow' 'scene-referred (AgX)'
     fi
   '';
 
