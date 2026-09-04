@@ -11,7 +11,15 @@ let
   # package directly — one build, used for both the GUI and the sync timer.
   darktable-xmp-sync =
     spektrafilmPackages.darktable-spektrafilm-ai.basePackage.overrideAttrs (old: {
-      patches = (old.patches or [ ]) ++ [ ./darktable-headless-xmp-sync.patch ];
+      patches = (old.patches or [ ]) ++ [
+        ./darktable-headless-xmp-sync.patch
+        # native Adobe DNG camera profile (.dcp) support in the input color
+        # profile module: put .dcp files in ~/.config/darktable/color/dcp/
+        # and pick them like any input profile. The profile tone curve is
+        # deliberately not applied, so agx/sigmoid keep owning tone, and the
+        # white balance / color calibration modules are untouched.
+        ./darktable-dcp-support.patch
+      ];
     });
 
   # DT Pro theme pack from darktable.info (DT-Pro-orange and its siblings).

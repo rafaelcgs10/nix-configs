@@ -1,0 +1,1375 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 0079f432e6..6734edb8d2 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -32,6 +32,7 @@ FILE(GLOB SOURCE_FILES
+   "common/color_vocabulary.c"
+   "common/colorlabels.c"
+   "common/colorspaces.c"
++  "common/dcp.c"
+   "common/curl_tools.c"
+   "common/curve_tools.c"
+   "common/custom_primaries.c"
+diff --git a/src/common/colorspaces.c b/src/common/colorspaces.c
+index c3fc7d6d8b..f90f46d4a2 100644
+--- a/src/common/colorspaces.c
++++ b/src/common/colorspaces.c
+@@ -18,6 +18,7 @@
+ 
+ #include "common/colorspaces_inline_conversions.h"
+ #include "common/colorspaces.h"
++#include "common/dcp.h"
+ #include "common/colormatrices.c"
+ #include "common/darktable.h"
+ #include "common/debug.h"
+@@ -1353,6 +1354,65 @@ static gint _sort_profiles(gconstpointer a, gconstpointer b)
+   return result;
+ }
+ 
++/** Scan {userconfig,datadir}/color/dcp for Adobe DNG camera profiles and
++ *  offer them in the input profile list. They carry no ICC profile: the
++ *  input color profile module handles DT_COLORSPACE_DCP natively (see
++ *  common/dcp.c), a placeholder profile is attached only so that generic
++ *  list handling has something valid to hold on to. */
++static GList *load_dcp_from_dir(void)
++{
++  GList *temp_profiles = NULL;
++  char confdir[PATH_MAX] = { 0 };
++  char datadir[PATH_MAX] = { 0 };
++  dt_loc_get_user_config_dir(confdir, sizeof(confdir));
++  dt_loc_get_datadir(datadir, sizeof(datadir));
++
++  for(int which = 0; which < 2; which++)
++  {
++    char *dirname = g_build_filename(which ? datadir : confdir, "color", "dcp", NULL);
++    GDir *dir = g_dir_open(dirname, 0, NULL);
++    if(dir)
++    {
++      const gchar *d_name;
++      while((d_name = g_dir_read_name(dir)))
++      {
++        if(g_ascii_strcasecmp(d_name + MAX(0, (int)strlen(d_name) - 4), ".dcp"))
++          continue;
++        char *filename = g_build_filename(dirname, d_name, NULL);
++        dt_dcp_t *dcp = dt_dcp_load(filename);
++        if(dcp)
++        {
++          dt_colorspaces_color_profile_t *prof =
++            calloc(1, sizeof(dt_colorspaces_color_profile_t));
++          if(prof)
++          {
++            if(dcp->name[0])
++              g_snprintf(prof->name, sizeof(prof->name), "%s", dcp->name);
++            else
++              g_snprintf(prof->name, sizeof(prof->name), "%s", d_name);
++            g_strlcpy(prof->filename, filename, sizeof(prof->filename));
++            prof->type = DT_COLORSPACE_DCP;
++            prof->profile = cmsCreate_sRGBProfile();  // placeholder, unused
++            prof->in_pos = -1;
++            prof->out_pos = -1;
++            prof->display_pos = -1;
++            prof->display2_pos = -1;
++            prof->category_pos = -1;
++            prof->work_pos = -1;
++            temp_profiles = g_list_prepend(temp_profiles, prof);
++          }
++          dt_dcp_free(dcp);
++        }
++        g_free(filename);
++      }
++      g_dir_close(dir);
++    }
++    g_free(dirname);
++    if(temp_profiles) break;   // user config wins over the shipped folder
++  }
++  return g_list_sort(temp_profiles, _sort_profiles);
++}
++
+ static GList *load_profile_from_dir(const char *subdir)
+ {
+   GList *temp_profiles = NULL;
+@@ -1641,6 +1701,15 @@ dt_colorspaces_t *dt_colorspaces_init()
+   }
+   res->profiles = g_list_concat(res->profiles, temp_profiles);
+ 
++  // Adobe DNG camera profiles from {conf,data}dir/color/dcp/*.dcp
++  temp_profiles = load_dcp_from_dir();
++  for(GList *iter = temp_profiles; iter; iter = g_list_next(iter))
++  {
++    dt_colorspaces_color_profile_t *prof = iter->data;
++    prof->in_pos = ++in_pos;
++  }
++  res->profiles = g_list_concat(res->profiles, temp_profiles);
++
+   // read {conf,data}dir/color/out/*.icc
+   temp_profiles = load_profile_from_dir("out");
+   for(GList *iter = temp_profiles; iter; iter = g_list_next(iter))
+@@ -1819,6 +1888,8 @@ const char *dt_colorspaces_get_name(dt_colorspaces_color_profile_type_t type,
+        return _("HLG P3");
+      case DT_COLORSPACE_DISPLAY_P3:
+        return _("Display P3");
++     case DT_COLORSPACE_DCP:
++       return _("DNG camera profile (DCP)");
+      case DT_COLORSPACE_LAST:
+        break;
+   }
+@@ -2638,6 +2709,7 @@ gboolean dt_colorspaces_profile_is_wide_gamut(const dt_colorspaces_color_profile
+     case DT_COLORSPACE_EXPORT:
+     case DT_COLORSPACE_SOFTPROOF:
+     case DT_COLORSPACE_WORK:
++    case DT_COLORSPACE_DCP:
+     case DT_COLORSPACE_LAST:
+       return FALSE;
+   }
+diff --git a/src/common/colorspaces.h b/src/common/colorspaces.h
+index 9b01c35057..7fe04af0de 100644
+--- a/src/common/colorspaces.h
++++ b/src/common/colorspaces.h
+@@ -104,7 +104,8 @@ typedef enum dt_colorspaces_color_profile_type_t
+   DT_COLORSPACE_PQ_P3 = 24,
+   DT_COLORSPACE_HLG_P3 = 25,
+   DT_COLORSPACE_DISPLAY_P3 = 26,
+-  DT_COLORSPACE_LAST = 27
++  DT_COLORSPACE_DCP = 27, // Adobe DNG camera profile (.dcp), see common/dcp.h
++  DT_COLORSPACE_LAST = 28
+ } dt_colorspaces_color_profile_type_t;
+ 
+ typedef enum dt_colorspaces_color_mode_t
+diff --git a/src/common/dcp.c b/src/common/dcp.c
+new file mode 100644
+index 0000000000..878655489a
+--- /dev/null
++++ b/src/common/dcp.c
+@@ -0,0 +1,816 @@
++/*
++    This file is part of darktable,
++    Copyright (C) 2026 darktable developers.
++
++    darktable is free software: you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation, either version 3 of the License, or
++    (at your option) any later version.
++
++    darktable is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License
++    along with darktable.  If not, see <http://www.gnu.org/licenses/>.
++*/
++
++#include "common/dcp.h"
++#include "common/darktable.h"
++#include "common/math.h"
++
++#include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++
++// ---------------------------------------------------------------- TIFF/IFD
++
++#define DCP_TAG_UNIQUE_CAMERA_MODEL 0xC614
++#define DCP_TAG_COLOR_MATRIX_1      0xC621
++#define DCP_TAG_COLOR_MATRIX_2      0xC622
++#define DCP_TAG_CALIB_ILLUM_1       0xC65A
++#define DCP_TAG_CALIB_ILLUM_2       0xC65B
++#define DCP_TAG_PROFILE_NAME        0xC6F8
++#define DCP_TAG_HSM_DIMS            0xC6F9
++#define DCP_TAG_HSM_DATA_1          0xC6FA
++#define DCP_TAG_HSM_DATA_2          0xC6FB
++#define DCP_TAG_TONE_CURVE          0xC6FC
++#define DCP_TAG_FORWARD_MATRIX_1    0xC714
++#define DCP_TAG_FORWARD_MATRIX_2    0xC715
++#define DCP_TAG_LOOK_DIMS           0xC725
++#define DCP_TAG_LOOK_DATA           0xC726
++#define DCP_TAG_HSM_ENCODING        0xC7A3
++#define DCP_TAG_LOOK_ENCODING       0xC7A4
++#define DCP_TAG_BASELINE_EXP_OFFSET 0xC7A5
++
++typedef struct dcp_reader_t
++{
++  const uint8_t *d;
++  size_t len;
++  gboolean be;      // big endian
++} dcp_reader_t;
++
++static uint16_t _u16(const dcp_reader_t *r, size_t o)
++{
++  if(o + 2 > r->len) return 0;
++  return r->be ? (uint16_t)((r->d[o] << 8) | r->d[o + 1])
++               : (uint16_t)((r->d[o + 1] << 8) | r->d[o]);
++}
++
++static uint32_t _u32(const dcp_reader_t *r, size_t o)
++{
++  if(o + 4 > r->len) return 0;
++  return r->be ? ((uint32_t)r->d[o] << 24 | (uint32_t)r->d[o + 1] << 16
++                  | (uint32_t)r->d[o + 2] << 8 | r->d[o + 3])
++               : ((uint32_t)r->d[o + 3] << 24 | (uint32_t)r->d[o + 2] << 16
++                  | (uint32_t)r->d[o + 1] << 8 | r->d[o]);
++}
++
++static int32_t _i32(const dcp_reader_t *r, size_t o)
++{
++  return (int32_t)_u32(r, o);
++}
++
++static float _f32(const dcp_reader_t *r, size_t o)
++{
++  uint32_t v = _u32(r, o);
++  float f;
++  memcpy(&f, &v, 4);
++  return f;
++}
++
++static size_t _type_size(uint16_t t)
++{
++  switch(t)
++  {
++    case 1: case 2: case 6: case 7: return 1;
++    case 3: case 8:                 return 2;
++    case 4: case 9: case 11:        return 4;
++    case 5: case 10: case 12:       return 8;
++    default:                        return 0;
++  }
++}
++
++/** Read `count` values of TIFF type `type` starting at the entry's value
++ *  field (offset `voff`), into a double array. Returns the number read. */
++static int _read_doubles(const dcp_reader_t *r, size_t voff, uint16_t type,
++                         uint32_t count, double *out, uint32_t max)
++{
++  const size_t esz = _type_size(type);
++  if(!esz) return 0;
++  const size_t total = esz * (size_t)count;
++  size_t base = voff;
++  if(total > 4) base = _u32(r, voff);
++  if(base + total > r->len) return 0;
++  const uint32_t n = MIN(count, max);
++  for(uint32_t i = 0; i < n; i++)
++  {
++    const size_t o = base + esz * i;
++    switch(type)
++    {
++      case 1: case 7: out[i] = r->d[o]; break;
++      case 3:         out[i] = _u16(r, o); break;
++      case 4:         out[i] = _u32(r, o); break;
++      case 8:         out[i] = (int16_t)_u16(r, o); break;
++      case 9:         out[i] = _i32(r, o); break;
++      case 11:        out[i] = _f32(r, o); break;
++      case 5:  // unsigned rational
++      {
++        const uint32_t num = _u32(r, o), den = _u32(r, o + 4);
++        out[i] = den ? (double)num / (double)den : 0.0;
++        break;
++      }
++      case 10: // signed rational
++      {
++        const int32_t num = _i32(r, o), den = _i32(r, o + 4);
++        out[i] = den ? (double)num / (double)den : 0.0;
++        break;
++      }
++      default: return 0;
++    }
++  }
++  return (int)n;
++}
++
++static void _read_string(const dcp_reader_t *r, size_t voff, uint16_t type,
++                         uint32_t count, char *out, size_t outsz)
++{
++  out[0] = '\0';
++  if(type != 2 && type != 1) return;
++  size_t base = voff;
++  if(count > 4) base = _u32(r, voff);
++  if(base + count > r->len) return;
++  const size_t n = MIN((size_t)count, outsz - 1);
++  memcpy(out, r->d + base, n);
++  out[n] = '\0';
++}
++
++// DNG CalibrationIlluminant code -> correlated color temperature
++static double _illuminant_temperature(int code)
++{
++  switch(code)
++  {
++    case 1:  return 5500.0;   // daylight
++    case 2:  return 3500.0;   // fluorescent
++    case 3:  return 2856.0;   // tungsten
++    case 4:  return 5500.0;   // flash
++    case 10: return 5500.0;   // fine weather
++    case 11: return 6500.0;   // cloudy
++    case 12: return 7500.0;   // shade
++    case 13: return 5700.0;   // daylight fluorescent
++    case 14: return 4600.0;   // day white fluorescent
++    case 15: return 3800.0;   // cool white fluorescent
++    case 17: return 2856.0;   // Standard light A
++    case 18: return 4874.0;   // Standard light B
++    case 19: return 6774.0;   // Standard light C
++    case 20: return 5503.0;   // D55
++    case 21: return 6504.0;   // D65
++    case 22: return 7504.0;   // D75
++    case 23: return 5003.0;   // D50
++    case 24: return 3200.0;   // ISO studio tungsten
++    default: return 0.0;
++  }
++}
++
++// ------------------------------------------------------------- 3x3 doubles
++
++static void _m3_mul(const double a[9], const double b[9], double out[9])
++{
++  double t[9];
++  for(int i = 0; i < 3; i++)
++    for(int j = 0; j < 3; j++)
++    {
++      double s = 0.0;
++      for(int k = 0; k < 3; k++) s += a[i * 3 + k] * b[k * 3 + j];
++      t[i * 3 + j] = s;
++    }
++  memcpy(out, t, sizeof(t));
++}
++
++static void _m3_apply(const double m[9], const double v[3], double out[3])
++{
++  double t[3];
++  for(int i = 0; i < 3; i++)
++    t[i] = m[i * 3] * v[0] + m[i * 3 + 1] * v[1] + m[i * 3 + 2] * v[2];
++  memcpy(out, t, sizeof(t));
++}
++
++static gboolean _m3_invert(const double m[9], double out[9])
++{
++  const double det = m[0] * (m[4] * m[8] - m[5] * m[7])
++                   - m[1] * (m[3] * m[8] - m[5] * m[6])
++                   + m[2] * (m[3] * m[7] - m[4] * m[6]);
++  if(fabs(det) < 1e-12) return FALSE;
++  const double id = 1.0 / det;
++  double t[9];
++  t[0] = (m[4] * m[8] - m[5] * m[7]) * id;
++  t[1] = (m[2] * m[7] - m[1] * m[8]) * id;
++  t[2] = (m[1] * m[5] - m[2] * m[4]) * id;
++  t[3] = (m[5] * m[6] - m[3] * m[8]) * id;
++  t[4] = (m[0] * m[8] - m[2] * m[6]) * id;
++  t[5] = (m[2] * m[3] - m[0] * m[5]) * id;
++  t[6] = (m[3] * m[7] - m[4] * m[6]) * id;
++  t[7] = (m[1] * m[6] - m[0] * m[7]) * id;
++  t[8] = (m[0] * m[4] - m[1] * m[3]) * id;
++  memcpy(out, t, sizeof(t));
++  return TRUE;
++}
++
++static void _m3_mix(const double a[9], double wa, const double b[9], double wb,
++                    double out[9])
++{
++  for(int i = 0; i < 9; i++) out[i] = a[i] * wa + b[i] * wb;
++}
++
++// Bradford chromatic adaptation from src white to dst white (both XYZ, Y=1)
++static const double BRADFORD[9] = {  0.8951,  0.2664, -0.1614,
++                                    -0.7502,  1.7135,  0.0367,
++                                     0.0389, -0.0685,  1.0296 };
++
++static void _bradford(const double src_w[3], const double dst_w[3], double out[9])
++{
++  double s[3], d[3], inv[9], diag[9] = { 0 };
++  _m3_apply(BRADFORD, src_w, s);
++  _m3_apply(BRADFORD, dst_w, d);
++  diag[0] = (fabs(s[0]) > 1e-9) ? d[0] / s[0] : 1.0;
++  diag[4] = (fabs(s[1]) > 1e-9) ? d[1] / s[1] : 1.0;
++  diag[8] = (fabs(s[2]) > 1e-9) ? d[2] / s[2] : 1.0;
++  _m3_invert(BRADFORD, inv);
++  _m3_mul(diag, BRADFORD, out);
++  _m3_mul(inv, out, out);
++}
++
++static void _xy_to_xyz(const double xy[2], double out[3])
++{
++  const double y = (fabs(xy[1]) > 1e-9) ? xy[1] : 1e-9;
++  out[0] = xy[0] / y;
++  out[1] = 1.0;
++  out[2] = (1.0 - xy[0] - xy[1]) / y;
++}
++
++// --------------------------------------------- xy <-> temperature (DNG SDK)
++
++typedef struct { double r, u, v, t; } dcp_ruvt_t;
++
++static const dcp_ruvt_t TEMP_TABLE[] = {
++  {   0, 0.18006, 0.26352, -0.24341 }, {  10, 0.18066, 0.26589, -0.25479 },
++  {  20, 0.18133, 0.26846, -0.26876 }, {  30, 0.18208, 0.27119, -0.28539 },
++  {  40, 0.18293, 0.27407, -0.30470 }, {  50, 0.18388, 0.27709, -0.32675 },
++  {  60, 0.18494, 0.28021, -0.35156 }, {  70, 0.18611, 0.28342, -0.37915 },
++  {  80, 0.18740, 0.28668, -0.40955 }, {  90, 0.18880, 0.28997, -0.44278 },
++  { 100, 0.19032, 0.29326, -0.47888 }, { 125, 0.19462, 0.30141, -0.58204 },
++  { 150, 0.19962, 0.30921, -0.70471 }, { 175, 0.20525, 0.31647, -0.84901 },
++  { 200, 0.21142, 0.32312, -1.0182  }, { 225, 0.21807, 0.32909, -1.2168  },
++  { 250, 0.22511, 0.33439, -1.4512  }, { 275, 0.23247, 0.33904, -1.7298  },
++  { 300, 0.24010, 0.34308, -2.0637  }, { 325, 0.24792, 0.34655, -2.4681  },
++  { 350, 0.25591, 0.34951, -2.9641  }, { 375, 0.26400, 0.35200, -3.5814  },
++  { 400, 0.27218, 0.35407, -4.3633  }, { 425, 0.28039, 0.35577, -5.3762  },
++  { 450, 0.28863, 0.35714, -6.7262  }, { 475, 0.29685, 0.35823, -8.5955  },
++  { 500, 0.30505, 0.35907, -11.324  }, { 525, 0.31320, 0.35968, -15.628  },
++  { 550, 0.32129, 0.36011, -23.325  }, { 575, 0.32931, 0.36038, -40.770  },
++  { 600, 0.33724, 0.36051, -116.45  }
++};
++#define TEMP_TABLE_N ((int)(sizeof(TEMP_TABLE) / sizeof(TEMP_TABLE[0])))
++
++static double _xy_to_temperature(const double xy[2])
++{
++  // DNG SDK: uv from xy (note the exact denominator, a factor here throws
++  // the point off the black-body locus and pins the result to the table end)
++  const double den = 1.5 - xy[0] + 6.0 * xy[1];
++  if(fabs(den) < 1e-9) return 5000.0;
++  const double u = 2.0 * xy[0] / den;
++  const double v = 3.0 * xy[1] / den;
++  double last_dt = 0.0, last_dv = 0.0, last_du = 0.0;
++  for(int i = 1; i < TEMP_TABLE_N; i++)
++  {
++    double du = 1.0, dv = TEMP_TABLE[i].t;
++    const double len = sqrt(1.0 + dv * dv);
++    du /= len; dv /= len;
++    double uu = u - TEMP_TABLE[i].u, vv = v - TEMP_TABLE[i].v;
++    double dt = -uu * dv + vv * du;
++    if(dt <= 0.0 || i == TEMP_TABLE_N - 1)
++    {
++      if(dt > 0.0) dt = 0.0;
++      dt = -dt;
++      const double f = (i == 1) ? 0.0 : dt / (last_dt + dt);
++      return 1.0e6 / (TEMP_TABLE[i - 1].r * f + TEMP_TABLE[i].r * (1.0 - f));
++    }
++    last_dt = dt; last_du = du; last_dv = dv;
++  }
++  (void)last_du; (void)last_dv;
++  return 5000.0;
++}
++
++// ------------------------------------------------------------- load / free
++
++static void _read_table(const dcp_reader_t *r, dt_dcp_table_t *t,
++                        size_t dims_voff, uint16_t dims_type, uint32_t dims_count,
++                        size_t data_voff, uint16_t data_type, uint32_t data_count)
++{
++  double dims[3] = { 0, 0, 0 };
++  if(_read_doubles(r, dims_voff, dims_type, dims_count, dims, 3) < 2) return;
++  t->dims[0] = (int)dims[0];
++  t->dims[1] = (int)dims[1];
++  t->dims[2] = (dims_count >= 3 && dims[2] >= 1) ? (int)dims[2] : 1;
++  const size_t n = (size_t)t->dims[0] * t->dims[1] * t->dims[2] * 3;
++  if(n == 0 || n > 64u * 1024u * 1024u || data_count < n) return;
++  double *tmp = malloc(sizeof(double) * n);
++  if(!tmp) return;
++  if((size_t)_read_doubles(r, data_voff, data_type, data_count, tmp, n) != n)
++  {
++    free(tmp);
++    return;
++  }
++  t->data = malloc(sizeof(float) * n);
++  if(t->data)
++    for(size_t i = 0; i < n; i++) t->data[i] = (float)tmp[i];
++  free(tmp);
++}
++
++dt_dcp_t *dt_dcp_load(const char *filename)
++{
++  FILE *f = g_fopen(filename, "rb");
++  if(!f) return NULL;
++  fseek(f, 0, SEEK_END);
++  const long sz = ftell(f);
++  fseek(f, 0, SEEK_SET);
++  if(sz < 16 || sz > 256 * 1024 * 1024) { fclose(f); return NULL; }
++  uint8_t *buf = malloc(sz);
++  if(!buf) { fclose(f); return NULL; }
++  if(fread(buf, 1, sz, f) != (size_t)sz) { free(buf); fclose(f); return NULL; }
++  fclose(f);
++
++  dcp_reader_t r = { buf, (size_t)sz, FALSE };
++  if(buf[0] == 'M' && buf[1] == 'M') r.be = TRUE;
++  else if(!(buf[0] == 'I' && buf[1] == 'I')) { free(buf); return NULL; }
++  const uint16_t magic = _u16(&r, 2);
++  // DCP files use magic 0x4352 ("CR"); plain TIFF uses 42
++  if(magic != 0x4352 && magic != 42) { free(buf); return NULL; }
++
++  dt_dcp_t *p = calloc(1, sizeof(dt_dcp_t));
++  if(!p) { free(buf); return NULL; }
++  p->illuminant[0] = p->illuminant[1] = -1;
++
++  const uint32_t ifd = _u32(&r, 4);
++  const uint16_t nent = _u16(&r, ifd);
++  for(uint16_t i = 0; i < nent; i++)
++  {
++    const size_t e = ifd + 2 + 12 * (size_t)i;
++    if(e + 12 > r.len) break;
++    const uint16_t tag = _u16(&r, e);
++    const uint16_t type = _u16(&r, e + 2);
++    const uint32_t count = _u32(&r, e + 4);
++    const size_t voff = e + 8;
++    double m[9];
++    switch(tag)
++    {
++      case DCP_TAG_PROFILE_NAME:
++        _read_string(&r, voff, type, count, p->name, sizeof(p->name));
++        break;
++      case DCP_TAG_UNIQUE_CAMERA_MODEL:
++        _read_string(&r, voff, type, count, p->camera_model,
++                     sizeof(p->camera_model));
++        break;
++      case DCP_TAG_CALIB_ILLUM_1:
++        if(_read_doubles(&r, voff, type, count, m, 1) == 1)
++          p->illuminant[0] = (int)m[0];
++        break;
++      case DCP_TAG_CALIB_ILLUM_2:
++        if(_read_doubles(&r, voff, type, count, m, 1) == 1)
++          p->illuminant[1] = (int)m[0];
++        break;
++      case DCP_TAG_COLOR_MATRIX_1:
++        if(_read_doubles(&r, voff, type, count, m, 9) == 9)
++        { memcpy(p->color_matrix[0], m, sizeof(m)); p->has_color_matrix[0] = TRUE; }
++        break;
++      case DCP_TAG_COLOR_MATRIX_2:
++        if(_read_doubles(&r, voff, type, count, m, 9) == 9)
++        { memcpy(p->color_matrix[1], m, sizeof(m)); p->has_color_matrix[1] = TRUE; }
++        break;
++      case DCP_TAG_FORWARD_MATRIX_1:
++        if(_read_doubles(&r, voff, type, count, m, 9) == 9)
++        { memcpy(p->forward_matrix[0], m, sizeof(m)); p->has_forward_matrix[0] = TRUE; }
++        break;
++      case DCP_TAG_FORWARD_MATRIX_2:
++        if(_read_doubles(&r, voff, type, count, m, 9) == 9)
++        { memcpy(p->forward_matrix[1], m, sizeof(m)); p->has_forward_matrix[1] = TRUE; }
++        break;
++      case DCP_TAG_HSM_ENCODING:
++        if(_read_doubles(&r, voff, type, count, m, 1) == 1)
++          p->hsm[0].srgb = p->hsm[1].srgb = (m[0] == 1.0);
++        break;
++      case DCP_TAG_LOOK_ENCODING:
++        if(_read_doubles(&r, voff, type, count, m, 1) == 1)
++          p->look.srgb = (m[0] == 1.0);
++        break;
++      case DCP_TAG_BASELINE_EXP_OFFSET:
++        if(_read_doubles(&r, voff, type, count, m, 1) == 1)
++          p->baseline_exposure_offset = (float)m[0];
++        break;
++      default:
++        break;
++    }
++  }
++
++  // second pass for the tables (dims and data are separate tags)
++  size_t hsm_dims_off = 0, hsm1_off = 0, hsm2_off = 0, look_dims_off = 0,
++         look_off = 0;
++  uint16_t hsm_dims_t = 0, hsm1_t = 0, hsm2_t = 0, look_dims_t = 0, look_t = 0;
++  uint32_t hsm_dims_c = 0, hsm1_c = 0, hsm2_c = 0, look_dims_c = 0, look_c = 0;
++  for(uint16_t i = 0; i < nent; i++)
++  {
++    const size_t e = ifd + 2 + 12 * (size_t)i;
++    if(e + 12 > r.len) break;
++    const uint16_t tag = _u16(&r, e), type = _u16(&r, e + 2);
++    const uint32_t count = _u32(&r, e + 4);
++    const size_t voff = e + 8;
++    switch(tag)
++    {
++      case DCP_TAG_HSM_DIMS:  hsm_dims_off = voff; hsm_dims_t = type; hsm_dims_c = count; break;
++      case DCP_TAG_HSM_DATA_1: hsm1_off = voff; hsm1_t = type; hsm1_c = count; break;
++      case DCP_TAG_HSM_DATA_2: hsm2_off = voff; hsm2_t = type; hsm2_c = count; break;
++      case DCP_TAG_LOOK_DIMS: look_dims_off = voff; look_dims_t = type; look_dims_c = count; break;
++      case DCP_TAG_LOOK_DATA: look_off = voff; look_t = type; look_c = count; break;
++      default: break;
++    }
++  }
++  if(hsm_dims_off && hsm1_off)
++    _read_table(&r, &p->hsm[0], hsm_dims_off, hsm_dims_t, hsm_dims_c,
++                hsm1_off, hsm1_t, hsm1_c);
++  if(hsm_dims_off && hsm2_off)
++    _read_table(&r, &p->hsm[1], hsm_dims_off, hsm_dims_t, hsm_dims_c,
++                hsm2_off, hsm2_t, hsm2_c);
++  if(look_dims_off && look_off)
++    _read_table(&r, &p->look, look_dims_off, look_dims_t, look_dims_c,
++                look_off, look_t, look_c);
++
++  free(buf);
++
++  p->temperature[0] = _illuminant_temperature(p->illuminant[0]);
++  p->temperature[1] = _illuminant_temperature(p->illuminant[1]);
++  p->valid = p->has_forward_matrix[0] || p->has_forward_matrix[1]
++             || p->has_color_matrix[0] || p->has_color_matrix[1];
++  if(!p->valid) { dt_dcp_free(p); return NULL; }
++
++  dt_print(DT_DEBUG_IMAGEIO,
++           "[dcp] loaded '%s' (%s): FM %d/%d, CM %d/%d, HSM %dx%dx%d, "
++           "look %dx%dx%d%s, illum %d/%d",
++           p->name, p->camera_model,
++           p->has_forward_matrix[0], p->has_forward_matrix[1],
++           p->has_color_matrix[0], p->has_color_matrix[1],
++           p->hsm[0].dims[0], p->hsm[0].dims[1], p->hsm[0].dims[2],
++           p->look.dims[0], p->look.dims[1], p->look.dims[2],
++           p->look.srgb ? " (sRGB)" : "",
++           p->illuminant[0], p->illuminant[1]);
++  return p;
++}
++
++void dt_dcp_free(dt_dcp_t *dcp)
++{
++  if(!dcp) return;
++  free(dcp->hsm[0].data);
++  free(dcp->hsm[1].data);
++  free(dcp->look.data);
++  free(dcp);
++}
++
++// ---------------------------------------------------------------- prepare
++
++/** Interpolation weight of illuminant 1 at the given temperature (DNG:
++ *  linear in reciprocal temperature, clamped to the calibration range). */
++static double _mix_weight(const dt_dcp_t *dcp, double temp)
++{
++  const double t1 = dcp->temperature[0], t2 = dcp->temperature[1];
++  if(t1 <= 0.0 || t2 <= 0.0 || t1 == t2) return 1.0;
++  const gboolean lt = t1 < t2;
++  if(lt ? (temp <= t1) : (temp >= t1)) return 1.0;
++  if(lt ? (temp >= t2) : (temp <= t2)) return 0.0;
++  return (1.0 / temp - 1.0 / t2) / (1.0 / t1 - 1.0 / t2);
++}
++
++/** XYZ->camera at a given white point, interpolating the two ColorMatrices. */
++static gboolean _xyz_to_camera(const dt_dcp_t *dcp, const double xy[2],
++                               double out[9])
++{
++  if(dcp->has_color_matrix[0] && dcp->has_color_matrix[1])
++  {
++    const double w = _mix_weight(dcp, _xy_to_temperature(xy));
++    _m3_mix(dcp->color_matrix[0], w, dcp->color_matrix[1], 1.0 - w, out);
++    return TRUE;
++  }
++  if(dcp->has_color_matrix[0]) { memcpy(out, dcp->color_matrix[0], 9 * sizeof(double)); return TRUE; }
++  if(dcp->has_color_matrix[1]) { memcpy(out, dcp->color_matrix[1], 9 * sizeof(double)); return TRUE; }
++  return FALSE;
++}
++
++/** Estimate the scene illuminant chromaticity from the camera neutral
++ *  (DNG's self-consistent loop, as ART/dcamprof do). */
++static gboolean _neutral_to_xy(const dt_dcp_t *dcp, const double neutral[3],
++                               double xy[2])
++{
++  double cur[2] = { 0.3457, 0.3585 };  // D50 start
++  for(int pass = 0; pass < 30; pass++)
++  {
++    double cm[9], inv[9], xyz[3];
++    if(!_xyz_to_camera(dcp, cur, cm)) return FALSE;
++    if(!_m3_invert(cm, inv)) return FALSE;
++    _m3_apply(inv, neutral, xyz);
++    const double sum = xyz[0] + xyz[1] + xyz[2];
++    if(sum < 1e-9) return FALSE;
++    const double nx = xyz[0] / sum, ny = xyz[1] / sum;
++    const gboolean done = (fabs(nx - cur[0]) + fabs(ny - cur[1])) < 1e-8;
++    cur[0] = nx; cur[1] = ny;
++    if(done) break;
++  }
++  xy[0] = cur[0]; xy[1] = cur[1];
++  return TRUE;
++}
++
++/** Derive a ForwardMatrix from a ColorMatrix when the profile has none:
++ *  invert XYZ->cam at the calibration illuminant, scale so the camera
++ *  neutral maps to that white, then adapt it to D50. */
++static gboolean _forward_from_color(const dt_dcp_t *dcp, int idx, double out[9])
++{
++  if(!dcp->has_color_matrix[idx]) return FALSE;
++  const double t = dcp->temperature[idx] > 0 ? dcp->temperature[idx] : 5000.0;
++  // approximate the calibration white as a daylight/blackbody xy for its CCT
++  double xy[2];
++  {
++    // invert the temperature table by bisection on _xy_to_temperature along
++    // the daylight locus approximation (sufficient: this is a fallback path)
++    const double x = (t <= 7000.0)
++      ? (-4.6070e9 / (t * t * t) + 2.9678e6 / (t * t) + 0.09911e3 / t + 0.244063)
++      : (-2.0064e9 / (t * t * t) + 1.9018e6 / (t * t) + 0.24748e3 / t + 0.237040);
++    xy[0] = x;
++    xy[1] = -3.0 * x * x + 2.87 * x - 0.275;
++  }
++  double cm[9], inv[9], w[3], neutral[3], diag[9] = { 0 }, adapt[9];
++  memcpy(cm, dcp->color_matrix[idx], sizeof(cm));
++  if(!_m3_invert(cm, inv)) return FALSE;
++  _xy_to_xyz(xy, w);
++  _m3_apply(cm, w, neutral);
++  diag[0] = neutral[0]; diag[4] = neutral[1]; diag[8] = neutral[2];
++  _m3_mul(inv, diag, out);
++  const double d50[3] = { 0.9642, 1.0, 0.8249 };
++  _bradford(w, d50, adapt);
++  _m3_mul(adapt, out, out);
++  return TRUE;
++}
++
++static void _interp_table(const dt_dcp_table_t *a, const dt_dcp_table_t *b,
++                          double w, dt_dcp_table_t *out)
++{
++  memset(out, 0, sizeof(*out));
++  const dt_dcp_table_t *src = a->data ? a : b;
++  if(!src || !src->data) return;
++  memcpy(out->dims, src->dims, sizeof(out->dims));
++  out->srgb = src->srgb;
++  const size_t n = (size_t)src->dims[0] * src->dims[1] * src->dims[2] * 3;
++  out->data = malloc(sizeof(float) * n);
++  if(!out->data) return;
++  if(a->data && b->data
++     && a->dims[0] == b->dims[0] && a->dims[1] == b->dims[1]
++     && a->dims[2] == b->dims[2])
++    for(size_t i = 0; i < n; i++)
++      out->data[i] = (float)(a->data[i] * w + b->data[i] * (1.0 - w));
++  else
++    memcpy(out->data, src->data, sizeof(float) * n);
++}
++
++// XYZ(D50) -> linear ProPhoto and back (RIMM primaries, D50 white)
++static const double DT_DCP_XYZ_TO_PROPHOTO[9] = {
++   1.3459433, -0.2556075, -0.0511118,
++  -0.5445989,  1.5081673,  0.0205351,
++   0.0000000,  0.0000000,  1.2118128 };
++static const double DT_DCP_PROPHOTO_TO_XYZ[9] = {
++   0.7976749,  0.1351917,  0.0313534,
++   0.2880402,  0.7118741,  0.0000857,
++   0.0000000,  0.0000000,  0.8252100 };
++
++gboolean dt_dcp_prepare(const dt_dcp_t *dcp, const double neutral[3],
++                        const gboolean unadapt, dt_dcp_prepared_t *out)
++{
++  if(!dcp || !dcp->valid || !out)
++  { dt_print(DT_DEBUG_ALWAYS, "[dcp] prepare: bad args (dcp=%p valid=%d out=%p)",
++             (void *)dcp, dcp ? dcp->valid : 0, (void *)out); return FALSE; }
++  memset(out, 0, sizeof(*out));
++
++  double n[3] = { neutral[0], neutral[1], neutral[2] };
++  if(n[0] <= 0.0 || n[1] <= 0.0 || n[2] <= 0.0) { n[0] = n[1] = n[2] = 1.0; }
++  // DNG normalises the neutral so that the largest component is 1
++  const double nmax = MAX(n[0], MAX(n[1], n[2]));
++  for(int i = 0; i < 3; i++) n[i] /= nmax;
++
++  double xy[2] = { 0.3457, 0.3585 };
++  if(!_neutral_to_xy(dcp, n, xy)) { xy[0] = 0.3457; xy[1] = 0.3585; }
++  out->scene_xy[0] = xy[0];
++  out->scene_xy[1] = xy[1];
++  out->temperature = _xy_to_temperature(xy);
++
++  // forward matrix at the estimated illuminant
++  const double w = _mix_weight(dcp, out->temperature);
++  double fm[9], fm1[9], fm2[9];
++  gboolean has1 = dcp->has_forward_matrix[0], has2 = dcp->has_forward_matrix[1];
++  if(has1) memcpy(fm1, dcp->forward_matrix[0], sizeof(fm1));
++  if(has2) memcpy(fm2, dcp->forward_matrix[1], sizeof(fm2));
++  if(!has1 && dcp->has_color_matrix[0]) has1 = _forward_from_color(dcp, 0, fm1);
++  if(!has2 && dcp->has_color_matrix[1]) has2 = _forward_from_color(dcp, 1, fm2);
++  if(has1 && has2)      _m3_mix(fm1, w, fm2, 1.0 - w, fm);
++  else if(has1)         memcpy(fm, fm1, sizeof(fm));
++  else if(has2)         memcpy(fm, fm2, sizeof(fm));
++  else
++  { dt_print(DT_DEBUG_ALWAYS, "[dcp] prepare: no usable forward matrix"); return FALSE; }
++
++  // The ForwardMatrix is defined for camera RGB divided by the camera's
++  // response to the scene white, and the DNG reference derives that response
++  // from the ColorMatrix rather than from the white balance multipliers
++  // directly (dng_color_spec::SetWhiteXY). The two are proportional but not
++  // equally scaled, and the scale matters: it sets the brightness at which
++  // the tables' value axis is sampled.
++  {
++    double cm[9], white_xyz[3];
++    _xy_to_xyz(xy, white_xyz);
++    if(_xyz_to_camera(dcp, xy, cm))
++      _m3_apply(cm, white_xyz, out->camera_white);
++    else
++      out->camera_white[0] = out->camera_white[1] = out->camera_white[2] = 1.0;
++    for(int i = 0; i < 3; i++)
++      if(!(out->camera_white[i] > 1e-9)) out->camera_white[i] = 1.0;
++  }
++
++  // Un-adapt: the FM output is adapted to D50 (a scene neutral lands on D50
++  // white). darktable's own camera matrices leave the illuminant cast in the
++  // data and let color calibration remove it, so restore the cast to keep
++  // this a drop-in replacement -- the white balance and color calibration
++  // modules then behave exactly as they do for any other camera profile.
++  const double d50[3] = { 0.9642, 1.0, 0.8249 };
++  double scene_w[3], unadapt_m[9], m[9];
++  _xy_to_xyz(xy, scene_w);
++  if(unadapt)
++    _bradford(d50, scene_w, unadapt_m);
++  else
++    memcpy(unadapt_m, (const double[9]){ 1,0,0, 0,1,0, 0,0,1 }, 9 * sizeof(double));
++  _m3_mul(unadapt_m, fm, m);
++
++  double cam_pp[9], pp_xyz[9];
++  _m3_mul(DT_DCP_XYZ_TO_PROPHOTO, fm, cam_pp);       // camera -> ProPhoto(D50)
++  _m3_mul(unadapt_m, DT_DCP_PROPHOTO_TO_XYZ, pp_xyz); // ProPhoto -> XYZ w/ cast
++  for(int i = 0; i < 3; i++)
++  {
++    for(int j = 0; j < 3; j++)
++    {
++      out->cam_to_xyz[i][j] = (float)m[i * 3 + j];
++      out->cam_to_prophoto[i][j] = (float)cam_pp[i * 3 + j];
++      out->prophoto_to_xyz[i][j] = (float)pp_xyz[i * 3 + j];
++    }
++    out->cam_to_xyz[i][3] = out->cam_to_prophoto[i][3]
++      = out->prophoto_to_xyz[i][3] = 0.0f;
++  }
++  for(int j = 0; j < 4; j++)
++    out->cam_to_xyz[3][j] = out->cam_to_prophoto[3][j]
++      = out->prophoto_to_xyz[3][j] = 0.0f;
++
++  // tables
++  _interp_table(&dcp->hsm[0], &dcp->hsm[1], w, &out->hsm);
++  out->look.dims[0] = dcp->look.dims[0];
++  out->look.dims[1] = dcp->look.dims[1];
++  out->look.dims[2] = dcp->look.dims[2];
++  out->look.srgb = dcp->look.srgb;
++  out->look.data = dcp->look.data;   // shared, not owned
++  out->has_tables = (out->hsm.data != NULL) || (out->look.data != NULL);
++
++  dt_print(DT_DEBUG_PARAMS,
++           "[dcp] prepared: scene xy %.4f/%.4f, %.0fK, mix %.3f, tables %d",
++           xy[0], xy[1], out->temperature, w, out->has_tables);
++  return TRUE;
++}
++
++void dt_dcp_prepared_cleanup(dt_dcp_prepared_t *p)
++{
++  if(!p) return;
++  free(p->hsm.data);
++  p->hsm.data = NULL;
++  p->look.data = NULL;  // not owned
++}
++
++// ------------------------------------------------------------ table lookup
++
++static inline float _srgb_encode(float x)
++{
++  return (x <= 0.0031308f) ? 12.92f * x
++                           : 1.055f * powf(x, 1.0f / 2.4f) - 0.055f;
++}
++
++static inline float _srgb_decode(float x)
++{
++  return (x <= 0.04045f) ? x / 12.92f : powf((x + 0.055f) / 1.055f, 2.4f);
++}
++
++// interpolate two hue shifts (degrees), taking the shorter way round
++static inline float _hue_mix(float w0, float h0, float w1, float h1)
++{
++  float d = h1 - h0;
++  if(d > 180.0f) d -= 360.0f;
++  else if(d < -180.0f) d += 360.0f;
++  return h0 * (w0 + w1) + d * w1;
++}
++
++void dt_dcp_apply_table(const dt_dcp_table_t *t, float *h, float *s, float *v,
++                        const float value_scale, const gboolean clip)
++{
++  if(!t || !t->data) return;
++  const int hd = t->dims[0], sd = t->dims[1], vd = t->dims[2];
++  if(hd < 1 || sd < 2) return;
++
++  // value is only a LOOKUP COORDINATE: clamp the index, never the pixel.
++  // value_scale maps darktable's white convention onto the profile's, so the
++  // table is sampled at the brightness Adobe intended.
++  const float v_lin = MAX(*v, 0.0f) * value_scale;
++  const float v_clamped = MIN(v_lin, 1.0f);
++  const float v_enc = t->srgb ? _srgb_encode(v_clamped) : v_clamped;
++
++  const float h_scaled = (*h) * (float)hd / 6.0f;
++  const float s_scaled = CLAMPF((*s) * (float)(sd - 1), 0.0f, (float)(sd - 1));
++  const float v_scaled = (vd > 1)
++    ? CLAMPF(v_enc * (float)(vd - 1), 0.0f, (float)(vd - 1)) : 0.0f;
++
++  int h0 = (int)floorf(h_scaled);
++  const float hf = h_scaled - (float)h0;
++  h0 = ((h0 % hd) + hd) % hd;
++  const int h1 = (h0 + 1) % hd;
++
++  int s0 = (int)s_scaled;
++  s0 = CLAMPS(s0, 0, sd - 2 >= 0 ? sd - 2 : 0);
++  const float sf = s_scaled - (float)s0;
++  const int s1 = MIN(s0 + 1, sd - 1);
++
++  int v0 = (int)v_scaled;
++  v0 = CLAMPS(v0, 0, vd - 2 >= 0 ? vd - 2 : 0);
++  const float vf = (vd > 1) ? (v_scaled - (float)v0) : 0.0f;
++  const int v1 = MIN(v0 + 1, vd - 1);
++
++  const size_t hue_step = (size_t)sd;
++  const size_t val_step = (size_t)hd * sd;
++#define IDX(vi, hi, si) (((size_t)(vi) * val_step + (size_t)(hi) * hue_step \
++                          + (size_t)(si)) * 3)
++
++  // Hue shifts are angles: interpolating them linearly is wrong when the
++  // sampled entries straddle the +/-180 wrap (this profile's look table
++  // spans -175..+175 degrees). Accumulate shortest-path deltas relative to
++  // the first sampled entry instead, like Adobe's reference code.
++  float dh = 0.0f, ds = 0.0f, dv = 0.0f, h_ref = 0.0f;
++  gboolean have_ref = FALSE;
++  for(int vi = 0; vi < 2; vi++)
++  {
++    const int vidx = vi ? v1 : v0;
++    const float vw = vi ? vf : (1.0f - vf);
++    if(vw == 0.0f && vd > 1 && vi == 1) continue;
++    for(int hi = 0; hi < 2; hi++)
++    {
++      const int hidx = hi ? h1 : h0;
++      const float hw = hi ? hf : (1.0f - hf);
++      for(int si = 0; si < 2; si++)
++      {
++        const int sidx = si ? s1 : s0;
++        const float sw = si ? sf : (1.0f - sf);
++        const float wgt = vw * hw * sw;
++        if(wgt == 0.0f) continue;
++        const float *e = t->data + IDX(vidx, hidx, sidx);
++        if(!have_ref) { h_ref = e[0]; have_ref = TRUE; }
++        float d = e[0] - h_ref;
++        if(d > 180.0f) d -= 360.0f;
++        else if(d < -180.0f) d += 360.0f;
++        dh += wgt * d;
++        ds += wgt * e[1];
++        dv += wgt * e[2];
++      }
++    }
++  }
++#undef IDX
++
++  *h += (h_ref + dh) * (6.0f / 360.0f);
++  while(*h < 0.0f) *h += 6.0f;
++  while(*h >= 6.0f) *h -= 6.0f;
++  *s = CLAMPF(*s * ds, 0.0f, 1.0f);
++
++  if(t->srgb)
++  {
++    // Adobe scales the value in the encoded domain. Compute the gain there
++    // and apply it multiplicatively, so highlights above white keep their
++    // relative structure instead of being clipped (darktable is unbounded).
++    const float out_enc = CLAMPF(v_enc * dv, 0.0f, 1.0f);
++    const float out_lin = _srgb_decode(out_enc);
++    const float gain = (v_clamped > 1e-6f) ? out_lin / v_clamped : dv;
++    *v = (clip ? v_clamped : v_lin) * gain / value_scale;
++  }
++  else
++    *v = (clip ? v_clamped : v_lin) * dv / value_scale;
++}
++
++// clang-format off
++// modelines: These editor modelines have been set for all relevant files by tools/update_modelines.py
++// vim: shiftwidth=2 expandtab tabstop=2 cindent
++// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
++// clang-format on
+diff --git a/src/common/dcp.h b/src/common/dcp.h
+new file mode 100644
+index 0000000000..9cb46d5d91
+--- /dev/null
++++ b/src/common/dcp.h
+@@ -0,0 +1,165 @@
++/*
++    This file is part of darktable,
++    Copyright (C) 2026 darktable developers.
++
++    darktable is free software: you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation, either version 3 of the License, or
++    (at your option) any later version.
++
++    darktable is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License
++    along with darktable.  If not, see <http://www.gnu.org/licenses/>.
++*/
++
++#pragma once
++
++#include "common/darktable.h"
++#include <glib.h>
++
++/** Adobe DNG camera profile (.dcp) support.
++ *
++ * A DCP is a TIFF/IFD container holding the DNG color-profile tags. We use
++ * the parts that describe COLOR only:
++ *
++ *   ColorMatrix1/2      XYZ -> camera; used to estimate the scene illuminant
++ *   ForwardMatrix1/2    white-balanced camera RGB -> XYZ(D50); the renderer
++ *   HueSatMap1/2        (hue, sat, value) -> (hue shift, sat scale, val scale)
++ *   LookTable           same shape, the profile's subjective "look"
++ *
++ * The profile tone curve is deliberately NOT used: darktable's own tone
++ * mapper (agx/sigmoid/filmic) owns that decision.
++ */
++
++#define DT_DCP_MAX_NAME 256
++
++typedef struct dt_dcp_table_t
++{
++  int dims[3];        // hue, sat, value divisions
++  gboolean srgb;      // value axis is sRGB-encoded (index only)
++  float *data;        // dims[2]*dims[0]*dims[1] triples (value-major)
++} dt_dcp_table_t;
++
++typedef struct dt_dcp_t
++{
++  char name[DT_DCP_MAX_NAME];
++  char camera_model[DT_DCP_MAX_NAME];
++
++  int illuminant[2];              // DNG CalibrationIlluminant codes
++  double temperature[2];          // their correlated color temperatures
++
++  gboolean has_color_matrix[2];
++  gboolean has_forward_matrix[2];
++  double color_matrix[2][9];      // XYZ -> camera
++  double forward_matrix[2][9];    // WB'd camera -> XYZ(D50)
++
++  dt_dcp_table_t hsm[2];          // HueSatMap, per illuminant
++  dt_dcp_table_t look;            // LookTable (single)
++
++  float baseline_exposure_offset; // EV, informational (not applied)
++  gboolean valid;
++} dt_dcp_t;
++
++/** Per-image prepared state: illuminant-interpolated matrices and tables. */
++typedef struct dt_dcp_prepared_t
++{
++  dt_colormatrix_t cam_to_xyz;    // WB'd camera RGB -> XYZ, un-adapted
++                                  // (carries the scene cast, like darktable's
++                                  //  own camera matrix, so color calibration
++                                  //  keeps working normally)
++  // Adobe's tables operate on D50-adapted data in ProPhoto, so the transform
++  // is also available split: camera -> ProPhoto(D50) [tables] -> XYZ un-adapted
++  dt_colormatrix_t cam_to_prophoto;
++  dt_colormatrix_t prophoto_to_xyz;
++  gboolean has_tables;
++  dt_dcp_table_t hsm;             // interpolated copy (data owned)
++  dt_dcp_table_t look;            // shallow copy of the profile's look table
++  double scene_xy[2];             // estimated scene illuminant chromaticity
++  double temperature;             // its CCT
++  // The camera's response to the scene white, computed from the DNG
++  // ColorMatrix (dng_color_spec::SetWhiteXY). The ForwardMatrix is defined
++  // for camera RGB divided by exactly this, which also fixes the absolute
++  // level the value-axis of the tables is sampled at.
++  double camera_white[3];
++} dt_dcp_prepared_t;
++
++/** Load and parse a .dcp file. Returns NULL on failure. */
++dt_dcp_t *dt_dcp_load(const char *filename);
++void dt_dcp_free(dt_dcp_t *dcp);
++
++/** Prepare the per-image transform.
++ *
++ * neutral = the camera's raw response to the scene white (i.e. the as-shot
++ * neutral, 1/white-balance-multipliers, green-normalized). Estimates the
++ * scene illuminant, interpolates matrices/tables for it, and builds a
++ * camera->XYZ matrix that leaves the scene cast in place.
++ */
++gboolean dt_dcp_prepare(const dt_dcp_t *dcp,
++                        const double neutral[3],
++                        gboolean unadapt,
++                        dt_dcp_prepared_t *out);
++void dt_dcp_prepared_cleanup(dt_dcp_prepared_t *p);
++
++/** Apply a DNG hue/sat/value table to one pixel, Adobe-style.
++ *
++ * h in [0,6), s and v >= 0 (v unbounded: the value axis is only a lookup
++ * index, so it is clamped for the lookup and never clamps the pixel).
++ */
++void dt_dcp_apply_table(const dt_dcp_table_t *t, float *h, float *s, float *v,
++                        const float value_scale, const gboolean clip);
++
++/** Adobe-style RGB<->HSV (hue in [0,6)). Returns FALSE for pixels with a
++ *  negative channel: those are out of gamut, the tables are meaningless
++ *  there and the caller should apply the matrix only (as ART does). */
++static inline gboolean dt_dcp_rgb_to_hsv(const float r, const float g,
++                                         const float b,
++                                         float *h, float *s, float *v)
++{
++  if(r < 0.0f || g < 0.0f || b < 0.0f) return FALSE;
++  const float mx = MAX(r, MAX(g, b));
++  const float mn = MIN(r, MIN(g, b));
++  *v = mx;
++  const float gap = mx - mn;
++  if(mx <= 0.0f) { *h = 0.0f; *s = 0.0f; return TRUE; }
++  *s = gap / mx;
++  if(gap <= 0.0f) { *h = 0.0f; return TRUE; }
++  float hh;
++  if(r >= mx)      hh = (g - b) / gap;
++  else if(g >= mx) hh = 2.0f + (b - r) / gap;
++  else             hh = 4.0f + (r - g) / gap;
++  if(hh < 0.0f) hh += 6.0f;
++  *h = hh;
++  return TRUE;
++}
++
++static inline void dt_dcp_hsv_to_rgb(float h, const float s, const float v,
++                                     float *r, float *g, float *b)
++{
++  if(s <= 0.0f) { *r = *g = *b = v; return; }
++  while(h < 0.0f) h += 6.0f;
++  while(h >= 6.0f) h -= 6.0f;
++  const int i = (int)h;
++  const float f = h - (float)i;
++  const float p = v * (1.0f - s);
++  const float q = v * (1.0f - s * f);
++  const float t = v * (1.0f - s * (1.0f - f));
++  switch(i)
++  {
++    case 0:  *r = v; *g = t; *b = p; break;
++    case 1:  *r = q; *g = v; *b = p; break;
++    case 2:  *r = p; *g = v; *b = t; break;
++    case 3:  *r = p; *g = q; *b = v; break;
++    case 4:  *r = t; *g = p; *b = v; break;
++    default: *r = v; *g = p; *b = q; break;
++  }
++}
++
++// clang-format off
++// modelines: These editor modelines have been set for all relevant files by tools/update_modelines.py
++// vim: shiftwidth=2 expandtab tabstop=2 cindent
++// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
++// clang-format on
+diff --git a/src/iop/colorin.c b/src/iop/colorin.c
+index 60fea1819a..b22bdc2ff3 100644
+--- a/src/iop/colorin.c
++++ b/src/iop/colorin.c
+@@ -21,6 +21,7 @@
+ #include "common/iop_profile.h"
+ #include "common/colormatrices.c"
+ #include "common/colorspaces.h"
++#include "common/dcp.h"
+ #include "common/colorspaces_inline_conversions.h"
+ #include "common/image_cache.h"
+ #include "common/opencl.h"
+@@ -114,6 +115,13 @@ typedef struct dt_iop_colorin_data_t
+   gboolean nonlinearlut;
+   dt_colorspaces_color_profile_type_t type;
+   dt_colorspaces_color_profile_type_t type_work;
++  // Adobe DNG camera profile (.dcp) support
++  dt_dcp_t *dcp;
++  dt_dcp_prepared_t dcp_prep;
++  gboolean use_dcp;
++  float dcp_value_scale;
++  gboolean dcp_clip;
++  gboolean dcp_tables;
+   char filename[DT_IOP_COLOR_ICC_LEN];
+   char filename_work[DT_IOP_COLOR_ICC_LEN];
+ } dt_iop_colorin_data_t;
+@@ -645,6 +653,8 @@ int process_cl(dt_iop_module_t *self,
+   const int width = roi_in->width;
+   const int height = roi_in->height;
+ 
++  if(d->use_dcp) return DT_OPENCL_PROCESS_CL;  // no GPU path yet
++
+   if(d->type == DT_COLORSPACE_LAB)
+   {
+     const size_t region[2] = { width, height };
+@@ -657,7 +667,7 @@ int process_cl(dt_iop_module_t *self,
+                                 corrected ? chr->D65coeffs[1] / chr->as_shot[1] : 1.0f,
+                                 corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
+                                 corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
+-  if(corrected)
++  if(corrected && !d->use_dcp)
+   {
+     for_four_channels(k)
+     {
+@@ -1184,6 +1194,75 @@ static void process_lcms2_proper(dt_iop_module_t *self,
+   dt_free_align(scratchlines);
+ }
+ 
++
++/* ---------------------------------------------------------------------
++   Adobe DNG camera profile (.dcp) path.
++
++   The profile's ForwardMatrix expects camera RGB divided by the camera
++   neutral -- exactly the state darktable's white balance produces with
++   the as-shot coefficients, so no residual correction is applied here
++   (see commit_params).
++
++   Adobe's HueSatMap/LookTable are defined on D50-adapted data in linear
++   ProPhoto, so the tables run there; afterwards the illuminant cast is
++   restored (dt_dcp_prepare bakes that into prophoto_to_xyz) to leave the
++   data in the same state darktable's own camera matrices produce -- the
++   white balance and color calibration modules therefore keep working
++   unchanged. The profile tone curve is deliberately not applied:
++   darktable's tone mapper owns that decision.
++*/
++static void _dcp_process(float *const restrict out,
++                         const float *const restrict in,
++                         const size_t npixels,
++                         const dt_iop_colorin_data_t *const d,
++                         const dt_aligned_pixel_t corr)
++{
++  const dt_dcp_prepared_t *const pr = &d->dcp_prep;
++  const gboolean tables = pr->has_tables && d->dcp_tables;
++  const dt_dcp_table_t *const hsm = pr->hsm.data ? &pr->hsm : NULL;
++  const dt_dcp_table_t *const look = pr->look.data ? &pr->look : NULL;
++  const float vscale = d->dcp_value_scale;
++  const gboolean vclip = d->dcp_clip;
++
++  dt_colormatrix_t M;
++  memcpy(M, tables ? pr->cam_to_prophoto : pr->cam_to_xyz, sizeof(M));
++  dt_colormatrix_t P;
++  memcpy(P, pr->prophoto_to_xyz, sizeof(P));
++
++  DT_OMP_FOR()
++  for(size_t k = 0; k < npixels; k++)
++  {
++    const float r = in[4 * k] * corr[0], g = in[4 * k + 1] * corr[1],
++                b = in[4 * k + 2] * corr[2];
++    dt_aligned_pixel_t xyz;
++    float x0 = M[0][0] * r + M[0][1] * g + M[0][2] * b;
++    float x1 = M[1][0] * r + M[1][1] * g + M[1][2] * b;
++    float x2 = M[2][0] * r + M[2][1] * g + M[2][2] * b;
++
++    if(tables)
++    {
++      float h, s, v;
++      if(dt_dcp_rgb_to_hsv(x0, x1, x2, &h, &s, &v))
++      {
++        if(hsm) dt_dcp_apply_table(hsm, &h, &s, &v, vscale, vclip);
++        if(look) dt_dcp_apply_table(look, &h, &s, &v, vscale, vclip);
++        dt_dcp_hsv_to_rgb(h, s, v, &x0, &x1, &x2);
++      }
++      const float p0 = x0, p1 = x1, p2 = x2;
++      x0 = P[0][0] * p0 + P[0][1] * p1 + P[0][2] * p2;
++      x1 = P[1][0] * p0 + P[1][1] * p1 + P[1][2] * p2;
++      x2 = P[2][0] * p0 + P[2][1] * p1 + P[2][2] * p2;
++    }
++
++    xyz[0] = x0; xyz[1] = x1; xyz[2] = x2; xyz[3] = 0.0f;
++    dt_aligned_pixel_t lab;
++    dt_XYZ_to_Lab(xyz, lab);
++    lab[3] = in[4 * k + 3];
++    copy_pixel_nontemporal(out + 4 * k, lab);
++  }
++  dt_omploop_sfence();
++}
++
+ void process(dt_iop_module_t *self,
+              dt_dev_pixelpipe_iop_t *piece,
+              const void *const ivoid,
+@@ -1204,7 +1283,7 @@ void process(dt_iop_module_t *self,
+                                       corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
+                                       corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
+   dt_dev_pixelpipe_t *pipe = piece->pipe;
+-  if(corrected)
++  if(corrected && !d->use_dcp)
+   {
+     for_four_channels(k)
+     {
+@@ -1223,7 +1302,31 @@ void process(dt_iop_module_t *self,
+   const gboolean blue_mapping =
+     d->blue_mapping && dt_image_is_matrix_correction_supported(&pipe->image);
+ 
+-  if(d->type == DT_COLORSPACE_LAB)
++  if(d->use_dcp)
++  {
++    // A DCP's ForwardMatrix is defined for camera RGB divided by the camera
++    // neutral, i.e. as-shot white balance. White balance may have produced a
++    // different state (the scene-referred workflow balances to the camera
++    // reference), so convert from whatever it applied to as-shot here --
++    // the white balance module itself is left untouched.
++    // undo whatever white balance applied, then divide by the camera's
++    // response to the scene white -- the state a ForwardMatrix expects
++    dt_aligned_pixel_t dcp_corr = { 1.0f, 1.0f, 1.0f, 1.0f };
++    for(int k = 0; k < 3; k++)
++    {
++      const float applied = pipe->dsc.temperature.coeffs[k];
++      const double cw = d->dcp_prep.camera_white[k];
++      if(applied > 0.0f && cw > 0.0)
++        dcp_corr[k] = (float)(1.0 / ((double)applied * cw));
++    }
++    dt_print_pipe(DT_DEBUG_PIPE | DT_DEBUG_VERBOSE, "dcp wb",
++                  pipe, self, DT_DEVICE_CPU, roi_in, roi_out,
++                  "as-shot correction %.4f %.4f %.4f",
++                  dcp_corr[0], dcp_corr[1], dcp_corr[2]);
++    _dcp_process((float *)ovoid, (const float *)ivoid,
++                 (size_t)roi_out->width * roi_out->height, d, dcp_corr);
++  }
++  else if(d->type == DT_COLORSPACE_LAB)
+   {
+     dt_iop_image_copy_by_size(ovoid, ivoid, roi_out->width, roi_out->height, piece->colors);
+   }
+@@ -1319,6 +1422,69 @@ void commit_params(dt_iop_module_t *self,
+   d->nonlinearlut = FALSE;
+   piece->process_cl_ready = TRUE;
+ 
++  // ---- Adobe DNG camera profile (.dcp) --------------------------------
++  dt_dcp_prepared_cleanup(&d->dcp_prep);
++  if(d->dcp)
++  {
++    dt_dcp_free(d->dcp);
++    d->dcp = NULL;
++  }
++  d->use_dcp = FALSE;
++
++  if(p->type == DT_COLORSPACE_DCP && p->filename[0])
++  {
++    d->dcp = dt_dcp_load(p->filename);
++    if(d->dcp)
++    {
++      // camera neutral = response to the scene white = 1 / white balance
++      const dt_dev_chroma_t *chr = &self->dev->chroma;
++      double neutral[3] = { 1.0, 1.0, 1.0 };
++      for(int k = 0; k < 3; k++)
++        if(chr->as_shot[k] > 0.0) neutral[k] = 1.0 / chr->as_shot[k];
++
++      // A DCP describes the whole camera->XYZ rendering including the
++      // adaptation of the scene illuminant, exactly as Adobe's converter and
++      // ART apply it, so by default it does that adaptation itself and color
++      // calibration must be off (measured against ART: dE76 3.5 this way, 5.7
++      // when the cast is handed to color calibration instead). Set
++      // plugins/darkroom/colorin/dcp_unadapt=true to keep the illuminant cast
++      // in the data and let color calibration adapt it as usual.
++      const gboolean unadapt =
++        dt_conf_key_exists("plugins/darkroom/colorin/dcp_unadapt")
++        ? dt_conf_get_bool("plugins/darkroom/colorin/dcp_unadapt") : FALSE;
++      d->dcp_value_scale =
++        dt_conf_key_exists("plugins/darkroom/colorin/dcp_value_scale")
++        ? (float)dt_conf_get_float("plugins/darkroom/colorin/dcp_value_scale") : 1.0f;
++      if(d->dcp_value_scale <= 0.0f) d->dcp_value_scale = 1.0f;
++      d->dcp_clip = dt_conf_key_exists("plugins/darkroom/colorin/dcp_clip")
++        ? dt_conf_get_bool("plugins/darkroom/colorin/dcp_clip") : FALSE;
++      d->dcp_tables = dt_conf_key_exists("plugins/darkroom/colorin/dcp_tables")
++        ? dt_conf_get_bool("plugins/darkroom/colorin/dcp_tables") : TRUE;
++      if(dt_dcp_prepare(d->dcp, neutral, unadapt, &d->dcp_prep))
++      {
++        d->use_dcp = TRUE;
++        // the fast matrix path is still used by callers that only need a
++        // camera->XYZ matrix (histogram, thumbnails, pipe profile info)
++        memcpy(d->cmatrix, d->dcp_prep.cam_to_xyz, sizeof(d->cmatrix));
++        piece->process_cl_ready = FALSE;   // CPU only for now
++        dt_print(DT_DEBUG_PARAMS,
++                 "[colorin] using DCP '%s' (%s), scene %.0fK, %s",
++                 d->dcp->name, p->filename, d->dcp_prep.temperature,
++                 unadapt ? "cast left for color calibration"
++                         : "profile adapts (turn color calibration off)");
++      }
++      else
++      {
++        dt_dcp_free(d->dcp);
++        d->dcp = NULL;
++      }
++    }
++    if(!d->use_dcp)
++      dt_print(DT_DEBUG_ALWAYS, "[colorin] could not use DCP `%s'", p->filename);
++    else
++      return;   // nothing else to set up
++  }
++
+   dt_colorspaces_color_profile_type_t type = p->type;
+   if(type == DT_COLORSPACE_LAB) // we keep the runtime in process for safety
+   {
+@@ -1597,6 +1763,12 @@ void cleanup_pipe(dt_iop_module_t *self,
+                   dt_dev_pixelpipe_iop_t *piece)
+ {
+   dt_iop_colorin_data_t *d = piece->data;
++  dt_dcp_prepared_cleanup(&d->dcp_prep);
++  if(d->dcp)
++  {
++    dt_dcp_free(d->dcp);
++    d->dcp = NULL;
++  }
+   if(d->input && d->clear_input) dt_colorspaces_cleanup_profile(d->input);
+   if(d->xform_cam_Lab)
+   {
