@@ -1161,7 +1161,7 @@ index 0000000000..6e16250383
 +// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
 +// clang-format on
 diff --git a/src/iop/colorin.c b/src/iop/colorin.c
-index 60fea1819a..1d82746024 100644
+index 60fea1819a..94ea988faa 100644
 --- a/src/iop/colorin.c
 +++ b/src/iop/colorin.c
 @@ -21,6 +21,7 @@
@@ -1183,7 +1183,7 @@ index 60fea1819a..1d82746024 100644
  } dt_iop_colorin_gui_data_t;
  
  typedef struct dt_iop_colorin_global_data_t
-@@ -114,6 +117,13 @@ typedef struct dt_iop_colorin_data_t
+@@ -114,6 +117,15 @@ typedef struct dt_iop_colorin_data_t
    gboolean nonlinearlut;
    dt_colorspaces_color_profile_type_t type;
    dt_colorspaces_color_profile_type_t type_work;
@@ -1191,13 +1191,15 @@ index 60fea1819a..1d82746024 100644
 +  dt_dcp_t *dcp;
 +  dt_dcp_prepared_t dcp_prep;
 +  gboolean use_dcp;
++  gboolean dcp_unadapt;
++  double dcp_neutral[3];  // the neutral dcp_prep was built for
 +  float dcp_value_scale;
 +  gboolean dcp_clip;
 +  gboolean dcp_tables;
    char filename[DT_IOP_COLOR_ICC_LEN];
    char filename_work[DT_IOP_COLOR_ICC_LEN];
  } dt_iop_colorin_data_t;
-@@ -493,34 +503,62 @@ void cleanup_global(dt_iop_module_so_t *self)
+@@ -493,34 +505,62 @@ void cleanup_global(dt_iop_module_so_t *self)
    self->data = NULL;
  }
  
@@ -1281,7 +1283,7 @@ index 60fea1819a..1d82746024 100644
    }
    // should really never happen.
    dt_print(DT_DEBUG_ALWAYS,
-@@ -645,6 +683,8 @@ int process_cl(dt_iop_module_t *self,
+@@ -645,6 +685,8 @@ int process_cl(dt_iop_module_t *self,
    const int width = roi_in->width;
    const int height = roi_in->height;
  
@@ -1290,7 +1292,7 @@ index 60fea1819a..1d82746024 100644
    if(d->type == DT_COLORSPACE_LAB)
    {
      const size_t region[2] = { width, height };
-@@ -657,7 +697,7 @@ int process_cl(dt_iop_module_t *self,
+@@ -657,7 +699,7 @@ int process_cl(dt_iop_module_t *self,
                                  corrected ? chr->D65coeffs[1] / chr->as_shot[1] : 1.0f,
                                  corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                  corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
@@ -1299,7 +1301,7 @@ index 60fea1819a..1d82746024 100644
    {
      for_four_channels(k)
      {
-@@ -1184,6 +1224,75 @@ static void process_lcms2_proper(dt_iop_module_t *self,
+@@ -1184,6 +1226,75 @@ static void process_lcms2_proper(dt_iop_module_t *self,
    dt_free_align(scratchlines);
  }
  
@@ -1375,7 +1377,7 @@ index 60fea1819a..1d82746024 100644
  void process(dt_iop_module_t *self,
               dt_dev_pixelpipe_iop_t *piece,
               const void *const ivoid,
-@@ -1204,7 +1313,7 @@ void process(dt_iop_module_t *self,
+@@ -1204,7 +1315,7 @@ void process(dt_iop_module_t *self,
                                        corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                        corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
    dt_dev_pixelpipe_t *pipe = piece->pipe;
@@ -1384,13 +1386,48 @@ index 60fea1819a..1d82746024 100644
    {
      for_four_channels(k)
      {
-@@ -1223,7 +1332,31 @@ void process(dt_iop_module_t *self,
+@@ -1223,7 +1334,66 @@ void process(dt_iop_module_t *self,
    const gboolean blue_mapping =
      d->blue_mapping && dt_image_is_matrix_correction_supported(&pipe->image);
  
 -  if(d->type == DT_COLORSPACE_LAB)
 +  if(d->use_dcp)
 +  {
++    // The white balance module is the illuminant control for the DCP, but a
++    // white balance edit only re-commits the temperature module, never this
++    // one -- so the illuminant-interpolated transform prepared in
++    // commit_params goes stale. Refresh it here whenever the neutral implied
++    // by the coefficients this pipe actually applied no longer matches the
++    // one dcp_prep was built for.
++    double neutral[3] = { 1.0, 1.0, 1.0 };
++    for(int k = 0; k < 3; k++)
++    {
++      const float applied = pipe->dsc.temperature.enabled
++                            ? pipe->dsc.temperature.coeffs[k] : 0.0f;
++      if(applied > 0.0f) neutral[k] = 1.0 / (double)applied;
++      else if(chr->as_shot[k] > 0.0) neutral[k] = 1.0 / chr->as_shot[k];
++    }
++    if(fabs(neutral[0] - d->dcp_neutral[0]) > 1e-7
++       || fabs(neutral[1] - d->dcp_neutral[1]) > 1e-7
++       || fabs(neutral[2] - d->dcp_neutral[2]) > 1e-7)
++    {
++      dt_iop_colorin_data_t *dm = piece->data;
++      dt_dcp_prepared_t fresh;
++      memset(&fresh, 0, sizeof(fresh));
++      if(dt_dcp_prepare(dm->dcp, neutral, dm->dcp_unadapt, &fresh))
++      {
++        dt_dcp_prepared_cleanup(&dm->dcp_prep);
++        dm->dcp_prep = fresh;
++        memcpy(dm->dcp_neutral, neutral, sizeof(dm->dcp_neutral));
++        memcpy(dm->cmatrix, fresh.cam_to_xyz, sizeof(dm->cmatrix));
++        dt_print_pipe(DT_DEBUG_PIPE | DT_DEBUG_VERBOSE, "dcp refresh",
++                      pipe, self, DT_DEVICE_CPU, roi_in, roi_out,
++                      "scene %.0fK", dm->dcp_prep.temperature);
++      }
++      else
++        dt_dcp_prepared_cleanup(&fresh);
++    }
++
 +    // A DCP's ForwardMatrix is defined for camera RGB divided by the camera
 +    // neutral, i.e. as-shot white balance. White balance may have produced a
 +    // different state (the scene-referred workflow balances to the camera
@@ -1417,7 +1454,7 @@ index 60fea1819a..1d82746024 100644
    {
      dt_iop_image_copy_by_size(ovoid, ivoid, roi_out->width, roi_out->height, piece->colors);
    }
-@@ -1319,6 +1452,85 @@ void commit_params(dt_iop_module_t *self,
+@@ -1319,6 +1489,87 @@ void commit_params(dt_iop_module_t *self,
    d->nonlinearlut = FALSE;
    piece->process_cl_ready = TRUE;
  
@@ -1475,6 +1512,8 @@ index 60fea1819a..1d82746024 100644
 +        ? dt_conf_get_bool("plugins/darkroom/colorin/dcp_clip") : FALSE;
 +      d->dcp_tables = dt_conf_key_exists("plugins/darkroom/colorin/dcp_tables")
 +        ? dt_conf_get_bool("plugins/darkroom/colorin/dcp_tables") : TRUE;
++      d->dcp_unadapt = unadapt;
++      memcpy(d->dcp_neutral, neutral, sizeof(d->dcp_neutral));
 +      if(dt_dcp_prepare(d->dcp, neutral, unadapt, &d->dcp_prep))
 +      {
 +        d->use_dcp = TRUE;
@@ -1503,7 +1542,7 @@ index 60fea1819a..1d82746024 100644
    dt_colorspaces_color_profile_type_t type = p->type;
    if(type == DT_COLORSPACE_LAB) // we keep the runtime in process for safety
    {
-@@ -1583,13 +1795,15 @@ void init_pipe(dt_iop_module_t *self,
+@@ -1583,13 +1834,15 @@ void init_pipe(dt_iop_module_t *self,
                 dt_dev_pixelpipe_t *pipe,
                 dt_dev_pixelpipe_iop_t *piece)
  {
@@ -1520,7 +1559,7 @@ index 60fea1819a..1d82746024 100644
  }
  
  void cleanup_pipe(dt_iop_module_t *self,
-@@ -1597,6 +1811,12 @@ void cleanup_pipe(dt_iop_module_t *self,
+@@ -1597,6 +1850,12 @@ void cleanup_pipe(dt_iop_module_t *self,
                    dt_dev_pixelpipe_iop_t *piece)
  {
    dt_iop_colorin_data_t *d = piece->data;
@@ -1533,7 +1572,7 @@ index 60fea1819a..1d82746024 100644
    if(d->input && d->clear_input) dt_colorspaces_cleanup_profile(d->input);
    if(d->xform_cam_Lab)
    {
-@@ -1625,6 +1845,20 @@ void gui_update(dt_iop_module_t *self)
+@@ -1625,6 +1884,20 @@ void gui_update(dt_iop_module_t *self)
  
    dt_bauhaus_combobox_set(g->clipping_combobox, p->normalize);
  
@@ -1554,7 +1593,7 @@ index 60fea1819a..1d82746024 100644
    // working profile
    int idx = -1;
    for(const GList *prof = darktable.color_profiles->profiles;
-@@ -1651,37 +1885,9 @@ void gui_update(dt_iop_module_t *self)
+@@ -1651,37 +1924,9 @@ void gui_update(dt_iop_module_t *self)
    }
    dt_bauhaus_combobox_set(g->work_combobox, idx);
  
@@ -1595,7 +1634,7 @@ index 60fea1819a..1d82746024 100644
               dt_colorspaces_get_name(p->type, p->filename));
  }
  
-@@ -2018,16 +2224,39 @@ static void update_profile_list(dt_iop_module_t *self)
+@@ -2018,16 +2263,39 @@ static void update_profile_list(dt_iop_module_t *self)
  
    // update the gui
    dt_bauhaus_combobox_clear(g->profile_combobox);
@@ -1637,7 +1676,7 @@ index 60fea1819a..1d82746024 100644
    }
  
    // working profile
-@@ -2054,6 +2283,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
+@@ -2054,6 +2322,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
          on ? "blue mode detected in colorin module" : NULL);
  }
  
@@ -1655,7 +1694,7 @@ index 60fea1819a..1d82746024 100644
  void gui_init(dt_iop_module_t *self)
  {
    // pthread_mutex_lock(&darktable.plugin_threadsafe);
-@@ -2067,7 +2307,19 @@ void gui_init(dt_iop_module_t *self)
+@@ -2067,7 +2346,19 @@ void gui_init(dt_iop_module_t *self)
    g->work_combobox = dt_bauhaus_combobox_new(self);
    dt_bauhaus_widget_set_label(g->work_combobox, NULL, N_("working profile"));
  
