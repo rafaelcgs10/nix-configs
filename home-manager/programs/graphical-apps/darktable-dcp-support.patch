@@ -149,10 +149,10 @@ index 9b01c35057..7fe04af0de 100644
  typedef enum dt_colorspaces_color_mode_t
 diff --git a/src/common/dcp.c b/src/common/dcp.c
 new file mode 100644
-index 0000000000..e0b8dc1ff1
+index 0000000000..7ddb2c6723
 --- /dev/null
 +++ b/src/common/dcp.c
-@@ -0,0 +1,834 @@
+@@ -0,0 +1,849 @@
 +/*
 +    This file is part of darktable,
 +    Copyright (C) 2026 darktable developers.
@@ -762,8 +762,21 @@ index 0000000000..e0b8dc1ff1
 +   0.2880402,  0.7118741,  0.0000857,
 +   0.0000000,  0.0000000,  0.8252100 };
 +
++gboolean dt_dcp_m3_invert(const double in[9], double out[9])
++{
++  return _m3_invert(in, out);
++}
++
 +gboolean dt_dcp_prepare(const dt_dcp_t *dcp, const double neutral[3],
 +                        const gboolean unadapt, dt_dcp_prepared_t *out)
++{
++  return dt_dcp_prepare_full(dcp, neutral, unadapt, NULL, out);
++}
++
++gboolean dt_dcp_prepare_full(const dt_dcp_t *dcp, const double neutral[3],
++                             const gboolean unadapt,
++                             const double *unadapt_matrix,
++                             dt_dcp_prepared_t *out)
 +{
 +  if(!dcp || !dcp->valid || !out)
 +  { dt_print(DT_DEBUG_ALWAYS, "[dcp] prepare: bad args (dcp=%p valid=%d out=%p)",
@@ -821,7 +834,9 @@ index 0000000000..e0b8dc1ff1
 +  const double d50[3] = { 0.9642, 1.0, 0.8249 };
 +  double scene_w[3], unadapt_m[9], m[9];
 +  _xy_to_xyz(xy, scene_w);
-+  if(unadapt)
++  if(unadapt_matrix)
++    memcpy(unadapt_m, unadapt_matrix, 9 * sizeof(double));
++  else if(unadapt)
 +    _bradford(d50, scene_w, unadapt_m);
 +  else
 +    memcpy(unadapt_m, (const double[9]){ 1,0,0, 0,1,0, 0,0,1 }, 9 * sizeof(double));
@@ -989,10 +1004,10 @@ index 0000000000..e0b8dc1ff1
 +// clang-format on
 diff --git a/src/common/dcp.h b/src/common/dcp.h
 new file mode 100644
-index 0000000000..6e16250383
+index 0000000000..3ce2eec307
 --- /dev/null
 +++ b/src/common/dcp.h
-@@ -0,0 +1,167 @@
+@@ -0,0 +1,178 @@
 +/*
 +    This file is part of darktable,
 +    Copyright (C) 2026 darktable developers.
@@ -1099,6 +1114,17 @@ index 0000000000..6e16250383
 +                        const double neutral[3],
 +                        gboolean unadapt,
 +                        dt_dcp_prepared_t *out);
++/** Like dt_dcp_prepare, but when unadapt_matrix is non-NULL it is used as
++ * the un-adaptation transform (row-major 3x3, applied to XYZ D50) instead
++ * of the Bradford D50->scene matrix. Used to hand the illuminant cast to
++ * color calibration in exactly the form that module will remove. */
++gboolean dt_dcp_prepare_full(const dt_dcp_t *dcp,
++                             const double neutral[3],
++                             gboolean unadapt,
++                             const double *unadapt_matrix,
++                             dt_dcp_prepared_t *out);
++/** Invert a row-major 3x3 double matrix. Returns FALSE if singular. */
++gboolean dt_dcp_m3_invert(const double in[9], double out[9]);
 +void dt_dcp_prepared_cleanup(dt_dcp_prepared_t *p);
 +
 +/** Apply a DNG hue/sat/value table to one pixel, Adobe-style.
@@ -1160,19 +1186,81 @@ index 0000000000..6e16250383
 +// vim: shiftwidth=2 expandtab tabstop=2 cindent
 +// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
 +// clang-format on
+diff --git a/src/develop/pixelpipe_cache.c b/src/develop/pixelpipe_cache.c
+index a1bd507d81..8d072bb1e8 100644
+--- a/src/develop/pixelpipe_cache.c
++++ b/src/develop/pixelpipe_cache.c
+@@ -137,6 +137,12 @@ static dt_hash_t _dev_pixelpipe_cache_basichash(dt_dev_pixelpipe_t *pipe,
+     if(!skipped && included)
+     {
+       hash = dt_hash(hash, &piece->hash, sizeof(piece->hash));
++      // a DCP in colorin adapts differently depending on whether color
++      // calibration (downstream!) is enabled -- the cast is handed over --
++      // so from colorin's position on that state must invalidate
++      // cachelines; lines upstream of colorin stay valid
++      if(pipe->dcp_cc_coupling && dt_iop_module_is(piece->module, "colorin"))
++        hash = dt_hash(hash, &pipe->cc_adaptation, sizeof(pipe->cc_adaptation));
+       if(piece->module->request_color_pick != DT_REQUEST_COLORPICK_OFF && roi)
+       {
+         if(darktable.lib->proxy.colorpicker.primary_sample->size == DT_LIB_COLORPICKER_SIZE_BOX)
+diff --git a/src/develop/pixelpipe_hb.h b/src/develop/pixelpipe_hb.h
+index d880582b25..94b447f852 100644
+--- a/src/develop/pixelpipe_hb.h
++++ b/src/develop/pixelpipe_hb.h
+@@ -220,6 +220,19 @@ typedef struct dt_dev_pixelpipe_t
+   // avoid cached data for processed module
+   gboolean nocache;
+ 
++  // set by colorin when a DCP profile is active: its output then depends on
++  // whether color calibration adapts (the cast is handed over), so that
++  // downstream state must feed the cache hash from colorin's position on
++  gboolean dcp_cc_coupling;
++  // published by channelmixerrgb's commit_params: whether that module will
++  // perform chromatic adaptation in this pipe and with which transform;
++  // read by colorin's DCP path to hand over the cast in matching form
++  struct
++  {
++    gboolean adapting;
++    int32_t kind;   // dt_adaptation_t
++  } cc_adaptation;
++
+   dt_imgid_t output_imgid;
+   /* Testing for shutting down and a running pixelpipe
+      can be used in various ways defined in dt_dev_pixelpipe_stopper_t, in all cases the
+diff --git a/src/iop/channelmixerrgb.c b/src/iop/channelmixerrgb.c
+index 49628dda96..dce1c7c05a 100644
+--- a/src/iop/channelmixerrgb.c
++++ b/src/iop/channelmixerrgb.c
+@@ -3143,6 +3143,14 @@ void commit_params(dt_iop_module_t *self,
+   // params
+   d->p = powf(0.818155f / d->illuminant[2], 0.0834f);
+ 
++  // publish whether this pipe's color calibration performs chromatic
++  // adaptation, and with which transform: colorin's DCP path reads this to
++  // hand over the illuminant cast in exactly the form we will remove
++  pipe->cc_adaptation.adapting = piece->enabled
++    && !(d->adaptation == DT_ADAPTATION_RGB
++         || d->illuminant_type == DT_ILLUMINANT_PIPE);
++  pipe->cc_adaptation.kind = d->adaptation;
++
+   // Disable OpenCL path if we are in any kind of diagnose mode (only CPU has this)
+   if(self->dev->gui_attached && g)
+   {
 diff --git a/src/iop/colorin.c b/src/iop/colorin.c
-index 60fea1819a..94ea988faa 100644
+index 60fea1819a..b90539c1f1 100644
 --- a/src/iop/colorin.c
 +++ b/src/iop/colorin.c
-@@ -21,6 +21,7 @@
+@@ -21,6 +21,9 @@
  #include "common/iop_profile.h"
  #include "common/colormatrices.c"
  #include "common/colorspaces.h"
 +#include "common/dcp.h"
++#include "common/chromatic_adaptation.h"
++#include "common/illuminants.h"
  #include "common/colorspaces_inline_conversions.h"
  #include "common/image_cache.h"
  #include "common/opencl.h"
-@@ -87,8 +88,10 @@ typedef struct dt_iop_colorin_params_t
+@@ -87,8 +90,10 @@ typedef struct dt_iop_colorin_params_t
  typedef struct dt_iop_colorin_gui_data_t
  {
    GtkWidget *profile_combobox, *clipping_combobox, *work_combobox;
@@ -1183,7 +1271,7 @@ index 60fea1819a..94ea988faa 100644
  } dt_iop_colorin_gui_data_t;
  
  typedef struct dt_iop_colorin_global_data_t
-@@ -114,6 +117,15 @@ typedef struct dt_iop_colorin_data_t
+@@ -114,6 +119,17 @@ typedef struct dt_iop_colorin_data_t
    gboolean nonlinearlut;
    dt_colorspaces_color_profile_type_t type;
    dt_colorspaces_color_profile_type_t type_work;
@@ -1193,13 +1281,15 @@ index 60fea1819a..94ea988faa 100644
 +  gboolean use_dcp;
 +  gboolean dcp_unadapt;
 +  double dcp_neutral[3];  // the neutral dcp_prep was built for
++  gboolean dcp_cc;        // dcp_prep hands the cast to color calibration
++  double dcp_cc_xy[2];    // the illuminant that un-adaptation was built for
 +  float dcp_value_scale;
 +  gboolean dcp_clip;
 +  gboolean dcp_tables;
    char filename[DT_IOP_COLOR_ICC_LEN];
    char filename_work[DT_IOP_COLOR_ICC_LEN];
  } dt_iop_colorin_data_t;
-@@ -493,34 +505,62 @@ void cleanup_global(dt_iop_module_so_t *self)
+@@ -493,34 +509,62 @@ void cleanup_global(dt_iop_module_so_t *self)
    self->data = NULL;
  }
  
@@ -1255,14 +1345,14 @@ index 60fea1819a..94ea988faa 100644
 -  if(pos < g->n_image_profiles)
 -    prof = g->image_profiles;
 -  else
--  {
++  const dt_colorspaces_color_profile_t *pp = dt_bauhaus_combobox_get_data(widget);
++  if(pp)
+   {
 -    prof = darktable.color_profiles->profiles;
 -    pos -= g->n_image_profiles;
 -  }
 -  for(; prof; prof = g_list_next(prof))
-+  const dt_colorspaces_color_profile_t *pp = dt_bauhaus_combobox_get_data(widget);
-+  if(pp)
-   {
+-  {
 -    dt_colorspaces_color_profile_t *pp = prof->data;
 -    if(pp->in_pos == pos)
 -    {
@@ -1283,7 +1373,7 @@ index 60fea1819a..94ea988faa 100644
    }
    // should really never happen.
    dt_print(DT_DEBUG_ALWAYS,
-@@ -645,6 +685,8 @@ int process_cl(dt_iop_module_t *self,
+@@ -645,6 +689,8 @@ int process_cl(dt_iop_module_t *self,
    const int width = roi_in->width;
    const int height = roi_in->height;
  
@@ -1292,7 +1382,7 @@ index 60fea1819a..94ea988faa 100644
    if(d->type == DT_COLORSPACE_LAB)
    {
      const size_t region[2] = { width, height };
-@@ -657,7 +699,7 @@ int process_cl(dt_iop_module_t *self,
+@@ -657,7 +703,7 @@ int process_cl(dt_iop_module_t *self,
                                  corrected ? chr->D65coeffs[1] / chr->as_shot[1] : 1.0f,
                                  corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                  corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
@@ -1301,7 +1391,7 @@ index 60fea1819a..94ea988faa 100644
    {
      for_four_channels(k)
      {
-@@ -1184,6 +1226,75 @@ static void process_lcms2_proper(dt_iop_module_t *self,
+@@ -1184,6 +1230,150 @@ static void process_lcms2_proper(dt_iop_module_t *self,
    dt_free_align(scratchlines);
  }
  
@@ -1322,6 +1412,81 @@ index 60fea1819a..94ea988faa 100644
 +   unchanged. The profile tone curve is deliberately not applied:
 +   darktable's tone mapper owns that decision.
 +*/
++/* When color calibration is enabled it adapts the illuminant itself (the
++   documented scene-referred workflow), so the DCP must hand it the cast in
++   exactly the form it will remove: the inverse of the CAT16 full adaptation
++   from the camera illuminant that channelmixerrgb's "as shot in camera"
++   mode detects. This mirrors _get_white_balance_coeff() and the
++   DT_ILLUMINANT_CAMERA runtime path of channelmixerrgb.c -- the pair then
++   cancels exactly and the net rendering equals the profile-adapts design,
++   while color calibration stays on and owns creative white balance. */
++static gboolean _dcp_cc_adaptation(dt_iop_module_t *self,
++                                   dt_dev_pixelpipe_t *pipe,
++                                   double xy[2],
++                                   double unadapt_m[9])
++{
++  if(!pipe->cc_adaptation.adapting) return FALSE;
++  const dt_adaptation_t kind = (dt_adaptation_t)pipe->cc_adaptation.kind;
++
++  const dt_dev_chroma_t *chr = &self->dev->chroma;
++  dt_aligned_pixel_t custom_wb = { 1.0f, 1.0f, 1.0f, 1.0f };
++  if(dt_image_is_matrix_correction_supported(&pipe->image))
++  {
++    const gboolean is_d65 = chr->late_correction
++      ? dt_dev_equal_chroma(chr->wb_coeffs, chr->as_shot)
++      : dt_dev_equal_chroma(chr->wb_coeffs, chr->D65coeffs);
++    const gboolean valid_chroma = chr->D65coeffs[0] > 0.0
++      && chr->D65coeffs[1] > 0.0 && chr->D65coeffs[2] > 0.0;
++    const gboolean changed_chroma = chr->wb_coeffs[0] > 1.0f
++      || chr->wb_coeffs[1] > 1.0f || chr->wb_coeffs[2] > 1.0f;
++    if(!is_d65 && valid_chroma && changed_chroma)
++      for_four_channels(k)
++        custom_wb[k] = (float)(chr->D65coeffs[k] / chr->wb_coeffs[k]);
++  }
++
++  float x = 0.f, y = 0.f;
++  if(!find_temperature_from_raw_coeffs(&pipe->image, custom_wb, &x, &y))
++    return FALSE;
++  xy[0] = x;
++  xy[1] = y;
++
++  // build the adaptation matrix by probing the XYZ basis vectors through
++  // the very functions color calibration applies per pixel (full Bradford
++  // is nonlinear per pixel; the linear Bradford probe approximates it)
++  dt_aligned_pixel_t illum_XYZ, illum_LMS;
++  illuminant_xy_to_XYZ(x, y, illum_XYZ);
++  convert_any_XYZ_to_LMS(illum_XYZ, illum_LMS, kind);
++  if(!(illum_LMS[0] > 0.f && illum_LMS[1] > 0.f && illum_LMS[2] > 0.f))
++    return FALSE;
++  // same blue compensation channelmixerrgb commits (D50 reference)
++  const float p_bradford = powf(0.818155f / illum_LMS[2], 0.0834f);
++  double adapt[9];
++  for(int j = 0; j < 3; j++)
++  {
++    dt_aligned_pixel_t e = { 0.f, 0.f, 0.f, 0.f }, lms, lms_a, xyz;
++    e[j] = 1.f;
++    convert_any_XYZ_to_LMS(e, lms, kind);
++    switch(kind)
++    {
++      case DT_ADAPTATION_CAT16:
++        CAT16_adapt_D50(lms, illum_LMS, 1.0f, TRUE, lms_a); // force full-adaptation like channelmixerrgb
++        break;
++      case DT_ADAPTATION_FULL_BRADFORD:
++      case DT_ADAPTATION_LINEAR_BRADFORD:
++        bradford_adapt_D50(lms, illum_LMS, p_bradford, FALSE, lms_a);
++        break;
++      case DT_ADAPTATION_XYZ:
++        XYZ_adapt_D50(lms, illum_LMS, lms_a);
++        break;
++      default:
++        return FALSE;
++    }
++    convert_any_LMS_to_XYZ(lms_a, xyz, kind);
++    for(int i = 0; i < 3; i++) adapt[i * 3 + j] = (double)xyz[i];
++  }
++  return dt_dcp_m3_invert(adapt, unadapt_m);
++}
++
 +static void _dcp_process(float *const restrict out,
 +                         const float *const restrict in,
 +                         const size_t npixels,
@@ -1377,7 +1542,7 @@ index 60fea1819a..94ea988faa 100644
  void process(dt_iop_module_t *self,
               dt_dev_pixelpipe_iop_t *piece,
               const void *const ivoid,
-@@ -1204,7 +1315,7 @@ void process(dt_iop_module_t *self,
+@@ -1204,7 +1394,7 @@ void process(dt_iop_module_t *self,
                                        corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                        corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
    dt_dev_pixelpipe_t *pipe = piece->pipe;
@@ -1386,43 +1551,59 @@ index 60fea1819a..94ea988faa 100644
    {
      for_four_channels(k)
      {
-@@ -1223,7 +1334,66 @@ void process(dt_iop_module_t *self,
+@@ -1223,7 +1413,82 @@ void process(dt_iop_module_t *self,
    const gboolean blue_mapping =
      d->blue_mapping && dt_image_is_matrix_correction_supported(&pipe->image);
  
 -  if(d->type == DT_COLORSPACE_LAB)
 +  if(d->use_dcp)
 +  {
-+    // The white balance module is the illuminant control for the DCP, but a
-+    // white balance edit only re-commits the temperature module, never this
-+    // one -- so the illuminant-interpolated transform prepared in
-+    // commit_params goes stale. Refresh it here whenever the neutral implied
-+    // by the coefficients this pipe actually applied no longer matches the
-+    // one dcp_prep was built for.
++    // The prepared transform can go stale in two ways commit_params never
++    // sees: a white balance edit re-commits only the temperature module,
++    // and toggling color calibration re-commits only that module. Detect
++    // the effective state here and re-prepare when it changed.
++    double cc_xy[2] = { 0.0, 0.0 };
++    double cc_unadapt[9];
++    const gboolean cc = _dcp_cc_adaptation(self, pipe, cc_xy, cc_unadapt);
 +    double neutral[3] = { 1.0, 1.0, 1.0 };
-+    for(int k = 0; k < 3; k++)
++    if(cc)
++    {
++      // color calibration owns the illuminant (documented scene-referred
++      // workflow, WB pinned to the camera reference), so estimate the scene
++      // from the as-shot neutral like Adobe does
++      for(int k = 0; k < 3; k++)
++        if(chr->as_shot[k] > 0.0) neutral[k] = 1.0 / chr->as_shot[k];
++    }
++    else for(int k = 0; k < 3; k++)
 +    {
 +      const float applied = pipe->dsc.temperature.enabled
 +                            ? pipe->dsc.temperature.coeffs[k] : 0.0f;
 +      if(applied > 0.0f) neutral[k] = 1.0 / (double)applied;
 +      else if(chr->as_shot[k] > 0.0) neutral[k] = 1.0 / chr->as_shot[k];
 +    }
-+    if(fabs(neutral[0] - d->dcp_neutral[0]) > 1e-7
++    if(cc != d->dcp_cc
++       || fabs(neutral[0] - d->dcp_neutral[0]) > 1e-7
 +       || fabs(neutral[1] - d->dcp_neutral[1]) > 1e-7
-+       || fabs(neutral[2] - d->dcp_neutral[2]) > 1e-7)
++       || fabs(neutral[2] - d->dcp_neutral[2]) > 1e-7
++       || (cc && (fabs(cc_xy[0] - d->dcp_cc_xy[0]) > 1e-7
++                  || fabs(cc_xy[1] - d->dcp_cc_xy[1]) > 1e-7)))
 +    {
 +      dt_iop_colorin_data_t *dm = piece->data;
 +      dt_dcp_prepared_t fresh;
 +      memset(&fresh, 0, sizeof(fresh));
-+      if(dt_dcp_prepare(dm->dcp, neutral, dm->dcp_unadapt, &fresh))
++      if(dt_dcp_prepare_full(dm->dcp, neutral, dm->dcp_unadapt,
++                             cc ? cc_unadapt : NULL, &fresh))
 +      {
 +        dt_dcp_prepared_cleanup(&dm->dcp_prep);
 +        dm->dcp_prep = fresh;
 +        memcpy(dm->dcp_neutral, neutral, sizeof(dm->dcp_neutral));
++        dm->dcp_cc = cc;
++        memcpy(dm->dcp_cc_xy, cc_xy, sizeof(dm->dcp_cc_xy));
 +        memcpy(dm->cmatrix, fresh.cam_to_xyz, sizeof(dm->cmatrix));
 +        dt_print_pipe(DT_DEBUG_PIPE | DT_DEBUG_VERBOSE, "dcp refresh",
 +                      pipe, self, DT_DEVICE_CPU, roi_in, roi_out,
-+                      "scene %.0fK", dm->dcp_prep.temperature);
++                      "scene %.0fK%s", dm->dcp_prep.temperature,
++                      cc ? ", cast handed to color calibration" : "");
 +      }
 +      else
 +        dt_dcp_prepared_cleanup(&fresh);
@@ -1454,7 +1635,7 @@ index 60fea1819a..94ea988faa 100644
    {
      dt_iop_image_copy_by_size(ovoid, ivoid, roi_out->width, roi_out->height, piece->colors);
    }
-@@ -1319,6 +1489,87 @@ void commit_params(dt_iop_module_t *self,
+@@ -1319,6 +1584,93 @@ void commit_params(dt_iop_module_t *self,
    d->nonlinearlut = FALSE;
    piece->process_cl_ready = TRUE;
  
@@ -1466,6 +1647,7 @@ index 60fea1819a..94ea988faa 100644
 +    d->dcp = NULL;
 +  }
 +  d->use_dcp = FALSE;
++  piece->pipe->dcp_cc_coupling = FALSE;
 +
 +  if(p->type == DT_COLORSPACE_DCP && p->filename[0])
 +  {
@@ -1514,9 +1696,14 @@ index 60fea1819a..94ea988faa 100644
 +        ? dt_conf_get_bool("plugins/darkroom/colorin/dcp_tables") : TRUE;
 +      d->dcp_unadapt = unadapt;
 +      memcpy(d->dcp_neutral, neutral, sizeof(d->dcp_neutral));
++      // process() re-prepares with the cast handed to color calibration
++      // when that module turns out to be enabled in this pipe
++      d->dcp_cc = FALSE;
++      d->dcp_cc_xy[0] = d->dcp_cc_xy[1] = 0.0;
 +      if(dt_dcp_prepare(d->dcp, neutral, unadapt, &d->dcp_prep))
 +      {
 +        d->use_dcp = TRUE;
++        piece->pipe->dcp_cc_coupling = TRUE;
 +        // the fast matrix path is still used by callers that only need a
 +        // camera->XYZ matrix (histogram, thumbnails, pipe profile info)
 +        memcpy(d->cmatrix, d->dcp_prep.cam_to_xyz, sizeof(d->cmatrix));
@@ -1542,7 +1729,7 @@ index 60fea1819a..94ea988faa 100644
    dt_colorspaces_color_profile_type_t type = p->type;
    if(type == DT_COLORSPACE_LAB) // we keep the runtime in process for safety
    {
-@@ -1583,13 +1834,15 @@ void init_pipe(dt_iop_module_t *self,
+@@ -1583,13 +1935,15 @@ void init_pipe(dt_iop_module_t *self,
                 dt_dev_pixelpipe_t *pipe,
                 dt_dev_pixelpipe_iop_t *piece)
  {
@@ -1559,7 +1746,7 @@ index 60fea1819a..94ea988faa 100644
  }
  
  void cleanup_pipe(dt_iop_module_t *self,
-@@ -1597,6 +1850,12 @@ void cleanup_pipe(dt_iop_module_t *self,
+@@ -1597,6 +1951,12 @@ void cleanup_pipe(dt_iop_module_t *self,
                    dt_dev_pixelpipe_iop_t *piece)
  {
    dt_iop_colorin_data_t *d = piece->data;
@@ -1572,7 +1759,7 @@ index 60fea1819a..94ea988faa 100644
    if(d->input && d->clear_input) dt_colorspaces_cleanup_profile(d->input);
    if(d->xform_cam_Lab)
    {
-@@ -1625,6 +1884,20 @@ void gui_update(dt_iop_module_t *self)
+@@ -1625,6 +1985,20 @@ void gui_update(dt_iop_module_t *self)
  
    dt_bauhaus_combobox_set(g->clipping_combobox, p->normalize);
  
@@ -1593,7 +1780,7 @@ index 60fea1819a..94ea988faa 100644
    // working profile
    int idx = -1;
    for(const GList *prof = darktable.color_profiles->profiles;
-@@ -1651,37 +1924,9 @@ void gui_update(dt_iop_module_t *self)
+@@ -1651,37 +2025,9 @@ void gui_update(dt_iop_module_t *self)
    }
    dt_bauhaus_combobox_set(g->work_combobox, idx);
  
@@ -1634,7 +1821,7 @@ index 60fea1819a..94ea988faa 100644
               dt_colorspaces_get_name(p->type, p->filename));
  }
  
-@@ -2018,16 +2263,39 @@ static void update_profile_list(dt_iop_module_t *self)
+@@ -2018,16 +2364,39 @@ static void update_profile_list(dt_iop_module_t *self)
  
    // update the gui
    dt_bauhaus_combobox_clear(g->profile_combobox);
@@ -1676,7 +1863,7 @@ index 60fea1819a..94ea988faa 100644
    }
  
    // working profile
-@@ -2054,6 +2322,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
+@@ -2054,6 +2423,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
          on ? "blue mode detected in colorin module" : NULL);
  }
  
@@ -1694,7 +1881,7 @@ index 60fea1819a..94ea988faa 100644
  void gui_init(dt_iop_module_t *self)
  {
    // pthread_mutex_lock(&darktable.plugin_threadsafe);
-@@ -2067,7 +2346,19 @@ void gui_init(dt_iop_module_t *self)
+@@ -2067,7 +2447,19 @@ void gui_init(dt_iop_module_t *self)
    g->work_combobox = dt_bauhaus_combobox_new(self);
    dt_bauhaus_widget_set_label(g->work_combobox, NULL, N_("working profile"));
  
