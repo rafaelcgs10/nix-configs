@@ -1203,6 +1203,19 @@ index a1bd507d81..8d072bb1e8 100644
        if(piece->module->request_color_pick != DT_REQUEST_COLORPICK_OFF && roi)
        {
          if(darktable.lib->proxy.colorpicker.primary_sample->size == DT_LIB_COLORPICKER_SIZE_BOX)
+diff --git a/src/develop/pixelpipe_hb.c b/src/develop/pixelpipe_hb.c
+index b0db26be10..9814ba7677 100644
+--- a/src/develop/pixelpipe_hb.c
++++ b/src/develop/pixelpipe_hb.c
+@@ -287,6 +287,8 @@ gboolean dt_dev_pixelpipe_init_cached(dt_dev_pixelpipe_t *pipe,
+ 
+   memset(&pipe->scharr, 0, sizeof(dt_dev_detail_mask_t));
+   pipe->want_detail_mask = FALSE;
++  pipe->dcp_cc_coupling = FALSE;
++  memset(&pipe->cc_adaptation, 0, sizeof(pipe->cc_adaptation));
+ 
+   dt_atomic_set_int(&pipe->shutdown, DT_DEV_PIXELPIPE_STOP_NO);
+   pipe->opencl_error = FALSE;
 diff --git a/src/develop/pixelpipe_hb.h b/src/develop/pixelpipe_hb.h
 index d880582b25..94b447f852 100644
 --- a/src/develop/pixelpipe_hb.h
