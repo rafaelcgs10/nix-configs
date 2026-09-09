@@ -1,5 +1,5 @@
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 0079f432e6..6734edb8d2 100644
+index 671b64c..cf464ce 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -32,6 +32,7 @@ FILE(GLOB SOURCE_FILES
@@ -11,7 +11,7 @@ index 0079f432e6..6734edb8d2 100644
    "common/curve_tools.c"
    "common/custom_primaries.c"
 diff --git a/src/common/colorspaces.c b/src/common/colorspaces.c
-index c3fc7d6d8b..b8caafee6c 100644
+index c3fc7d6..b8caafe 100644
 --- a/src/common/colorspaces.c
 +++ b/src/common/colorspaces.c
 @@ -18,6 +18,7 @@
@@ -134,7 +134,7 @@ index c3fc7d6d8b..b8caafee6c 100644
        return FALSE;
    }
 diff --git a/src/common/colorspaces.h b/src/common/colorspaces.h
-index 9b01c35057..7fe04af0de 100644
+index 9b01c35..7fe04af 100644
 --- a/src/common/colorspaces.h
 +++ b/src/common/colorspaces.h
 @@ -104,7 +104,8 @@ typedef enum dt_colorspaces_color_profile_type_t
@@ -149,7 +149,7 @@ index 9b01c35057..7fe04af0de 100644
  typedef enum dt_colorspaces_color_mode_t
 diff --git a/src/common/dcp.c b/src/common/dcp.c
 new file mode 100644
-index 0000000000..7ddb2c6723
+index 0000000..7ddb2c6
 --- /dev/null
 +++ b/src/common/dcp.c
 @@ -0,0 +1,849 @@
@@ -1004,7 +1004,7 @@ index 0000000000..7ddb2c6723
 +// clang-format on
 diff --git a/src/common/dcp.h b/src/common/dcp.h
 new file mode 100644
-index 0000000000..3ce2eec307
+index 0000000..3ce2eec
 --- /dev/null
 +++ b/src/common/dcp.h
 @@ -0,0 +1,178 @@
@@ -1187,7 +1187,7 @@ index 0000000000..3ce2eec307
 +// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
 +// clang-format on
 diff --git a/src/develop/pixelpipe_cache.c b/src/develop/pixelpipe_cache.c
-index a1bd507d81..8d072bb1e8 100644
+index a1bd507..8d072bb 100644
 --- a/src/develop/pixelpipe_cache.c
 +++ b/src/develop/pixelpipe_cache.c
 @@ -137,6 +137,12 @@ static dt_hash_t _dev_pixelpipe_cache_basichash(dt_dev_pixelpipe_t *pipe,
@@ -1204,10 +1204,10 @@ index a1bd507d81..8d072bb1e8 100644
        {
          if(darktable.lib->proxy.colorpicker.primary_sample->size == DT_LIB_COLORPICKER_SIZE_BOX)
 diff --git a/src/develop/pixelpipe_hb.c b/src/develop/pixelpipe_hb.c
-index b0db26be10..9814ba7677 100644
+index 35320df..16b30d7 100644
 --- a/src/develop/pixelpipe_hb.c
 +++ b/src/develop/pixelpipe_hb.c
-@@ -287,6 +287,8 @@ gboolean dt_dev_pixelpipe_init_cached(dt_dev_pixelpipe_t *pipe,
+@@ -292,6 +292,8 @@ static gboolean _dev_pixelpipe_init_cached(dt_dev_pixelpipe_t *pipe,
  
    memset(&pipe->scharr, 0, sizeof(dt_dev_detail_mask_t));
    pipe->want_detail_mask = FALSE;
@@ -1217,10 +1217,10 @@ index b0db26be10..9814ba7677 100644
    dt_atomic_set_int(&pipe->shutdown, DT_DEV_PIXELPIPE_STOP_NO);
    pipe->opencl_error = FALSE;
 diff --git a/src/develop/pixelpipe_hb.h b/src/develop/pixelpipe_hb.h
-index d880582b25..94b447f852 100644
+index 9fd02c3..bc79834 100644
 --- a/src/develop/pixelpipe_hb.h
 +++ b/src/develop/pixelpipe_hb.h
-@@ -220,6 +220,19 @@ typedef struct dt_dev_pixelpipe_t
+@@ -233,6 +233,19 @@ typedef struct dt_dev_pixelpipe_t
    // avoid cached data for processed module
    gboolean nocache;
  
@@ -1241,10 +1241,10 @@ index d880582b25..94b447f852 100644
    /* Testing for shutting down and a running pixelpipe
       can be used in various ways defined in dt_dev_pixelpipe_stopper_t, in all cases the
 diff --git a/src/iop/channelmixerrgb.c b/src/iop/channelmixerrgb.c
-index 49628dda96..dce1c7c05a 100644
+index 37bb0c7..5a3509d 100644
 --- a/src/iop/channelmixerrgb.c
 +++ b/src/iop/channelmixerrgb.c
-@@ -3143,6 +3143,14 @@ void commit_params(dt_iop_module_t *self,
+@@ -3127,6 +3127,14 @@ void commit_params(dt_iop_module_t *self,
    // params
    d->p = powf(0.818155f / d->illuminant[2], 0.0834f);
  
@@ -1260,7 +1260,7 @@ index 49628dda96..dce1c7c05a 100644
    if(self->dev->gui_attached && g)
    {
 diff --git a/src/iop/colorin.c b/src/iop/colorin.c
-index 60fea1819a..b90539c1f1 100644
+index 60229e6..096af5c 100644
 --- a/src/iop/colorin.c
 +++ b/src/iop/colorin.c
 @@ -21,6 +21,9 @@
@@ -1876,7 +1876,7 @@ index 60fea1819a..b90539c1f1 100644
    }
  
    // working profile
-@@ -2054,6 +2423,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
+@@ -2053,6 +2422,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
          on ? "blue mode detected in colorin module" : NULL);
  }
  
@@ -1894,7 +1894,7 @@ index 60fea1819a..b90539c1f1 100644
  void gui_init(dt_iop_module_t *self)
  {
    // pthread_mutex_lock(&darktable.plugin_threadsafe);
-@@ -2067,7 +2447,19 @@ void gui_init(dt_iop_module_t *self)
+@@ -2066,7 +2446,19 @@ void gui_init(dt_iop_module_t *self)
    g->work_combobox = dt_bauhaus_combobox_new(self);
    dt_bauhaus_widget_set_label(g->work_combobox, NULL, N_("working profile"));
  

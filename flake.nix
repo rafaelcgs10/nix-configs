@@ -25,7 +25,7 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/cc342c39f91dc7077b2532584c023668eeb64fc5";
+    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/11b5a18e3b08486906f8a6039cfde339cb3247b1";
 
     # CLI for COSMIC toplevel management (scratchpad chat toggles).
     # Unofficial but source-reviewed at this pin: no network/exec/fs access.
