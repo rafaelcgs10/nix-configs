@@ -22,6 +22,33 @@ let
       ];
     });
 
+  # darktable is GTK3, which cannot do Wayland fractional scaling: on
+  # bbstation's 150% output the compositor advertises integer scale 2, GTK
+  # cairo-renders every frame at 200% (5120x2880 for a maximized window, all on
+  # the CPU) and cosmic downscales it to 150% — 78% more pixels than the screen
+  # has, an extra per-frame scale pass, and a slight blur. On the X11 backend
+  # cosmic's Xwayland handling (descale_xwayland=fractional + "Xwayland
+  # primary" on DP-1) maps windows 1:1 to physical pixels and provides
+  # Xft/DPI=144 via XSETTINGS, so darktable renders native-sharp at the right
+  # size with no in-app DPI tweaks (verified 2026-09-10) and each redraw
+  # touches 44% fewer pixels. Do NOT add GDK_SCALE/GDK_DPI_SCALE on top: the
+  # XSETTINGS DPI already handles sizing, and stacking them double-scales.
+  #
+  # Scoped two ways on purpose: per-APP because cosmic-session exports
+  # GDK_BACKEND=wayland,x11 globally and home.nix explains why that must stay;
+  # per-HOST (runtime hostname check, since this file is shared by the whole
+  # "default" profile) because only bbstation runs the 4K/150% screen — the
+  # thinkpad keeps the stock backend choice.
+  darktable-x11 = pkgs.symlinkJoin {
+    name = "darktable-x11";
+    paths = [ darktable-xmp-sync ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/darktable \
+        --run 'if [ "$(${pkgs.coreutils}/bin/uname -n)" = "bbstation" ]; then export GDK_BACKEND=x11; fi'
+    '';
+  };
+
   # DT Pro theme pack from darktable.info (DT-Pro-orange and its siblings).
   # Not in nixpkgs and there is no upstream git repo — the author distributes a
   # single archive from the site, so fetch that and expose the CSS + SVG tree
@@ -121,11 +148,12 @@ in
     pkgs.upscayl
     pkgsLmstudio.lmstudio
 
-    # darktable built from the spektrafilm PR branch (native C spektrafilm
-    # module), patched to add the headless `--sync-xmp` mode driven by the
-    # systemd timer below. Replaces the stock pkgsDarktable.darktable; the
-    # runtime data pack and AI models are linked in via home.file below.
-    darktable-xmp-sync
+    # darktable built from upstream master (native C spektrafilm module),
+    # patched to add the headless `--sync-xmp` mode driven by the systemd
+    # timer below, and wrapped to run the GUI on X11 (see darktable-x11).
+    # Replaces the stock pkgsDarktable.darktable; the runtime data pack and
+    # AI models are linked in via home.file below.
+    darktable-x11
     dtSync # `dt-sync` command: run the sync with a live progress bar
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
