@@ -99,7 +99,7 @@ let
 in
 {
   home.packages = [
-    pkgs.gimp3-with-plugins
+    pkgsUnstable.gimp3-with-plugins
     pkgs.scribus
     pkgs.inkscape
     pkgs.krita
@@ -203,6 +203,15 @@ in
     spektrafilmPackages.darktable-ai-models;
 
   home.file.".local/share/darktable/raster-masks/.keep".text = "";
+
+  # Filmator's custom G'MIC filter (Film Rebate: randomized scanned-negative
+  # border). Source of truth is ~/Documents/filmator/assets/filmator.gmic —
+  # re-copy here when it changes. user.gmic is what the G'MIC-Qt plugin in
+  # GIMP loads (shows up under Filmator > Film Rebate after a filter refresh);
+  # ~/.gmic makes the same `film_rebate` command available to the gmic CLI
+  # without passing the file explicitly.
+  home.file.".config/gmic/user.gmic".source = ./filmator.gmic;
+  home.file.".gmic".source = ./filmator.gmic;
 
   # darktable stores the raster-mask export directory in darktablerc. Keep the
   # generated PNG masks out of $HOME without taking ownership of the full file.
