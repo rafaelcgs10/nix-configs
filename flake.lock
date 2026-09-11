@@ -527,6 +527,21 @@
         "type": "github"
       }
     },
+    "gmic-film-framing": {
+      "locked": {
+        "lastModified": 1789136601,
+        "narHash": "sha256-UbGZ1oddnoUk5T4udNTMeny3fLw7APvqMlEoCZ1LGI0=",
+        "ref": "refs/heads/master",
+        "rev": "a85915c189f8bcc422a082f9bee33ffa7ab95558",
+        "revCount": 3,
+        "type": "git",
+        "url": "ssh://git@github.com/rafaelcgs10/gmic-film-framing.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/rafaelcgs10/gmic-film-framing.git"
+      }
+    },
     "gnome-shell": {
       "flake": false,
       "locked": {
@@ -988,6 +1003,7 @@
         "cos-cli": "cos-cli",
         "cosmic-manager": "cosmic-manager",
         "firefox-addons": "firefox-addons",
+        "gmic-film-framing": "gmic-film-framing",
         "home-manager": "home-manager",
         "nix-doom-emacs-unstraightened": "nix-doom-emacs-unstraightened",
         "nixos-hardware": "nixos-hardware",
