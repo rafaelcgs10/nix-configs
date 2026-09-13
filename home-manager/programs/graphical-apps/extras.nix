@@ -125,6 +125,14 @@ let
   '';
 in
 {
+  # gimpsegany (Image > Segment Anything Layers): click-to-select object
+  # segmentation with SAM 2.1 small -- the same model darktable's AI object
+  # masking uses. CPU: ~2.4s to encode an image, ~0.2s per click after that.
+  # Its inference bridge runs as a subprocess in its own Python env, so it is
+  # not coupled to GIMP's interpreter; only the GUI half has to match.
+  home.file.".config/GIMP/3.2/plug-ins/seganyplugin".source =
+    pkgsUnstable.callPackage ./gimp-segany.nix { };
+
   # Arakne's Path Shape Creator (Filters > Arakne). Vector shape/arch generator
   # for GIMP 3; not in nixpkgs and upstream has no repo, so it is packaged from
   # the author's ZIP next door. pkgsUnstable because the plug-in's interpreter
