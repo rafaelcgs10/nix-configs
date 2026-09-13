@@ -100,6 +100,11 @@ let
   # exact; for routine incremental runs only a few files change, so the % is a
   # loose upper bound — but those finish in seconds anyway. Ctrl-C stops watching;
   # the sync keeps running in the background (it's a systemd service).
+  # The withoutBG matting server the GIMP plug-in below talks to. Bound here
+  # because it is referenced twice: by the systemd units at the bottom of this
+  # file and by the comment trail around them.
+  withoutbg-inference = pkgsUnstable.callPackage ./withoutbg-inference.nix { };
+
   dtSync = pkgs.writeShellScriptBin "dt-sync" ''
     export XDG_RUNTIME_DIR="/run/user/$(${pkgs.coreutils}/bin/id -u)"
     svc="darktable-xmp-sync.service"
@@ -140,6 +145,16 @@ in
   home.file.".config/GIMP/3.2/plug-ins/path-shape-creator-2026".source =
     pkgsUnstable.callPackage ./gimp-path-shape-creator.nix { };
 
+  # withoutbg (Tools > WithoutBG > Remove Background...): attaches an AI alpha
+  # matte to the active layer as an unapplied layer mask. Complements gimpsegany
+  # -- that one is promptable and gives you a hard selection of whatever you
+  # clicked, this one is fully automatic and gives you a *soft* matte of the
+  # salient subject, which is the one that survives hair and out-of-focus edges.
+  # The plug-in is only an HTTP client; the server it needs is socket-activated
+  # at the bottom of this file, so nothing runs until you invoke the menu item.
+  home.file.".config/GIMP/3.2/plug-ins/withoutbg".source =
+    pkgsUnstable.callPackage ./withoutbg-gimp.nix { };
+
   # Filmator's custom G'MIC filter (Film Rebate: randomized scanned-negative
   # border), imported straight from its repo's flake — no vendored copy to
   # keep in sync. The module links it for both the G'MIC-Qt plugin in GIMP
@@ -167,6 +182,18 @@ in
     pkgs.pgadmin4-desktopmode
     pkgs.handbrake # ghb
     pkgs.upscayl
+
+    # `withoutbg <image>` -> <image>-withoutbg.png: offline salient-subject
+    # alpha matting on the CPU. 5.7s end to end for a 2600x1737 frame on this
+    # laptop (1.1s to load the model, 1.9s inference, the rest PNG encoding),
+    # and the model is reused across a `--batch` run. It produces a genuinely
+    # soft matte -- on a backlit portrait ~5% of pixels land at fractional
+    # alpha -- so it is usable as a mask to paste into GIMP/darktable, not just
+    # as a cutout. Automatic only: no prompt, no click, no box; for pointing at
+    # a specific object use gimpsegany above. The ONNX weights are pinned in
+    # the store and the wrapper points the SDK at them, so it never touches the
+    # network.
+    (pkgsUnstable.callPackage ./withoutbg.nix { })
     pkgsLmstudio.lmstudio
 
     # darktable built from upstream master (native C spektrafilm module),
@@ -561,6 +588,40 @@ in
       ExecStart = "${darktable-xmp-sync}/bin/darktable -d control --sync-xmp";
       # 0 = synced; 75 = library locked (darktable open) — both are fine.
       SuccessExitStatus = "0 75";
+    };
+  };
+
+  # withoutBG matting server for the GIMP plug-in, on demand only.
+  #
+  # systemd owns the listening socket; the plug-in's health check is the
+  # connection that starts the service, and the service hands back the same
+  # socket as fd 3 (uvicorn --fd). Cold start to first response is ~4.2s, then
+  # ~1.9s per image. While loaded it holds roughly 1GB RSS -- an ONNX arena
+  # sized for the 455MB graph -- which is exactly why this is not a normal
+  # always-on user service: it exits itself after five idle minutes (see
+  # withoutbg-inference.nix) and the socket re-arms for the next request.
+  #
+  # Deliberately no Install.WantedBy on the service: the socket is the only
+  # thing that may start it.
+  systemd.user.sockets.withoutbg-inference = {
+    Unit.Description = "Socket for the on-demand withoutBG matting server";
+    # The plug-in hard-codes this address, and loopback-only keeps an
+    # unauthenticated inference endpoint off the network.
+    Socket.ListenStream = "127.0.0.1:8000";
+    Install.WantedBy = [ "sockets.target" ];
+  };
+
+  systemd.user.services.withoutbg-inference = {
+    Unit = {
+      Description = "withoutBG open-weights matting server (socket-activated)";
+      Requires = [ "withoutbg-inference.socket" ];
+      After = [ "withoutbg-inference.socket" ];
+    };
+    Service = {
+      ExecStart = "${withoutbg-inference}/bin/withoutbg-inference-server";
+      # The idle timeout makes the process exit 0 on its own; a Restart= here
+      # would immediately undo that.
+      Restart = "no";
     };
   };
 
