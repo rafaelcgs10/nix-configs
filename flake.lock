@@ -528,11 +528,11 @@
     },
     "gmic-film-framing": {
       "locked": {
-        "lastModified": 1789320560,
-        "narHash": "sha256-mq65LcULidSasfqoNEOD8fWZbuJyorROK6a/HwvDkt8=",
+        "lastModified": 1789321356,
+        "narHash": "sha256-qCoMX9lfFk5776jBXMw2o4aL0JJE17Gbp10WTj2IFTc=",
         "ref": "refs/heads/master",
-        "rev": "db94daaba0884fa0c320a93a3e3e5c2905cc66a3",
-        "revCount": 20,
+        "rev": "2080485e30f1220ad1550f0008321e66fc0e81c7",
+        "revCount": 21,
         "type": "git",
         "url": "ssh://git@github.com/rafaelcgs10/gmic-film-framing.git"
       },
