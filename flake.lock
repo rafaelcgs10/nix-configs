@@ -278,11 +278,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789304964,
-        "narHash": "sha256-qidqGtwQjVgmN4qZBBuM+g/LHuBQwdjcYupL8AhXb1Y=",
+        "lastModified": 1790082606,
+        "narHash": "sha256-e2TqqcyPItl5eTJwAPHeVFyHn4LbmA9Z0SD8cdzoAD8=",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "779b1bd730f2866cc7fb70c3b20b94bdc75e301e",
+        "rev": "90015f2441fb378033e9b3182f9c9633c6a52aa0",
         "type": "github"
       },
       "original": {
@@ -526,21 +526,6 @@
         "type": "github"
       }
     },
-    "gmic-film-framing": {
-      "locked": {
-        "lastModified": 1789323585,
-        "narHash": "sha256-a0OsA4vM7GCxTZksU0GGwP+XTg0iAEkaD6feki8fIwE=",
-        "ref": "refs/heads/master",
-        "rev": "6afa27d9d5c27a008635bfc75f53cc82f12dc25f",
-        "revCount": 23,
-        "type": "git",
-        "url": "ssh://git@github.com/rafaelcgs10/gmic-film-framing.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/rafaelcgs10/gmic-film-framing.git"
-      }
-    },
     "gnome-shell": {
       "flake": false,
       "locked": {
@@ -613,11 +598,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789305657,
-        "narHash": "sha256-XSlgitqh1XpSpnZgGKP7JQOVurP45AM1E9yw9pybKG4=",
+        "lastModified": 1790083689,
+        "narHash": "sha256-vtdVmmf9ArzjDdgjXyhYpMAodn4+6awHxSuoRVve5L8=",
         "owner": "marienz",
         "repo": "nix-doom-emacs-unstraightened",
-        "rev": "f06f526c2fc9eff1f66882c337bc4f127b0ee4fc",
+        "rev": "76d1920eee44921340c25648125a8b12fb989208",
         "type": "github"
       },
       "original": {
@@ -985,7 +970,6 @@
         "cos-cli": "cos-cli",
         "cosmic-manager": "cosmic-manager",
         "firefox-addons": "firefox-addons",
-        "gmic-film-framing": "gmic-film-framing",
         "home-manager": "home-manager",
         "nix-doom-emacs-unstraightened": "nix-doom-emacs-unstraightened",
         "nixos-hardware": "nixos-hardware",
@@ -1024,17 +1008,17 @@
         "nixpkgs-unstable": "nixpkgs-unstable_2"
       },
       "locked": {
-        "lastModified": 1788960858,
-        "narHash": "sha256-ePyAMP/TYRmazQqAQrQhmxSXFINyOa/0mynuDP3mwiU=",
+        "lastModified": 1786689854,
+        "narHash": "sha256-Ry6yGv9z2AVkD287DV3zJHLIsAO3UpUJH5Ig6GN3qsA=",
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art-darktable",
-        "rev": "11b5a18e3b08486906f8a6039cfde339cb3247b1",
+        "rev": "d1ff13f11096f3ac8d6043853fbb89146cbed982",
         "type": "github"
       },
       "original": {
         "owner": "rafaelcgs10",
         "repo": "spektrafilm-art-darktable",
-        "rev": "11b5a18e3b08486906f8a6039cfde339cb3247b1",
+        "rev": "d1ff13f11096f3ac8d6043853fbb89146cbed982",
         "type": "github"
       }
     },
