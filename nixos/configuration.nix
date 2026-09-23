@@ -144,6 +144,17 @@ in {
   };
 
 
+  # Pin every flake input into the current system generation's closure.
+  # `nix.gc` below runs daily with --delete-older-than 5d, and nothing
+  # otherwise roots the *source* of a flake input, so the inputs get
+  # collected.  Once they are gone the machine cannot evaluate its own
+  # configuration without refetching them, which means no `nixos-rebuild`
+  # while offline -- exactly when it is most needed, e.g. during a DNS
+  # outage.  With this, `nixos-rebuild switch --flake ... --offline` always
+  # works from the last-built generation.  Cost is disk: the input sources
+  # stay in the store.
+  system.extraDependencies = lib.attrValues inputs;
+
   # Auto-GC: keeps the store from growing unbounded
   nix.gc = {
     automatic = true;
@@ -167,7 +178,15 @@ in {
   #  Enables wireless support via wpa_supplicant.
   networking.networkmanager = {
    enable = true;
-   # dns = "none";
+   # NetworkManager must not push the DHCP-advertised resolvers into
+   # systemd-resolved.  When it does, those land on the link scope and win
+   # over the global `networking.nameservers` below, so queries bypass the
+   # NextDNS profile entirely and DNS-over-TLS has no hostname to verify the
+   # certificate against.  With "none" the global servers, which carry the
+   # #6e9815.dns.nextdns.io names, are the only ones used.
+   # mkForce because services.resolved's module sets this to
+   # "systemd-resolved" by default, which is what re-enables the push.
+   dns = lib.mkForce "none";
    wifi.powersave = false;
    # extraConfig = ''
    #    [main]
