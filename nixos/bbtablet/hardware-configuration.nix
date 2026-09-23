@@ -325,12 +325,6 @@
 
   nix = {
     distributedBuilds = true;
-    # Never build on the tablet itself. A Surface Go compiling a kernel takes
-    # ~14h, pegs all four cores and thrashes swap, which also starves any
-    # concurrent `--build-host` copy down to a crawl. With max-jobs = 0 every
-    # derivation is forced onto nixbuild.net. Tradeoff: if nixbuild.net is
-    # unreachable, builds fail outright rather than silently falling back here.
-    settings.max-jobs = 0;
     # Have nixbuild.net's builders fetch from public substituters directly
     # instead of streaming closures back through this tablet's uplink.
     extraOptions = ''
