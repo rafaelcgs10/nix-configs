@@ -12,6 +12,11 @@
 # repo is guaranteed to be mounted. Not logged in => no update that day, and
 # the noon rebuild just rebuilds the current lock.
 #
+# Two lanes: the daily timer (Sun-Fri) only moves the cheap, well-cached
+# inputs listed in dailyInputs below; the Saturday timer runs a full
+# `nix flake update`, letting the compile-heavy inputs (doom-emacs stack,
+# affinity-nix, spektrafilm darktable) move once a week instead of daily.
+#
 # nix-configs-revert is the failure path: when nixos-upgrade fails WITHOUT
 # having switched generations (i.e. the new lock does not even build), its
 # failure hook starts this service, which reverts the auto-update commit and
@@ -22,10 +27,41 @@
 let
   repo = "${config.home.homeDirectory}/nix-configs";
 
+  # Inputs the daily run is allowed to move. Everything NOT listed here sits
+  # on the weekly lane (Saturday full update) because a bump forces hours of
+  # local compilation: nix-doom-emacs-unstraightened (+ its emacs-overlay/
+  # doomemacs graph, ~120 uncached emacs packages), affinity-nix (multi-GB
+  # wine prefix rebuild) and spektrafilm-art-darktable (full darktable
+  # compile). Measured over 30 days those three moved 22/9/5 times and
+  # caused nearly all local build time, while the inputs below are either
+  # Hydra/cachix-cached or trivial to build.
+  # nixpkgs-darktable/-isabelle/-lmstudio are pinned to fixed revs in
+  # flake.nix, so listing them would be a no-op; they are left out.
+  dailyInputs = [
+    "nixpkgs"
+    "nixpkgs-unstable"
+    "nixpkgs2511"
+    "home-manager"
+    "stylix"
+    "firefox-addons"
+    "nixos-hardware"
+    "agenix"
+    "cos-cli"
+    "cosmic-manager"
+    "plasma-manager"
+    "winapps"
+  ];
+
   updateScript = pkgs.writeShellScript "nix-configs-update" ''
     set -euo pipefail
-    export PATH=${lib.makeBinPath [ pkgs.git pkgs.nix pkgs.openssh pkgs.coreutils pkgs.gnugrep pkgs.libnotify ]}
+    export PATH=${lib.makeBinPath [ pkgs.git pkgs.nix pkgs.openssh pkgs.coreutils pkgs.gnugrep pkgs.libnotify pkgs.util-linux ]}
     cd ${repo}
+
+    # The daily and weekly units share this script and the repo; if their
+    # timers ever fire together (Persistent catch-up after a long poweroff),
+    # let one finish before the other starts.
+    exec 9>.git/nix-configs-update.lock
+    flock 9
 
     # systemd user units normally carry DBUS_SESSION_BUS_ADDRESS; fall back to
     # the standard per-uid bus path so the COSMIC popup always works.
@@ -55,7 +91,9 @@ let
     # notification (nvd diff of the two system generations).
     update_log=$(mktemp)
     trap 'rm -f "$update_log"' EXIT
-    nix flake update --extra-experimental-features 'nix-command flakes' 2>&1 | tee "$update_log"
+    # With input names as arguments only those inputs move (daily lane);
+    # with no arguments everything moves (weekly full run).
+    nix flake update --extra-experimental-features 'nix-command flakes' "$@" 2>&1 | tee "$update_log"
 
     if git diff --quiet -- flake.lock; then
       echo "flake.lock already up to date"
@@ -137,7 +175,15 @@ let
 in
 {
   systemd.user.services.nix-configs-update = {
-    Unit.Description = "Update, commit and push flake.lock in ~/nix-configs";
+    Unit.Description = "Update, commit and push flake.lock in ~/nix-configs (cheap inputs only)";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${updateScript} ${lib.escapeShellArgs dailyInputs}";
+    };
+  };
+
+  systemd.user.services.nix-configs-update-full = {
+    Unit.Description = "Weekly full flake.lock update in ~/nix-configs (all inputs)";
     Service = {
       Type = "oneshot";
       ExecStart = "${updateScript}";
@@ -155,9 +201,21 @@ in
   systemd.user.timers.nix-configs-update = {
     Unit.Description = "Daily flake.lock auto-update (before the 12:00 nixos-upgrade)";
     Timer = {
-      OnCalendar = "11:00";
+      # Saturday belongs to the full run below; skipping it here avoids two
+      # updates racing for the same 11:00 slot.
+      OnCalendar = "Mon..Fri,Sun 11:00";
       RandomizedDelaySec = "20min";
       # Catch up on the next login if 11:00 was missed (machine off / logged out).
+      Persistent = true;
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
+  systemd.user.timers.nix-configs-update-full = {
+    Unit.Description = "Weekly full flake.lock auto-update, expensive inputs included";
+    Timer = {
+      OnCalendar = "Sat 11:00";
+      RandomizedDelaySec = "20min";
       Persistent = true;
     };
     Install.WantedBy = [ "timers.target" ];

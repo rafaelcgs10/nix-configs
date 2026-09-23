@@ -210,8 +210,34 @@ in
       # the network coming back instead of failing with "Network is unreachable"
       # — which would mark the whole switch (and the daily nixos-upgrade) as
       # failed. _netdev alone only orders after network.target.
-      mount_opts = "noauto,nofail,x-systemd.automount,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,x-systemd.requires=network-online.target,x-systemd.after=network-online.target";
+      #
+      # idle-timeout is 10min, not the old 60s: cosmic-files stats every mount
+      # point on launch, so an expired automount made opening it block on a
+      # fresh SMB mount (measured 0.2-1.0s, worse on weak wifi). At 60s the
+      # share was remounted ~9x in under 2h, so launches almost always paid it.
+      # bbstation drops idle-timeout entirely, but this is a roaming laptop —
+      # a finite timeout still releases the mount after leaving the network.
+      mount_opts = "noauto,nofail,x-systemd.automount,x-systemd.idle-timeout=600,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,x-systemd.requires=network-online.target,x-systemd.after=network-online.target";
     in ["${mount_opts},credentials=/run/agenix/smb-secrets,uid=1000,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" "noserverino" ];
+  };
+
+  # Back the `fsc` mount option on /rafael_mounts with a real FS-Cache backend.
+  # Without cachefilesd the `fsc` above is inert: the cachefiles module is never
+  # loaded and /var/cache/fscache never exists, so every browse re-reads the
+  # same bytes over wifi. Thumbnailing is what makes that hurt: gdk-pixbuf
+  # reads a camera JPEG in full to build one thumbnail (measured 1.77MB read
+  # for a 1.74MB file, ~0.3s each on 5GHz), and /rafael_mounts/camera_jpegs is
+  # 38GB. Same block as bbtablet.
+  services.cachefilesd = {
+    enable = true;
+    extraConfig = ''
+      brun 10%
+      bcull 7%
+      bstop 3%
+      frun 10%
+      fcull 7%
+      fstop 3%
+    '';
   };
 
   # fileSystems."/" =

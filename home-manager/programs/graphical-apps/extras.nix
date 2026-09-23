@@ -1,4 +1,4 @@
-{ pkgs, lib, config, pkgsUnstable, pkgsLmstudio, spektrafilmPackages, ...}:
+{ pkgs, lib, config, inputs, pkgsUnstable, pkgsLmstudio, spektrafilmPackages, ...}:
 
 let
   # `darktable-spektrafilm-ai` is a symlinkJoin wrapper (it runtime-links the
@@ -11,8 +11,67 @@ let
   # package directly — one build, used for both the GUI and the sync timer.
   darktable-xmp-sync =
     spektrafilmPackages.darktable-spektrafilm-ai.basePackage.overrideAttrs (old: {
-      patches = (old.patches or [ ]) ++ [ ./darktable-headless-xmp-sync.patch ];
+      patches = (old.patches or [ ]) ++ [
+        ./darktable-headless-xmp-sync.patch
+        # native Adobe DNG camera profile (.dcp) support in the input color
+        # profile module: put .dcp files in ~/.config/darktable/color/dcp/
+        # and pick them like any input profile. The profile tone curve is
+        # deliberately not applied, so agx/sigmoid keep owning tone, and the
+        # white balance / color calibration modules are untouched.
+        ./darktable-dcp-support.patch
+      ];
     });
+
+  # darktable is GTK3, which cannot do Wayland fractional scaling: on
+  # bbstation's 150% output the compositor advertises integer scale 2, GTK
+  # cairo-renders every frame at 200% (5120x2880 for a maximized window, all on
+  # the CPU) and cosmic downscales it to 150% — 78% more pixels than the screen
+  # has, an extra per-frame scale pass, and a slight blur. On the X11 backend
+  # cosmic's Xwayland handling (descale_xwayland=fractional + "Xwayland
+  # primary" on DP-1) maps windows 1:1 to physical pixels and provides
+  # Xft/DPI=144 via XSETTINGS, so darktable renders native-sharp at the right
+  # size with no in-app DPI tweaks (verified 2026-09-10) and each redraw
+  # touches 44% fewer pixels. Do NOT add GDK_SCALE/GDK_DPI_SCALE on top: the
+  # XSETTINGS DPI already handles sizing, and stacking them double-scales.
+  #
+  # Scoped two ways on purpose: per-APP because cosmic-session exports
+  # GDK_BACKEND=wayland,x11 globally and home.nix explains why that must stay;
+  # per-HOST (runtime hostname check, since this file is shared by the whole
+  # "default" profile) because only bbstation runs the 4K/150% screen — the
+  # thinkpad keeps the stock backend choice.
+  darktable-x11 = pkgs.symlinkJoin {
+    name = "darktable-x11";
+    paths = [ darktable-xmp-sync ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/darktable \
+        --run 'if [ "$(${pkgs.coreutils}/bin/uname -n)" = "bbstation" ]; then export GDK_BACKEND=x11; fi'
+    '';
+  };
+
+  # GIMP with all packaged plug-ins, evaluated in a nixpkgs instance that does
+  # NOT set allowBroken.
+  #
+  # gimp-with-plugins picks its plug-in set with
+  #   lib.filter (pkg: lib.isDerivation pkg && !pkg.meta.broken or false)
+  # and 7 of the 11 packaged plug-ins (bimp, farbfeld, fourier, gimplensfun,
+  # lqrPlugin, texturize, waveletSharpen) are GIMP-2-only, guarded upstream by
+  # `broken = gimp.apiVersion != "2.0"`. Our global allowBroken = true rewrites
+  # meta.broken to false — it means "broken no longer blocks you" — which also
+  # neutralises that filter, so the wrapper tries to build all 7 against GIMP 3
+  # and the build dies in farbfeld.c on a missing gimp-2.0 pkg-config.
+  #
+  # Reading the flag in an allowBroken-free instance restores upstream's intent
+  # and keeps tracking it: plug-ins ported to the GIMP 3 API return on their own,
+  # with no hardcoded list here to drift. Scoped to GIMP only — the rest of the
+  # config keeps allowBroken.
+  gimpWithPlugins =
+    (import inputs.nixpkgs-unstable {
+      inherit (pkgs.stdenv.hostPlatform) system;
+      config = {
+        allowUnfree = true;
+      };
+    }).gimp-with-plugins;
 
   # DT Pro theme pack from darktable.info (DT-Pro-orange and its siblings).
   # Not in nixpkgs and there is no upstream git repo — the author distributes a
@@ -65,6 +124,11 @@ let
   # exact; for routine incremental runs only a few files change, so the % is a
   # loose upper bound — but those finish in seconds anyway. Ctrl-C stops watching;
   # the sync keeps running in the background (it's a systemd service).
+  # The withoutBG matting server the GIMP plug-in below talks to. Bound here
+  # because it is referenced twice: by the systemd units at the bottom of this
+  # file and by the comment trail around them.
+  withoutbg-inference = pkgsUnstable.callPackage ./withoutbg-inference.nix { };
+
   dtSync = pkgs.writeShellScriptBin "dt-sync" ''
     export XDG_RUNTIME_DIR="/run/user/$(${pkgs.coreutils}/bin/id -u)"
     svc="darktable-xmp-sync.service"
@@ -90,8 +154,39 @@ let
   '';
 in
 {
+  # gimpsegany (Image > Segment Anything Layers): click-to-select object
+  # segmentation with SAM 2.1 small -- the same model darktable's AI object
+  # masking uses. CPU: ~2.4s to encode an image, ~0.2s per click after that.
+  # Its inference bridge runs as a subprocess in its own Python env, so it is
+  # not coupled to GIMP's interpreter; only the GUI half has to match.
+  home.file.".config/GIMP/3.2/plug-ins/seganyplugin".source =
+    pkgsUnstable.callPackage ./gimp-segany.nix { };
+
+  # Arakne's Path Shape Creator (Filters > Arakne). Vector shape/arch generator
+  # for GIMP 3; not in nixpkgs and upstream has no repo, so it is packaged from
+  # the author's ZIP next door. pkgsUnstable because the plug-in's interpreter
+  # has to match the Python nixpkgs built this GIMP's plug-ins with.
+  home.file.".config/GIMP/3.2/plug-ins/path-shape-creator-2026".source =
+    pkgsUnstable.callPackage ./gimp-path-shape-creator.nix { };
+
+  # withoutbg (Tools > WithoutBG > Remove Background...): attaches an AI alpha
+  # matte to the active layer as an unapplied layer mask. Complements gimpsegany
+  # -- that one is promptable and gives you a hard selection of whatever you
+  # clicked, this one is fully automatic and gives you a *soft* matte of the
+  # salient subject, which is the one that survives hair and out-of-focus edges.
+  # The plug-in is only an HTTP client; the server it needs is socket-activated
+  # at the bottom of this file, so nothing runs until you invoke the menu item.
+  home.file.".config/GIMP/3.2/plug-ins/withoutbg".source =
+    pkgsUnstable.callPackage ./withoutbg-gimp.nix { };
+
+  # Filmator's custom G'MIC filter (Film Rebate: randomized scanned-negative
+  # border), imported straight from its repo's flake — no vendored copy to
+  # keep in sync. The module links it for both the G'MIC-Qt plugin in GIMP
+  # and the gmic CLI.
+  imports = [ inputs.gmic-film-framing.homeManagerModules.default ];
+
   home.packages = [
-    pkgs.gimp3-with-plugins
+    gimpWithPlugins
     pkgs.scribus
     pkgs.inkscape
     pkgs.krita
@@ -111,13 +206,26 @@ in
     pkgs.pgadmin4-desktopmode
     pkgs.handbrake # ghb
     pkgs.upscayl
+
+    # `withoutbg <image>` -> <image>-withoutbg.png: offline salient-subject
+    # alpha matting on the CPU. 5.7s end to end for a 2600x1737 frame on this
+    # laptop (1.1s to load the model, 1.9s inference, the rest PNG encoding),
+    # and the model is reused across a `--batch` run. It produces a genuinely
+    # soft matte -- on a backlit portrait ~5% of pixels land at fractional
+    # alpha -- so it is usable as a mask to paste into GIMP/darktable, not just
+    # as a cutout. Automatic only: no prompt, no click, no box; for pointing at
+    # a specific object use gimpsegany above. The ONNX weights are pinned in
+    # the store and the wrapper points the SDK at them, so it never touches the
+    # network.
+    (pkgsUnstable.callPackage ./withoutbg.nix { })
     pkgsLmstudio.lmstudio
 
-    # darktable built from the spektrafilm PR branch (native C spektrafilm
-    # module), patched to add the headless `--sync-xmp` mode driven by the
-    # systemd timer below. Replaces the stock pkgsDarktable.darktable; the
-    # runtime data pack and AI models are linked in via home.file below.
-    darktable-xmp-sync
+    # darktable built from upstream master (native C spektrafilm module),
+    # patched to add the headless `--sync-xmp` mode driven by the systemd
+    # timer below, and wrapped to run the GUI on X11 (see darktable-x11).
+    # Replaces the stock pkgsDarktable.darktable; the runtime data pack and
+    # AI models are linked in via home.file below.
+    darktable-x11
     dtSync # `dt-sync` command: run the sync with a live progress bar
     spektrafilmPackages.spektrafilm
     spektrafilmPackages.spektrafilm-art
@@ -176,13 +284,15 @@ in
 
   # Film & print data pack for the darktable spektrafilm module. Newer builds
   # can download this pack from within the UI into
-  # ~/.config/darktable/spektrafilm/packs/<lut_hash>/; we pre-install the pinned
-  # pack at that same hashed path so it works offline with no download, while
-  # leaving spektrafilm/ itself writable so the in-UI downloader still works for
-  # other tables. The resolver (src/common/spektra_fetch.c) picks this up for
-  # both fresh edits and edits recorded with this LUT hash. The hash comes from
-  # the pack derivation so it tracks pack bumps automatically.
-  home.file.".config/darktable/spektrafilm/packs/${spektrafilmPackages.spektrafilm-data-pack.lutHash}".source =
+  # ~/.local/share/darktable/spektrafilm/packs/<lut_hash>/; we pre-install the
+  # pinned pack at that same hashed path so it works offline with no download,
+  # while leaving spektrafilm/ itself writable so the in-UI downloader still
+  # works for other tables. The resolver (src/common/spektra_fetch.c) picks this
+  # up for both fresh edits and edits recorded with this LUT hash. The hash
+  # comes from the pack derivation so it tracks pack bumps automatically.
+  # (Moved from ~/.config/darktable in the 2026-08 module update: packs now
+  # resolve via g_get_user_data_dir(), next to the AI models below.)
+  home.file.".local/share/darktable/spektrafilm/packs/${spektrafilmPackages.spektrafilm-data-pack.lutHash}".source =
     spektrafilmPackages.spektrafilm-data-pack;
 
   # Offline AI models for darktable's AI modules (denoise / upscale / object
@@ -339,14 +449,23 @@ in
     }
 
     if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
-      # Ask darktable itself whether OpenCL actually works here. --conf keeps
-      # the probe out of darktablerc, so a failed probe leaves no trace.
-      if darktable-cltest --conf opencl=TRUE --conf clplatform_rusticl=TRUE 2>&1 \
-           | ${pkgs.gnugrep}/bin/grep -q 'is AVAILABLE and ENABLED'; then
+      # OpenCL only on NVIDIA (bbstation). rusticl on the thinkpad's AMD
+      # iGPU hard-resets the GPU mid-render ("amdgpu: context lost", SIGABRT
+      # in darktable:cs0; gdb-confirmed 2026-09-05 while opening a duplicate
+      # in darkroom) — and its cltest probe passes anyway, so probing alone
+      # cannot be trusted on AMD. NVIDIA's proprietary OpenCL has no such
+      # history here.
+      cl_probe="$(darktable-cltest --conf opencl=TRUE 2>&1 || true)"
+      if printf '%s' "$cl_probe" | ${pkgs.gnugrep}/bin/grep -qi 'nvidia' \
+         && printf '%s' "$cl_probe" | ${pkgs.gnugrep}/bin/grep -q 'is AVAILABLE and ENABLED'; then
         set_key opencl TRUE
-        set_key clplatform_rusticl TRUE
+      else
+        set_key opencl FALSE
       fi
       set_key resourcelevel large
+      # Rafael's chosen darkroom defaults (2026-09): the AgX workflow is what
+      # the native-DCP validation and all the RP styles assume as tone mapper.
+      set_key 'plugins/darkroom/workflow' 'scene-referred (AgX)'
     fi
   '';
 
@@ -493,6 +612,40 @@ in
       ExecStart = "${darktable-xmp-sync}/bin/darktable -d control --sync-xmp";
       # 0 = synced; 75 = library locked (darktable open) — both are fine.
       SuccessExitStatus = "0 75";
+    };
+  };
+
+  # withoutBG matting server for the GIMP plug-in, on demand only.
+  #
+  # systemd owns the listening socket; the plug-in's health check is the
+  # connection that starts the service, and the service hands back the same
+  # socket as fd 3 (uvicorn --fd). Cold start to first response is ~4.2s, then
+  # ~1.9s per image. While loaded it holds roughly 1GB RSS -- an ONNX arena
+  # sized for the 455MB graph -- which is exactly why this is not a normal
+  # always-on user service: it exits itself after five idle minutes (see
+  # withoutbg-inference.nix) and the socket re-arms for the next request.
+  #
+  # Deliberately no Install.WantedBy on the service: the socket is the only
+  # thing that may start it.
+  systemd.user.sockets.withoutbg-inference = {
+    Unit.Description = "Socket for the on-demand withoutBG matting server";
+    # The plug-in hard-codes this address, and loopback-only keeps an
+    # unauthenticated inference endpoint off the network.
+    Socket.ListenStream = "127.0.0.1:8000";
+    Install.WantedBy = [ "sockets.target" ];
+  };
+
+  systemd.user.services.withoutbg-inference = {
+    Unit = {
+      Description = "withoutBG open-weights matting server (socket-activated)";
+      Requires = [ "withoutbg-inference.socket" ];
+      After = [ "withoutbg-inference.socket" ];
+    };
+    Service = {
+      ExecStart = "${withoutbg-inference}/bin/withoutbg-inference-server";
+      # The idle timeout makes the process exit 0 on its own; a Restart= here
+      # would immediately undo that.
+      Restart = "no";
     };
   };
 

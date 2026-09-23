@@ -25,7 +25,14 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/d1ff13f11096f3ac8d6043853fbb89146cbed982";
+    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/11b5a18e3b08486906f8a6039cfde339cb3247b1";
+
+    # Filmator: custom G'MIC Film Rebate filter (film-scan look toolkit).
+    # Private repo, so git+ssh instead of github: — every machine evaluating
+    # this flake needs an SSH key with access. Exposes a home-manager module
+    # that links the filter for G'MIC-Qt (GIMP) and the gmic CLI; imported in
+    # home-manager/programs/graphical-apps/extras.nix.
+    gmic-film-framing.url = "git+ssh://git@github.com/rafaelcgs10/gmic-film-framing.git";
 
     # CLI for COSMIC toplevel management (scratchpad chat toggles).
     # Unofficial but source-reviewed at this pin: no network/exec/fs access.

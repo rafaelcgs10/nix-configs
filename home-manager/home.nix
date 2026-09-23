@@ -246,6 +246,7 @@ in {
     pkgs.ltex-ls
     pkgs.progress
     pkgs.ffmpeg
+    pkgs.whisper-ctranslate2
     pkgs.gcalcli
     pkgs.conky
     pkgs.netcat-gnu
