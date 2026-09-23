@@ -178,10 +178,21 @@ in {
     nameservers = [  "2a07:a8c0::#6e9815.dns.nextdns.io" "45.90.28.0#6e9815.dns.nextdns.io" "45.90.30.0#6e9815.dns.nextdns.io" "2a07:a8c1::#6e9815.dns.nextdns.io" ];
     # nameservers = [  "localhost" ];
   };
+  # DNSSEC is deliberately "allow-downgrade" rather than "true".  Strict
+  # DNSSEC makes resolved validate the chain itself, which means that for an
+  # *unsigned* zone it must first obtain the parent's NSEC/NSEC3 proof that
+  # no DS record exists.  The upstream here does not return that proof, so
+  # under DNSSEC=true every unsigned domain (google.com, github.com,
+  # wikipedia.org, anthropic.com, and most of the web) fails with
+  # "DNSSEC validation failed: no-signature" while signed domains keep
+  # working, which looks exactly like a partial internet outage.  The
+  # downgrade risk this reintroduces is largely covered by DNSOverTLS below:
+  # the channel to the resolver is authenticated by name and encrypted, so
+  # an on-path attacker cannot silently strip the DNSSEC records.
   services.resolved = {
     enable = true;
     settings.Resolve = {
-      DNSSEC = "true";
+      DNSSEC = "allow-downgrade";
       Domains = [ "~." ];
       FallbackDNS = [ "1.1.1.1#one.one.one.one" ];
       DNSOverTLS = "true";
