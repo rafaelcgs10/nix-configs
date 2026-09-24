@@ -49,6 +49,30 @@ let
     '';
   };
 
+  # GIMP with all packaged plug-ins, evaluated in a nixpkgs instance that does
+  # NOT set allowBroken.
+  #
+  # gimp-with-plugins picks its plug-in set with
+  #   lib.filter (pkg: lib.isDerivation pkg && !pkg.meta.broken or false)
+  # and 7 of the 11 packaged plug-ins (bimp, farbfeld, fourier, gimplensfun,
+  # lqrPlugin, texturize, waveletSharpen) are GIMP-2-only, guarded upstream by
+  # `broken = gimp.apiVersion != "2.0"`. Our global allowBroken = true rewrites
+  # meta.broken to false — it means "broken no longer blocks you" — which also
+  # neutralises that filter, so the wrapper tries to build all 7 against GIMP 3
+  # and the build dies in farbfeld.c on a missing gimp-2.0 pkg-config.
+  #
+  # Reading the flag in an allowBroken-free instance restores upstream's intent
+  # and keeps tracking it: plug-ins ported to the GIMP 3 API return on their own,
+  # with no hardcoded list here to drift. Scoped to GIMP only — the rest of the
+  # config keeps allowBroken.
+  gimpWithPlugins =
+    (import inputs.nixpkgs-unstable {
+      inherit (pkgs.stdenv.hostPlatform) system;
+      config = {
+        allowUnfree = true;
+      };
+    }).gimp-with-plugins;
+
   # DT Pro theme pack from darktable.info (DT-Pro-orange and its siblings).
   # Not in nixpkgs and there is no upstream git repo — the author distributes a
   # single archive from the site, so fetch that and expose the CSS + SVG tree
@@ -162,7 +186,7 @@ in
   imports = [ inputs.gmic-film-framing.homeManagerModules.default ];
 
   home.packages = [
-    pkgsUnstable.gimp3-with-plugins
+    gimpWithPlugins
     pkgs.scribus
     pkgs.inkscape
     pkgs.krita
