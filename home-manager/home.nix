@@ -307,7 +307,7 @@ in {
       '';
       meta.mainProgram = "opencode";
     })
-    pkgs.claude-code
+    pkgsUnstable.claude-code
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 
