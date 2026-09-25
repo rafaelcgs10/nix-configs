@@ -255,6 +255,68 @@
   # Touchscreen + pen via the Intel Precise Touch & Stylus daemon.
   services.iptsd.enable = true;
 
+  # Auto-rotation: GNOME has to be nudged into claiming the accelerometer.
+  #
+  # The sensor stack itself is healthy. ISH enumerates, hid-sensor-hub binds,
+  # and iio-sensor-proxy exports accel_3d correctly -- claiming it by hand with
+  # monitor-sensor returns an orientation immediately. The fault is on mutter's
+  # side: it does not reliably claim the accelerometer from
+  # net.hadess.SensorProxy, neither after a fresh boot nor after a resume. With
+  # no client holding a claim the proxy stops computing orientation,
+  # AccelerometerOrientation reads "undefined", and the screen never rotates.
+  #
+  # Resume makes this constant on a Surface Go, because folding the Type Cover
+  # back into tablet position registers as a lid close and suspends the machine.
+  # HandleLidSwitch is deliberately left at its "suspend" default -- closing the
+  # cover *should* suspend -- so rotation dies at exactly the moment you switch
+  # into the mode that needs it.
+  #
+  # Restarting the proxy makes its D-Bus name drop and reappear, which is what
+  # makes mutter claim the sensor. Verified by hand: `systemctl restart
+  # iio-sensor-proxy` on a dead session brings rotation straight back.
+  #
+  # The restart must happen *after* mutter is running, or there is nobody to
+  # react to the name returning. graphical.target is reached when GDM starts,
+  # well before login, so wait for gnome-shell itself rather than the target.
+  systemd.services.iio-sensor-proxy-reclaim = {
+    description = "Restart iio-sensor-proxy so GNOME claims the accelerometer";
+    wantedBy = [
+      "graphical.target"
+      "suspend.target"
+      "hibernate.target"
+      "hybrid-sleep.target"
+      "suspend-then-hibernate.target"
+    ];
+    # Being ordered After a sleep target means this runs on the way back *up*,
+    # once the machine has actually resumed -- not on the way down.
+    after = [
+      "graphical.target"
+      "suspend.target"
+      "hibernate.target"
+      "hybrid-sleep.target"
+      "suspend-then-hibernate.target"
+    ];
+    path = [ pkgs.procps ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      set -eu
+      # On resume gnome-shell is already up and this returns on the first pass.
+      # At boot it covers however long the user spends at the GDM prompt, then
+      # gives up after ~2min so the unit does not linger on a headless boot.
+      for _ in $(seq 1 60); do
+        if pgrep -f gnome-shell > /dev/null 2>&1; then
+          # Let mutter finish its own sensor setup before yanking the name.
+          sleep 3
+          # try-restart: do nothing if the proxy is not running, rather than
+          # starting a service that was deliberately stopped.
+          systemctl try-restart iio-sensor-proxy.service
+          exit 0
+        fi
+        sleep 2
+      done
+    '';
+  };
+
   # Bluetooth (Marvell module on Surface Go).
   hardware.bluetooth = {
     enable = true;
@@ -308,46 +370,46 @@
   # `root@eu.nixbuild.net: Permission denied (publickey)`. Setting it here
   # covers both call sites. (nixbuild.net ignores the username and identifies
   # clients purely by SSH key.)
-  programs.ssh.extraConfig = ''
-  Host eu.nixbuild.net
-  User rafael
-  PubkeyAcceptedKeyTypes ssh-ed25519
-  ServerAliveInterval 60
-  IdentityFile /etc/nix/nixbuild_ed25519
-'';
+#   programs.ssh.extraConfig = ''
+#   Host eu.nixbuild.net
+#   User rafael
+#   PubkeyAcceptedKeyTypes ssh-ed25519
+#   ServerAliveInterval 60
+#   IdentityFile /etc/nix/nixbuild_ed25519
+# '';
 
-  programs.ssh.knownHosts = {
-    nixbuild = {
-      hostNames = [ "eu.nixbuild.net" ];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPIQCZc54poJ8vqawd8TraNryQeJnvH1eLpIDgbiqymM";
-    };
-  };
+  # programs.ssh.knownHosts = {
+  #   nixbuild = {
+  #     hostNames = [ "eu.nixbuild.net" ];
+  #     publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPIQCZc54poJ8vqawd8TraNryQeJnvH1eLpIDgbiqymM";
+  #   };
+  # };
 
-  nix = {
-    distributedBuilds = true;
-    # Have nixbuild.net's builders fetch from public substituters directly
-    # instead of streaming closures back through this tablet's uplink.
-    extraOptions = ''
-      builders-use-substitutes = true
-    '';
-    buildMachines = [
-      { hostName = "eu.nixbuild.net";
-        # nixbuild.net identifies clients by SSH key, not username; any user
-        # name works. Pinning it here avoids the daemon falling back to `root`
-        # (which would then look for /root/.ssh/config, not /etc/ssh/ssh_config
-        # in some code paths).
-        sshUser = "rafael";
-        sshKey = "/etc/nix/nixbuild_ed25519";
-        # ssh-ng is required for nixbuild.net's remote-store protocol; the plain
-        # `ssh` protocol works too but ssh-ng streams derivations more
-        # efficiently and is what nixbuild's docs recommend.
-        protocol = "ssh-ng";
-        system = "x86_64-linux";
-        maxJobs = 100;
-        supportedFeatures = [ "benchmark" "big-parallel" "kvm" ];
-      }
-    ];
-  };
+  # nix = {
+  #   distributedBuilds = true;
+  #   # Have nixbuild.net's builders fetch from public substituters directly
+  #   # instead of streaming closures back through this tablet's uplink.
+  #   extraOptions = ''
+  #     builders-use-substitutes = true
+  #   '';
+  #   buildMachines = [
+  #     { hostName = "eu.nixbuild.net";
+  #       # nixbuild.net identifies clients by SSH key, not username; any user
+  #       # name works. Pinning it here avoids the daemon falling back to `root`
+  #       # (which would then look for /root/.ssh/config, not /etc/ssh/ssh_config
+  #       # in some code paths).
+  #       sshUser = "rafael";
+  #       sshKey = "/etc/nix/nixbuild_ed25519";
+  #       # ssh-ng is required for nixbuild.net's remote-store protocol; the plain
+  #       # `ssh` protocol works too but ssh-ng streams derivations more
+  #       # efficiently and is what nixbuild's docs recommend.
+  #       protocol = "ssh-ng";
+  #       system = "x86_64-linux";
+  #       maxJobs = 100;
+  #       supportedFeatures = [ "benchmark" "big-parallel" "kvm" ];
+  #     }
+  #   ];
+  # };
 
   # Fail the rebuild early with a clear message if the key isn't in place, so
   # we don't ship a config where every build silently falls back to local.
