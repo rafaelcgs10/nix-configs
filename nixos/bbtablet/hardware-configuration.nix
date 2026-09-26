@@ -296,23 +296,57 @@
       "hybrid-sleep.target"
       "suspend-then-hibernate.target"
     ];
-    path = [ pkgs.procps ];
+    path = [ pkgs.systemd pkgs.gnugrep pkgs.coreutils ];
     serviceConfig.Type = "oneshot";
     script = ''
       set -eu
-      # On resume gnome-shell is already up and this returns on the first pass.
-      # At boot it covers however long the user spends at the GDM prompt, then
-      # gives up after ~2min so the unit does not linger on a headless boot.
-      for _ in $(seq 1 60); do
-        if pgrep -f gnome-shell > /dev/null 2>&1; then
-          # Let mutter finish its own sensor setup before yanking the name.
-          sleep 3
-          # try-restart: do nothing if the proxy is not running, rather than
-          # starting a service that was deliberately stopped.
-          systemctl try-restart iio-sensor-proxy.service
-          exit 0
-        fi
+
+      # Is GNOME Shell far enough along to own its name on the session bus?
+      # That happens much later than the gnome-shell *process* merely existing,
+      # which is what the first version of this script got wrong: pgrep matched
+      # ~3s into startup, before mutter had looked at the sensor at all, so the
+      # restart was wasted and rotation stayed dead until a manual restart.
+      shell_up() {
+        for b in /run/user/*/bus; do
+          [ -S "$b" ] || continue
+          if busctl --address="unix:path=$b" list --no-legend 2>/dev/null \
+             | grep -q "org.gnome.Shell"; then
+            return 0
+          fi
+        done
+        return 1
+      }
+
+      orientation() {
+        busctl --system get-property net.hadess.SensorProxy \
+          /net/hadess/SensorProxy net.hadess.SensorProxy \
+          AccelerometerOrientation 2>/dev/null || echo unknown
+      }
+
+      # On resume the shell is already up, so this returns on the first pass. At
+      # boot it covers however long the user spends at the GDM prompt; give up
+      # after ~3min so the unit does not linger forever on a headless boot.
+      for _ in $(seq 1 90); do
+        shell_up && break
         sleep 2
+      done
+
+      # Restart, then confirm something actually claimed the accelerometer:
+      # with no client the proxy stops polling and orientation stays
+      # "undefined". Exactly when mutter becomes willing to claim is not
+      # observable from here, so retry rather than guess a single delay.
+      #
+      # Caveat: a tablet lying flat also reads "undefined" even when properly
+      # claimed, so in that position this burns all three attempts and gives
+      # up. Harmless -- each attempt is just a service restart, and mutter
+      # re-claims on every one.
+      for _ in 1 2 3; do
+        systemctl try-restart iio-sensor-proxy.service
+        sleep 8
+        case "$(orientation)" in
+          *undefined*|*unknown*) ;;
+          *) exit 0 ;;
+        esac
       done
     '';
   };
