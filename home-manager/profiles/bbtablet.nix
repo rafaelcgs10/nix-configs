@@ -10,7 +10,12 @@
     ../programs/nvim/default.nix
     ../programs/graphical-apps/everyday.nix
     ../programs/non-arm/default.nix
-    ../programs/nix-configs-autoupdate.nix
+    # nix-configs-autoupdate.nix is deliberately NOT imported here. It is the
+    # other half of the unattended upgrade: a user timer that bumps, commits and
+    # pushes flake.lock daily. system.autoUpgrade is forced off for this host in
+    # nixos/bbtablet/hardware-configuration.nix, and leaving the lock bumps
+    # running would push commits this tablet never builds. The other hosts still
+    # update the lock, so bbtablet keeps receiving it -- just on a manual pull.
   ];
 
   home.file.".config/autostart/synology-drive.desktop" = {

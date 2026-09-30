@@ -363,6 +363,21 @@
   services.thermald.enable = true;
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
 
+  # No unattended upgrades on this host.
+  #
+  # nixos/configuration.nix turns system.autoUpgrade on for every host, but on a
+  # fanless 4-core Surface Go an unattended rebuild is actively harmful. With
+  # nixbuild.net out of build time there is no remote builder left, so the
+  # service falls back to compiling locally: hours of gcc at full tilt (a kernel
+  # build once ran ~14h), all four cores pegged, heavy swap thrash, and an
+  # unusable tablet. It also starves any concurrent `nixos-rebuild --build-host`
+  # copy down to a few KB/s, because the import has no CPU left to hash and
+  # decompress incoming NARs.
+  #
+  # This host is rebuilt by hand instead, with an explicit --build-host, so the
+  # heavy lifting lands on a machine that can take it.
+  system.autoUpgrade.enable = lib.mkForce false;
+
   # Backlight + power keys (programs.light was removed from nixpkgs).
   hardware.acpilight.enable = true;
   services.acpid.enable = true;
