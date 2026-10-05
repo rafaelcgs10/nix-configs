@@ -166,8 +166,8 @@ in
   # for GIMP 3; not in nixpkgs and upstream has no repo, so it is packaged from
   # the author's ZIP next door. pkgsUnstable because the plug-in's interpreter
   # has to match the Python nixpkgs built this GIMP's plug-ins with.
-  home.file.".config/GIMP/3.2/plug-ins/path-shape-creator-2026".source =
-    pkgsUnstable.callPackage ./gimp-path-shape-creator.nix { };
+  # home.file.".config/GIMP/3.2/plug-ins/path-shape-creator-2026".source =
+  #   pkgsUnstable.callPackage ./gimp-path-shape-creator.nix { };
 
   # withoutbg (Tools > WithoutBG > Remove Background...): attaches an AI alpha
   # matte to the active layer as an unapplied layer mask. Complements gimpsegany
@@ -193,7 +193,7 @@ in
     # Affinity v3 (unified Photo/Designer/Publisher app) via Wine, from the
     # affinity-nix overlay. v2 apps also exist as affinity-photo/-designer/
     # -publisher if ever needed.
-    pkgs.affinity-v3
+    # pkgs.affinity-v3
     pkgs.lutris
     pkgs.gamescope
     pkgs.mangohud

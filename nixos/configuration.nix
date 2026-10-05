@@ -407,7 +407,7 @@ in {
   # flake's nixpkgs, while the overlay evaluates against ours (allowUnfree).
   # Wine itself still comes from affinity-nix's pinned nixpkgs, so the big
   # wine closure stays substitutable from cache.forall.systems.
-  nixpkgs.overlays = [ inputs.affinity-nix.overlays.default ];
+  # nixpkgs.overlays = [ inputs.affinity-nix.overlays.default ];
 
   # A permanent home, OFF the encrypted home directory, for Affinity's
   # writable overlay layer. Affinity needs an overlayfs mount to save its
@@ -417,11 +417,11 @@ in {
   # from home-manager (full explanation in
   # home-manager/programs/graphical-apps/extras.nix). Owned by the user so
   # the launcher can write it; the trailing "-" age means never auto-cleaned.
-  systemd.tmpfiles.rules = [
-    "d /var/lib/affinity-nix       0700 rafael users - -"
-    "d /var/lib/affinity-nix/data  0700 rafael users - -"
-    "d /var/lib/affinity-nix/state 0700 rafael users - -"
-  ];
+  # systemd.tmpfiles.rules = [
+  #   "d /var/lib/affinity-nix       0700 rafael users - -"
+  #   "d /var/lib/affinity-nix/data  0700 rafael users - -"
+  #   "d /var/lib/affinity-nix/state 0700 rafael users - -"
+  # ];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
