@@ -25,7 +25,7 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/8365a303612422146a83745e244572d9f60cbd03";
+    spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/36778137aac8005f1dfbc175bbd1fa28007c93fb";
 
     # Filmator: custom G'MIC Film Rebate filter (film-scan look toolkit).
     # Private repo, so git+ssh instead of github: — every machine evaluating
