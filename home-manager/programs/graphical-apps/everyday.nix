@@ -18,7 +18,7 @@
     pkgs.seahorse
     pkgs.freerdp
     pkgs.xdotool
-    pkgs.lxrandr
+    pkgs.anki
     pkgs.srandrd
     pkgs.zoom-us              # picks up libpw-v4l2 via global LD_PRELOAD in home.nix
     pkgsUnstable.signal-desktop
@@ -32,7 +32,6 @@
     pkgs.snapshot
     pkgs.thunderbird
     pkgs.kdePackages.kalk
-    pkgs.xpra
     pkgs.proton-vpn
     pkgs.papers
     pkgs.mission-center
