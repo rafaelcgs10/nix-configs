@@ -1,0 +1,3 @@
+# Auto-resolve flake.lock conflicts by keeping the newer lock; the driver is
+# declared in home-manager/programs/nix-configs-autoupdate.nix.
+flake.lock merge=flake-lock

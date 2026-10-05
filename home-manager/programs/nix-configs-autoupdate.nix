@@ -27,6 +27,22 @@
 let
   repo = "${config.home.homeDirectory}/nix-configs";
 
+  # Git merge driver for flake.lock. Every machine commits its own daily
+  # auto-update, so two lock commits routinely race and the manual merge that
+  # reconciles them conflicts on flake.lock -- a file nobody wants to resolve
+  # hunk by hunk. The driver keeps whichever side is newer: the lock whose
+  # freshest input (max lastModified over all nodes) is most recent. It picks a
+  # whole side rather than merging per input, because node names like
+  # nixpkgs_7 are assigned per `nix flake update` run and can differ between
+  # the two sides, so a per-node splice can produce dangling references.
+  # Anything that is not valid JSON on both sides is left as a normal conflict
+  # for a human. Wired to flake.lock only via .gitattributes in the repo
+  # (`flake.lock merge=flake-lock`); git also honours it during rebase,
+  # cherry-pick and stash pops.
+  flakeLockMerge = pkgs.writers.writePython3Bin "flake-lock-merge" { } (
+    builtins.readFile ./flake-lock-merge.py
+  );
+
   # Inputs the daily run is allowed to move. Everything NOT listed here sits
   # on the weekly lane (Saturday full update) because a bump forces hours of
   # local compilation: nix-doom-emacs-unstraightened (+ its emacs-overlay/
@@ -174,6 +190,11 @@ let
   '';
 in
 {
+  programs.git.settings.merge."flake-lock" = {
+    name = "keep the newer flake.lock";
+    driver = "${flakeLockMerge}/bin/flake-lock-merge %O %A %B";
+  };
+
   systemd.user.services.nix-configs-update = {
     Unit.Description = "Update, commit and push flake.lock in ~/nix-configs (cheap inputs only)";
     Service = {
