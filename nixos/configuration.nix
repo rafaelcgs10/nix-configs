@@ -479,10 +479,18 @@ in {
     '';
   };
   services.avahi.enable = true;
-  hardware.sane.enable = true;
-  hardware.sane.extraBackends = [ pkgs.sane-airscan ];
-  services.udev.packages = [ pkgs.sane-airscan ];
-  # services.avahi.nssmdns = true;
+  # Resolve .local names through mDNS in the NSS stack. Without this, avahi
+  # only *discovers* services: `getent hosts <printer>.local` fell through to
+  # systemd-resolved's MulticastDNS, which answered with a bare link-local
+  # IPv6 address (fe80::… with no scope id, so unroutable) and no A record at
+  # all — so CUPS queues pointing at a .local name resolved to an address that
+  # can never be reached and reported "printer not available", while the
+  # printer's IPv4 was up the whole time.
+  #
+  # nssmdns4 only (the option is per-family since 24.05; plain `nssmdns` is the
+  # old alias): IPv4-only lookups are what avoids that link-local-IPv6 answer,
+  # and nothing on this LAN is reachable over mDNS IPv6 anyway.
+  services.avahi.nssmdns4 = true;
   # services.avahi.extraServiceFiles = {
   #   ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
   #   smb = ''

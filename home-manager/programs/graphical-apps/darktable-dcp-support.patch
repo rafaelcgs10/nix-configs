@@ -1,5 +1,5 @@
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 671b64c..cf464ce 100644
+index 424c73c5c..9445cf002 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -32,6 +32,7 @@ FILE(GLOB SOURCE_FILES
@@ -11,7 +11,7 @@ index 671b64c..cf464ce 100644
    "common/curve_tools.c"
    "common/custom_primaries.c"
 diff --git a/src/common/colorspaces.c b/src/common/colorspaces.c
-index c3fc7d6..b8caafe 100644
+index 3ca427950..30cfc4346 100644
 --- a/src/common/colorspaces.c
 +++ b/src/common/colorspaces.c
 @@ -18,6 +18,7 @@
@@ -22,7 +22,7 @@ index c3fc7d6..b8caafe 100644
  #include "common/colormatrices.c"
  #include "common/darktable.h"
  #include "common/debug.h"
-@@ -1353,6 +1354,77 @@ static gint _sort_profiles(gconstpointer a, gconstpointer b)
+@@ -1368,6 +1369,77 @@ static gint _sort_profiles(gconstpointer a, gconstpointer b)
    return result;
  }
  
@@ -100,7 +100,7 @@ index c3fc7d6..b8caafe 100644
  static GList *load_profile_from_dir(const char *subdir)
  {
    GList *temp_profiles = NULL;
-@@ -1641,6 +1713,15 @@ dt_colorspaces_t *dt_colorspaces_init()
+@@ -1656,6 +1728,15 @@ dt_colorspaces_t *dt_colorspaces_init()
    }
    res->profiles = g_list_concat(res->profiles, temp_profiles);
  
@@ -116,7 +116,7 @@ index c3fc7d6..b8caafe 100644
    // read {conf,data}dir/color/out/*.icc
    temp_profiles = load_profile_from_dir("out");
    for(GList *iter = temp_profiles; iter; iter = g_list_next(iter))
-@@ -1819,6 +1900,8 @@ const char *dt_colorspaces_get_name(dt_colorspaces_color_profile_type_t type,
+@@ -1834,6 +1915,8 @@ const char *dt_colorspaces_get_name(dt_colorspaces_color_profile_type_t type,
         return _("HLG P3");
       case DT_COLORSPACE_DISPLAY_P3:
         return _("Display P3");
@@ -125,7 +125,7 @@ index c3fc7d6..b8caafe 100644
       case DT_COLORSPACE_LAST:
         break;
    }
-@@ -2638,6 +2721,7 @@ gboolean dt_colorspaces_profile_is_wide_gamut(const dt_colorspaces_color_profile
+@@ -2659,6 +2742,7 @@ gboolean dt_colorspaces_profile_is_wide_gamut(const dt_colorspaces_color_profile
      case DT_COLORSPACE_EXPORT:
      case DT_COLORSPACE_SOFTPROOF:
      case DT_COLORSPACE_WORK:
@@ -134,7 +134,7 @@ index c3fc7d6..b8caafe 100644
        return FALSE;
    }
 diff --git a/src/common/colorspaces.h b/src/common/colorspaces.h
-index 9b01c35..7fe04af 100644
+index 9b01c3505..7fe04af0d 100644
 --- a/src/common/colorspaces.h
 +++ b/src/common/colorspaces.h
 @@ -104,7 +104,8 @@ typedef enum dt_colorspaces_color_profile_type_t
@@ -149,7 +149,7 @@ index 9b01c35..7fe04af 100644
  typedef enum dt_colorspaces_color_mode_t
 diff --git a/src/common/dcp.c b/src/common/dcp.c
 new file mode 100644
-index 0000000..7ddb2c6
+index 000000000..7ddb2c672
 --- /dev/null
 +++ b/src/common/dcp.c
 @@ -0,0 +1,849 @@
@@ -1004,7 +1004,7 @@ index 0000000..7ddb2c6
 +// clang-format on
 diff --git a/src/common/dcp.h b/src/common/dcp.h
 new file mode 100644
-index 0000000..3ce2eec
+index 000000000..3ce2eec30
 --- /dev/null
 +++ b/src/common/dcp.h
 @@ -0,0 +1,178 @@
@@ -1187,7 +1187,7 @@ index 0000000..3ce2eec
 +// kate: tab-indents: off; indent-width 2; replace-tabs on; indent-mode cstyle; remove-trailing-spaces modified;
 +// clang-format on
 diff --git a/src/develop/pixelpipe_cache.c b/src/develop/pixelpipe_cache.c
-index a1bd507..8d072bb 100644
+index a1bd507d8..8d072bb1e 100644
 --- a/src/develop/pixelpipe_cache.c
 +++ b/src/develop/pixelpipe_cache.c
 @@ -137,6 +137,12 @@ static dt_hash_t _dev_pixelpipe_cache_basichash(dt_dev_pixelpipe_t *pipe,
@@ -1204,10 +1204,10 @@ index a1bd507..8d072bb 100644
        {
          if(darktable.lib->proxy.colorpicker.primary_sample->size == DT_LIB_COLORPICKER_SIZE_BOX)
 diff --git a/src/develop/pixelpipe_hb.c b/src/develop/pixelpipe_hb.c
-index 35320df..16b30d7 100644
+index 84d33c595..1a56e4bc1 100644
 --- a/src/develop/pixelpipe_hb.c
 +++ b/src/develop/pixelpipe_hb.c
-@@ -292,6 +292,8 @@ static gboolean _dev_pixelpipe_init_cached(dt_dev_pixelpipe_t *pipe,
+@@ -295,6 +295,8 @@ static gboolean _dev_pixelpipe_init_cached(dt_dev_pixelpipe_t *pipe,
  
    memset(&pipe->scharr, 0, sizeof(dt_dev_detail_mask_t));
    pipe->want_detail_mask = FALSE;
@@ -1217,7 +1217,7 @@ index 35320df..16b30d7 100644
    dt_atomic_set_int(&pipe->shutdown, DT_DEV_PIXELPIPE_STOP_NO);
    pipe->opencl_error = FALSE;
 diff --git a/src/develop/pixelpipe_hb.h b/src/develop/pixelpipe_hb.h
-index 9fd02c3..bc79834 100644
+index 9fd02c313..bc79834e9 100644
 --- a/src/develop/pixelpipe_hb.h
 +++ b/src/develop/pixelpipe_hb.h
 @@ -233,6 +233,19 @@ typedef struct dt_dev_pixelpipe_t
@@ -1241,10 +1241,10 @@ index 9fd02c3..bc79834 100644
    /* Testing for shutting down and a running pixelpipe
       can be used in various ways defined in dt_dev_pixelpipe_stopper_t, in all cases the
 diff --git a/src/iop/channelmixerrgb.c b/src/iop/channelmixerrgb.c
-index 37bb0c7..5a3509d 100644
+index 075726a6f..03f8877a0 100644
 --- a/src/iop/channelmixerrgb.c
 +++ b/src/iop/channelmixerrgb.c
-@@ -3127,6 +3127,14 @@ void commit_params(dt_iop_module_t *self,
+@@ -3131,6 +3131,14 @@ void commit_params(dt_iop_module_t *self,
    // params
    d->p = powf(0.818155f / d->illuminant[2], 0.0834f);
  
@@ -1260,7 +1260,7 @@ index 37bb0c7..5a3509d 100644
    if(self->dev->gui_attached && g)
    {
 diff --git a/src/iop/colorin.c b/src/iop/colorin.c
-index 60229e6..096af5c 100644
+index 923d18950..f885c9b5f 100644
 --- a/src/iop/colorin.c
 +++ b/src/iop/colorin.c
 @@ -21,6 +21,9 @@
@@ -1302,7 +1302,7 @@ index 60229e6..096af5c 100644
    char filename[DT_IOP_COLOR_ICC_LEN];
    char filename_work[DT_IOP_COLOR_ICC_LEN];
  } dt_iop_colorin_data_t;
-@@ -493,34 +509,62 @@ void cleanup_global(dt_iop_module_so_t *self)
+@@ -502,34 +518,62 @@ void cleanup_global(dt_iop_module_so_t *self)
    self->data = NULL;
  }
  
@@ -1386,7 +1386,7 @@ index 60229e6..096af5c 100644
    }
    // should really never happen.
    dt_print(DT_DEBUG_ALWAYS,
-@@ -645,6 +689,8 @@ int process_cl(dt_iop_module_t *self,
+@@ -654,6 +698,8 @@ int process_cl(dt_iop_module_t *self,
    const int width = roi_in->width;
    const int height = roi_in->height;
  
@@ -1395,7 +1395,7 @@ index 60229e6..096af5c 100644
    if(d->type == DT_COLORSPACE_LAB)
    {
      const size_t region[2] = { width, height };
-@@ -657,7 +703,7 @@ int process_cl(dt_iop_module_t *self,
+@@ -666,7 +712,7 @@ int process_cl(dt_iop_module_t *self,
                                  corrected ? chr->D65coeffs[1] / chr->as_shot[1] : 1.0f,
                                  corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                  corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
@@ -1404,7 +1404,7 @@ index 60229e6..096af5c 100644
    {
      for_four_channels(k)
      {
-@@ -1184,6 +1230,150 @@ static void process_lcms2_proper(dt_iop_module_t *self,
+@@ -1193,6 +1239,150 @@ static void process_lcms2_proper(dt_iop_module_t *self,
    dt_free_align(scratchlines);
  }
  
@@ -1555,7 +1555,7 @@ index 60229e6..096af5c 100644
  void process(dt_iop_module_t *self,
               dt_dev_pixelpipe_iop_t *piece,
               const void *const ivoid,
-@@ -1204,7 +1394,7 @@ void process(dt_iop_module_t *self,
+@@ -1213,7 +1403,7 @@ void process(dt_iop_module_t *self,
                                        corrected ? chr->D65coeffs[2] / chr->as_shot[2] : 1.0f,
                                        corrected ? chr->D65coeffs[3] / chr->as_shot[3] : 1.0f };
    dt_dev_pixelpipe_t *pipe = piece->pipe;
@@ -1564,7 +1564,7 @@ index 60229e6..096af5c 100644
    {
      for_four_channels(k)
      {
-@@ -1223,7 +1413,82 @@ void process(dt_iop_module_t *self,
+@@ -1232,7 +1422,82 @@ void process(dt_iop_module_t *self,
    const gboolean blue_mapping =
      d->blue_mapping && dt_image_is_matrix_correction_supported(&pipe->image);
  
@@ -1648,7 +1648,7 @@ index 60229e6..096af5c 100644
    {
      dt_iop_image_copy_by_size(ovoid, ivoid, roi_out->width, roi_out->height, piece->colors);
    }
-@@ -1319,6 +1584,93 @@ void commit_params(dt_iop_module_t *self,
+@@ -1331,6 +1596,93 @@ void commit_params(dt_iop_module_t *self,
    d->nonlinearlut = FALSE;
    piece->process_cl_ready = TRUE;
  
@@ -1662,9 +1662,9 @@ index 60229e6..096af5c 100644
 +  d->use_dcp = FALSE;
 +  piece->pipe->dcp_cc_coupling = FALSE;
 +
-+  if(p->type == DT_COLORSPACE_DCP && p->filename[0])
++  if(p->type == DT_COLORSPACE_DCP && d->filename[0])
 +  {
-+    d->dcp = dt_dcp_load(p->filename);
++    d->dcp = dt_dcp_load(d->filename);
 +    if(d->dcp)
 +    {
 +      // camera neutral = response to the scene white = 1 / white balance.
@@ -1723,7 +1723,7 @@ index 60229e6..096af5c 100644
 +        piece->process_cl_ready = FALSE;   // CPU only for now
 +        dt_print(DT_DEBUG_PARAMS,
 +                 "[colorin] using DCP '%s' (%s), scene %.0fK, %s",
-+                 d->dcp->name, p->filename, d->dcp_prep.temperature,
++                 d->dcp->name, d->filename, d->dcp_prep.temperature,
 +                 unadapt ? "cast left for color calibration"
 +                         : "profile adapts (turn color calibration off)");
 +      }
@@ -1734,7 +1734,7 @@ index 60229e6..096af5c 100644
 +      }
 +    }
 +    if(!d->use_dcp)
-+      dt_print(DT_DEBUG_ALWAYS, "[colorin] could not use DCP `%s'", p->filename);
++      dt_print(DT_DEBUG_ALWAYS, "[colorin] could not use DCP `%s'", d->filename);
 +    else
 +      return;   // nothing else to set up
 +  }
@@ -1742,7 +1742,7 @@ index 60229e6..096af5c 100644
    dt_colorspaces_color_profile_type_t type = p->type;
    if(type == DT_COLORSPACE_LAB) // we keep the runtime in process for safety
    {
-@@ -1583,13 +1935,15 @@ void init_pipe(dt_iop_module_t *self,
+@@ -1595,13 +1947,15 @@ void init_pipe(dt_iop_module_t *self,
                 dt_dev_pixelpipe_t *pipe,
                 dt_dev_pixelpipe_iop_t *piece)
  {
@@ -1759,7 +1759,7 @@ index 60229e6..096af5c 100644
  }
  
  void cleanup_pipe(dt_iop_module_t *self,
-@@ -1597,6 +1951,12 @@ void cleanup_pipe(dt_iop_module_t *self,
+@@ -1609,6 +1963,12 @@ void cleanup_pipe(dt_iop_module_t *self,
                    dt_dev_pixelpipe_iop_t *piece)
  {
    dt_iop_colorin_data_t *d = piece->data;
@@ -1772,7 +1772,7 @@ index 60229e6..096af5c 100644
    if(d->input && d->clear_input) dt_colorspaces_cleanup_profile(d->input);
    if(d->xform_cam_Lab)
    {
-@@ -1625,6 +1985,20 @@ void gui_update(dt_iop_module_t *self)
+@@ -1641,6 +2001,20 @@ void gui_update(dt_iop_module_t *self)
  
    dt_bauhaus_combobox_set(g->clipping_combobox, p->normalize);
  
@@ -1793,7 +1793,7 @@ index 60229e6..096af5c 100644
    // working profile
    int idx = -1;
    for(const GList *prof = darktable.color_profiles->profiles;
-@@ -1651,37 +2025,9 @@ void gui_update(dt_iop_module_t *self)
+@@ -1667,37 +2041,9 @@ void gui_update(dt_iop_module_t *self)
    }
    dt_bauhaus_combobox_set(g->work_combobox, idx);
  
@@ -1834,7 +1834,7 @@ index 60229e6..096af5c 100644
               dt_colorspaces_get_name(p->type, p->filename));
  }
  
-@@ -2018,16 +2364,39 @@ static void update_profile_list(dt_iop_module_t *self)
+@@ -2034,16 +2380,39 @@ static void update_profile_list(dt_iop_module_t *self)
  
    // update the gui
    dt_bauhaus_combobox_clear(g->profile_combobox);
@@ -1876,7 +1876,7 @@ index 60229e6..096af5c 100644
    }
  
    // working profile
-@@ -2053,6 +2422,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
+@@ -2069,6 +2438,17 @@ static void _preview_pipe_finished_callback(gpointer instance, dt_iop_module_t *
          on ? "blue mode detected in colorin module" : NULL);
  }
  
@@ -1894,7 +1894,7 @@ index 60229e6..096af5c 100644
  void gui_init(dt_iop_module_t *self)
  {
    // pthread_mutex_lock(&darktable.plugin_threadsafe);
-@@ -2066,7 +2446,19 @@ void gui_init(dt_iop_module_t *self)
+@@ -2082,7 +2462,19 @@ void gui_init(dt_iop_module_t *self)
    g->work_combobox = dt_bauhaus_combobox_new(self);
    dt_bauhaus_widget_set_label(g->work_combobox, NULL, N_("working profile"));
  
