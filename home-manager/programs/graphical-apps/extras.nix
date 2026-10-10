@@ -476,6 +476,26 @@ in
   # its extension. Same closed-darktable guard as the settings above.
   xdg.configFile."darktable/themes".source = dt-pro-themes;
 
+  # SOOC snapshot: darktable Lua script that extracts the camera's embedded JPEG
+  # (via exiftool), imports and groups it with the raw, and pins it as a darkroom
+  # snapshot so the straight-out-of-camera rendering is one click away for
+  # comparison. Vendored from ~/Documents/dt-sooc-snapshot (a local repo with no
+  # remote, so other hosts cannot fetch it); that checkout stays the dev copy --
+  # copy the file here after editing it. darktable loads ~/.config/darktable/
+  # luarc at startup; the one-line luarc only requires this script, and nothing
+  # else writes to it (the Lua script manager is not in use). `force` replaces
+  # the hand-made symlink and luarc this started out as on thinkpad.
+  xdg.configFile."darktable/lua/sooc_snapshot.lua" = {
+    source = ./sooc_snapshot.lua;
+    force = true;
+  };
+  xdg.configFile."darktable/luarc" = {
+    text = ''
+      require "sooc_snapshot"
+    '';
+    force = true;
+  };
+
   home.activation.setDarktableTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     config_file="${config.home.homeDirectory}/.config/darktable/darktablerc"
     if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
