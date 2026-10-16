@@ -25,3 +25,7 @@
 (package! eglot-ltex
   :recipe (:host github :repo "emacs-languagetool/eglot-ltex")
   :pin "2ae2fad68ca2520f69b8d8174afc42ca271f6146")
+
+;; GNU APL: major mode, APL-Z input method, interactive session and symbol
+;; docs. On MELPA (emacs-overlay), so no :pin needed.
+(package! gnu-apl-mode)

@@ -283,6 +283,40 @@ With prefix argument (`C-u'), also kill the special buffers."
   :mode "\\.drv\\'")
 
 
+;;; APL (GNU APL)
+;; gnu-apl-mode for .apl files and `M-x gnu-apl' for the interactive session
+;; (the `apl' binary comes from home-manager, see default.nix). Typing APL
+;; glyphs goes through the package's quail input method "APL-Z": the glyph is
+;; on the key with a `.' prefix (e.g. `.r' -> ⍴, `.i' -> ⍳); C-\ toggles it
+;; off/on. `C-c C-k' shows the full keyboard layout.
+(use-package! gnu-apl-mode
+  :mode "\\.apl\\'"
+  :init
+  ;; Hack Nerd Font has no APL glyphs; fall back to DejaVu Sans Mono (installed
+  ;; system-wide) for the APL symbols block so ⍳⍴⌹⍉ render instead of boxes.
+  (add-hook 'doom-init-ui-hook
+            (lambda ()
+              (set-fontset-font t '(#x2336 . #x237a) "DejaVu Sans Mono" nil 'prepend)))
+  :config
+  (setq gnu-apl-executable "apl"
+        gnu-apl-show-keymap-on-startup nil   ; no keyboard popup on every REPL start
+        gnu-apl-show-tips-on-start nil
+        gnu-apl-show-apl-welcome nil)
+  (dolist (hook '(gnu-apl-mode-hook gnu-apl-interactive-mode-hook))
+    (add-hook hook (lambda () (set-input-method "APL-Z"))))
+  (map! :localleader
+        :map gnu-apl-mode-map
+        :desc "Start/switch to APL REPL" "r" #'gnu-apl
+        :desc "Show APL keyboard"        "k" #'gnu-apl-show-keyboard
+        :desc "Help for symbol at point" "h" #'gnu-apl-show-help-for-symbol
+        :desc "Apropos symbol"           "a" #'gnu-apl-apropos-symbol
+        :desc "Toggle APL input method"  "i" #'toggle-input-method
+        (:prefix ("s" . "send to REPL")
+         :desc "Line"             "l" #'gnu-apl-interactive-send-line
+         :desc "Region"           "r" #'gnu-apl-interactive-send-region
+         :desc "Current function" "f" #'gnu-apl-interactive-send-current-function
+         :desc "Buffer"           "b" #'gnu-apl-interactive-send-buffer)))
+
 ;;; Org
 ;; `org-directory' must be set before org loads, so keep it at top level.
 (setq org-directory "~/org/")

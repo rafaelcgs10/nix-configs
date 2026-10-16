@@ -134,6 +134,8 @@ in
     pkgs.postgresql
     ghc
     pkgs.pandoc
+    # GNU APL interpreter (`apl`), driven from Doom by gnu-apl-mode.
+    pkgs.gnuapl
 
 
     pkgs.haskellPackages.haskell-language-server
