@@ -156,9 +156,13 @@ in {
     RDP_PORT="3389"
     VM_NAME="RDPWindows"
     WAFLAVOR="docker"
-    RDP_SCALE="140"
+    # FreeRDP /scale: Windows renders its UI at this DPI (100, 140 or 180 only).
+    # 140 looked oversized on the 2.0-scaled COSMIC outputs; 100 fits.
+    RDP_SCALE="100"
     REMOVABLE_MEDIA="/run/media"
-    RDP_FLAGS="/cert:ignore /sound /microphone +home-drive /network:lan /gfx"
+    # /dynamic-resolution: the Windows desktop follows the window size instead
+    # of a fixed resolution.
+    RDP_FLAGS="/cert:ignore /sound /microphone +home-drive /network:lan /gfx /dynamic-resolution"
     DEBUG="false"
     AUTOPAUSE="off"
     AUTOPAUSE_TIME="300"
