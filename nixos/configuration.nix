@@ -423,6 +423,15 @@ in {
   #   "d /var/lib/affinity-nix/state 0700 rafael users - -"
   # ];
 
+  # /winapps holds the WinApps Windows VM's disk (winapps/compose.yaml binds it
+  # at /storage). A plain directory rather than a Docker volume so it can be
+  # synced between hosts with Syncthing and backed up as files; owned by rafael
+  # so Syncthing (running as rafael) can write into it. Deliberately outside
+  # the ecryptfs home. Never auto-cleaned.
+  systemd.tmpfiles.rules = [
+    "d /winapps 0755 rafael users - -"
+  ];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
