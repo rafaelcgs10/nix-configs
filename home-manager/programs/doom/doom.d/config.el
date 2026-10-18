@@ -272,12 +272,24 @@ With prefix argument (`C-u'), also kill the special buffers."
                     "-j=4"))))
 
 
-;;; C# / .NET via eglot + csharp-ls. The server binary is not installed
-;; globally; it comes from each project's nix flake devshell, which the
-;; direnv module puts on the buffer's PATH before eglot starts.
+;;; C# / .NET via eglot + csharp-ls. `csharp-ls' and the .NET SDK are
+;; installed by home-manager (programs/languages); a project flake devshell
+;; that ships its own versions wins because the direnv module prepends it to
+;; the buffer's PATH before eglot starts. csharp-ls finds the .sln/.csproj
+;; from the project root on its own; a restored project (obj/ present, i.e.
+;; `dotnet build' or `dotnet restore' ran once) is needed for references to
+;; resolve. Doom's (csharp +lsp) runs `lsp!' (-> eglot-ensure) in C# buffers.
 (after! eglot
   (add-to-list 'eglot-server-programs
                '((csharp-mode csharp-ts-mode) . ("csharp-ls"))))
+
+;; sharper: transient menu over the dotnet CLI (run, build, test, add
+;; package/reference, manage the solution). Doom binds it to C-c d; also put
+;; it on the local leader.
+(map! :after csharp-mode
+      :localleader
+      :map (csharp-mode-map csharp-ts-mode-map)
+      :desc "dotnet CLI (sharper)" "d" #'sharper-main-transient)
 
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")

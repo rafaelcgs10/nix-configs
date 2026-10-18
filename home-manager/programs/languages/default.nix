@@ -129,6 +129,12 @@ in
     pkgs.postgresql
     ghc
     pkgs.pandoc
+    # C# / .NET: SDK + csharp-ls language server installed globally so Doom's
+    # eglot finds `csharp-ls` even when a project has no flake or its direnv is
+    # not (yet) allowed. A project devshell that provides its own versions
+    # takes precedence on PATH via envrc.
+    pkgs.dotnet-sdk_10
+    pkgs.csharp-ls
     # Dyalog APL (`dyalog`, `dyalogscript`), driven from Doom by dyalog-mode
     # over the RIDE protocol. Unfree; the package refuses to
     # build until its licence is accepted (free Basic Licence, non-commercial
