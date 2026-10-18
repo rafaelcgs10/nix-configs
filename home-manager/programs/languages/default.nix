@@ -87,16 +87,11 @@ in
     #   runScript = "pixi";
     #   targetPkgs = pkgs: with pkgs; [ pixi ];
     # })
-    # pkgs.conda
-    pkgs.micromamba
+    pkgs.conda
+    # pkgs.micromamba
     # pkgs.python310Packages.conda
     # pkgs.python310Packages.tensorflow
     # pkgs.python310Packages.venvShellHook
-    pkgs.veriT
-    pkgs.iprover
-    pkgs.cvc5
-    pkgs.leo3-bin
-    pkgs.satallax
     pkgs.cargo
     pkgs.rustc
     pkgs.rustfmt
