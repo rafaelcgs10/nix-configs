@@ -18,7 +18,7 @@ services:
       VERSION: "11"
       RAM_SIZE: "12G" # RAM allocated to the Windows VM.
       CPU_CORES: "12" # CPU cores allocated to the Windows VM.
-      DISK_SIZE: "64G" # Size of the primary hard disk.
+      DISK_SIZE: "128G" # Size of the primary hard disk.
       # qcow2 instead of the default raw sparse file: the image is only as big as
       # the data it holds, so any copy tool (Syncthing, cp, SMB) moves ~20GB and
       # not a 64GB file full of holes. Migrated from the old raw data.img with

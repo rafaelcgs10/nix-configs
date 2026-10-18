@@ -27,12 +27,13 @@
 
     spektrafilm-art-darktable.url = "github:rafaelcgs10/spektrafilm-art-darktable/36778137aac8005f1dfbc175bbd1fa28007c93fb";
 
-    # Filmator: custom G'MIC Film Rebate filter (film-scan look toolkit).
-    # Private repo, so git+ssh instead of github: — every machine evaluating
-    # this flake needs an SSH key with access. Exposes a home-manager module
-    # that links the filter for G'MIC-Qt (GIMP) and the gmic CLI; imported in
-    # home-manager/programs/graphical-apps/extras.nix.
-    gmic-film-framing.url = "git+ssh://git@github.com/rafaelcgs10/gmic-film-framing.git";
+    # NixOS as a WSL2 distribution (the `wsl` host runs inside the WinApps
+    # Windows VM). Every input must be fetchable anonymously: no git+ssh
+    # inputs, so a fresh machine can evaluate this flake without a GitHub key.
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # CLI for COSMIC toplevel management (scratchpad chat toggles).
     # Unofficial but source-reviewed at this pin: no network/exec/fs access.
@@ -127,6 +128,7 @@
       homeProfiles = {
         default = ./home-manager/profiles/default.nix;
         bbtablet = ./home-manager/profiles/bbtablet.nix;
+        wsl = ./home-manager/profiles/wsl.nix;
       };
 
       mkHomeModules = profile: [
@@ -214,6 +216,9 @@
           specialArgs = { inherit inputs; };
           modules =
             lib.optionals common [ ./nixos/configuration.nix ]
+            # configuration.nix carries the shared nixpkgs config; hosts that
+            # skip it still need allowUnfree etc. for the home-manager profile.
+            ++ lib.optionals (!common) [ { nixpkgs.config = nixpkgsConfig; } ]
             ++ modules
             ++ lib.optionals (homeProfile != null) [
               home-manager.nixosModules.home-manager
@@ -257,6 +262,18 @@
             ./nixos/agenix.nix
           ];
         };
+
+        # NixOS-WSL inside the WinApps Windows VM. No shared configuration.nix
+        # (NetworkManager, PipeWire, printing, firewall... are meaningless in
+        # WSL); the slim `wsl` home profile carries Doom, zsh and nvim.
+        wsl = mkHost {
+          common = false;
+          homeProfile = "wsl";
+          modules = [
+            inputs.nixos-wsl.nixosModules.default
+            ./nixos/wsl/configuration.nix
+          ];
+        };
       };
     in
     {
@@ -279,6 +296,10 @@
 
         "rafael@thinkpad" = mkHome {
           profile = "default";
+        };
+
+        "rafael@wsl" = mkHome {
+          profile = "wsl";
         };
 
       };

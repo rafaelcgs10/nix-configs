@@ -355,6 +355,22 @@
       }
     },
     "flake-compat_3": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "flake-compat_4": {
       "locked": {
         "lastModified": 1733328505,
         "narHash": "sha256-NeCCThCEP3eCl2l/+27kNNK7QrwZB1IJCrXfrbv5oqU=",
@@ -499,21 +515,6 @@
         "type": "github"
       }
     },
-    "gmic-film-framing": {
-      "locked": {
-        "lastModified": 1789323585,
-        "narHash": "sha256-a0OsA4vM7GCxTZksU0GGwP+XTg0iAEkaD6feki8fIwE=",
-        "ref": "refs/heads/master",
-        "rev": "6afa27d9d5c27a008635bfc75f53cc82f12dc25f",
-        "revCount": 23,
-        "type": "git",
-        "url": "ssh://git@github.com/rafaelcgs10/gmic-film-framing.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/rafaelcgs10/gmic-film-framing.git"
-      }
-    },
     "gnome-shell": {
       "flake": false,
       "locked": {
@@ -630,6 +631,28 @@
         "owner": "NixOS",
         "ref": "master",
         "repo": "nixos-hardware",
+        "type": "github"
+      }
+    },
+    "nixos-wsl": {
+      "inputs": {
+        "flake-compat": "flake-compat_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789164534,
+        "narHash": "sha256-DoYGPM6QpnYBLWj9gGw6ZwAzIX+HrAVov1BoT+8Jixo=",
+        "owner": "nix-community",
+        "repo": "NixOS-WSL",
+        "rev": "72c92b11bb8289e6651c7fef29cc0a885fd6a255",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "ref": "main",
+        "repo": "NixOS-WSL",
         "type": "github"
       }
     },
@@ -958,10 +981,10 @@
         "cos-cli": "cos-cli",
         "cosmic-manager": "cosmic-manager",
         "firefox-addons": "firefox-addons",
-        "gmic-film-framing": "gmic-film-framing",
         "home-manager": "home-manager",
         "nix-doom-emacs-unstraightened": "nix-doom-emacs-unstraightened",
         "nixos-hardware": "nixos-hardware",
+        "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs_6",
         "nixpkgs-darktable": "nixpkgs-darktable",
         "nixpkgs-isabelle": "nixpkgs-isabelle",
@@ -1174,7 +1197,7 @@
     },
     "winapps": {
       "inputs": {
-        "flake-compat": "flake-compat_3",
+        "flake-compat": "flake-compat_4",
         "flake-utils": "flake-utils_2",
         "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs_8"

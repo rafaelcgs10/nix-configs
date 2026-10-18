@@ -179,12 +179,6 @@ in
   home.file.".config/GIMP/3.2/plug-ins/withoutbg".source =
     pkgsUnstable.callPackage ./withoutbg-gimp.nix { };
 
-  # Filmator's custom G'MIC filter (Film Rebate: randomized scanned-negative
-  # border), imported straight from its repo's flake — no vendored copy to
-  # keep in sync. The module links it for both the G'MIC-Qt plugin in GIMP
-  # and the gmic CLI.
-  imports = [ inputs.gmic-film-framing.homeManagerModules.default ];
-
   home.packages = [
     gimpWithPlugins
     pkgs.scribus
