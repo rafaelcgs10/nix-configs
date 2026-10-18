@@ -76,7 +76,7 @@
 
   # wordnet provides the `wn` binary + offline WordNet database used by Doom's
   # (lookup +dictionary +offline) backends: wordnut for definitions and
-  # synosaurus-wordnet for synonyms. (The `apl` binary for gnu-apl-mode lives
+  # synosaurus-wordnet for synonyms. (The `dyalog` binary for dyalog-mode lives
   # with the other language toolchains in programs/languages.)
   home.packages = [ pkgs.wordnet ];
 }
