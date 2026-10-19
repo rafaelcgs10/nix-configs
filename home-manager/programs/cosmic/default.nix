@@ -16,6 +16,9 @@ let
   # cosmic-comp exposes neither wlr-foreign-toplevel nor a first-party window
   # CLI, so this is the only way to script activate/minimize/sticky.
   cos-cli = inputs.cos-cli.defaultPackage.${pkgs.stdenv.hostPlatform.system};
+
+  # Docker/Podman container manager applet for the panel (see the file).
+  container-manager-applet = pkgs.callPackage ./container-manager-applet.nix { };
   jq = "${pkgs.jq}/bin/jq";
 
   # --- Clipboard history (cliphist) -----------------------------------------
@@ -172,8 +175,24 @@ in
     };
   };
 
-  home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cosmic-theme-toggle cos-cli ]
+  home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cosmic-theme-toggle cos-cli container-manager-applet ]
     ++ map (chat: chat.toggle) chats;
+
+  # Pin the Container Manager applet in the panel's right wing, next to the
+  # status area, without taking over the whole applet list: panel layouts
+  # differ per host and are otherwise left to Settings > Panel. The RON file
+  # is `Some(([left...], [right...]))`; insert the applet id as the first entry
+  # of the right list if it is not present anywhere yet. cosmic-panel watches
+  # the file and reloads live. Skipped when the panel has never written its
+  # config (fresh host): add it once via Settings > Panel > Applets then.
+  home.activation.pinContainerManagerApplet = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    wings="$HOME/.config/cosmic/com.system76.CosmicPanel.Panel/v1/plugins_wings"
+    applet="org.cosmic_utils.CosmicExtAppletContainerManager"
+    if [ -f "$wings" ] && ! ${pkgs.gnugrep}/bin/grep -q "$applet" "$wings" \
+       && ${pkgs.gnugrep}/bin/grep -q '^\], \[$' "$wings"; then
+      $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i "/^\], \[\$/a\\    \"$applet\"," "$wings"
+    fi
+  '';
 
   # Match GTK apps to the COSMIC interface font. Set here (not in home.nix)
   # deliberately: this module is only imported by the COSMIC profile, so
