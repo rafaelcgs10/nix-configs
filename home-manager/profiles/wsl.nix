@@ -18,4 +18,13 @@
   # which WSL never reaches (no login session manager). Start it with the
   # plain user session instead; `emacsclient -c` then opens a WSLg window.
   services.emacs.startWithUserSession = lib.mkForce true;
+
+  # Stylix's gtk target adds dconf.settings, and HM applies them through the
+  # user's session bus (imported from `systemctl --user show-environment`).
+  # In WSL the user manager is spawned by WSL's init without a PAM login, so
+  # the session dbus-broker has no XDG_DATA_DIRS pointing at the system
+  # service dir and reports ca.desrt.dconf as "not activatable", failing the
+  # whole activation. Nothing here reads dconf (no GNOME; GTK apps under WSLg
+  # use gtk-3.0/settings.ini), so skip that step entirely.
+  dconf.enable = false;
 }
