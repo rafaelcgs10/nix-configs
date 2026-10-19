@@ -49,6 +49,10 @@
   };
   programs.zsh.enable = true;
 
+  # Home Manager's dconfSettings step (Stylix gtk target) talks to the dconf
+  # D-Bus service; without this it fails with "The name is not activatable".
+  programs.dconf.enable = true;
+
   programs.git = {
     enable = true;
     config.safe.directory = "/home/rafael/nix-configs";
