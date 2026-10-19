@@ -3,6 +3,7 @@
 let
   hostName = if osConfig == null then "" else osConfig.networking.hostName or "";
   isBbtablet = hostName == "bbtablet";
+  isWsl = hostName == "wsl";
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -208,12 +209,13 @@ in {
     };
   };
 
+  # Core CLI tools, spell-check and fonts: every host gets these, including the
+  # NixOS-WSL guest inside the WinApps VM (see profiles/wsl.nix).
   home.packages = [
     pkgs.gawk
     pkgs.jq
     pkgs.tree
     pkgs.ranger
-    pkgs.nmap
     pkgs.unzip
     pkgs.unrar
     pkgs.p7zip
@@ -221,6 +223,33 @@ in {
     pkgs.zsh
     pkgs.dig
     pkgs.fastfetch
+    pkgs.bc
+    pkgs.pv
+    pkgs.git-lfs
+    pkgs.lazygit
+    pkgs.direnv
+    (pkgs.aspellWithDicts (d: [d.en d.pt_BR]))
+    pkgs.hunspell
+    pkgs.hunspellDicts.en_US-large
+    pkgs.progress
+    pkgs.netcat-gnu
+    pkgs.traceroute
+    pkgs.fd
+    pkgs.zstd
+    pkgs.sqlite
+    pkgs.ripgrep
+    pkgsUnstable.claude-code
+    pkgs.noto-fonts
+    pkgs.liberation_ttf
+    pkgs.fira-code
+    pkgs.emacs-all-the-icons-fonts
+  ]
+  # Everything else is tooling for the physical machines (networking, k8s,
+  # media, wifi auditing, desktop helpers...). Skipped on WSL, where disk is
+  # scarce: this block alone is ~15 GiB of closure (whisper 3 GiB, ffmpeg,
+  # wifite2, veracrypt, ltex-ls, languagetool ~1 GiB each).
+  ++ lib.optionals (!isWsl) [
+    pkgs.nmap
     pkgs.lazydocker
     pkgs.libgccjit
     pkgs.owofetch
@@ -229,44 +258,29 @@ in {
     pkgs.pciutils
     pkgs.openfortivpn
     pkgs.lm_sensors
-    pkgs.bc
-    pkgs.pv
     pkgs.s-tui
     pkgs.stress
     pkgs.flamegraph
     # pkgs.perf-tools
-    pkgs.git-lfs
     pkgs.kubectl
     pkgs.kubernetes
     pkgs.podman
-    pkgs.lazygit
     pkgs.k9s
     pkgs.xclip
-    pkgs.direnv
-    (pkgs.aspellWithDicts (d: [d.en d.pt_BR]))
-    pkgs.hunspell
-    pkgs.hunspellDicts.en_US-large
     pkgs.languagetool
     pkgs.ltex-ls
-    pkgs.progress
     pkgs.ffmpeg
     pkgs.whisper-ctranslate2
     pkgs.gcalcli
     pkgs.conky
-    pkgs.netcat-gnu
-    pkgs.traceroute
     pkgs.dmidecode
     pkgs.sysstat
     pkgs.hdparm
     pkgs.wdisplays
     pkgs.kanshi
-    pkgs.fd
     pkgs.imagemagick
-    pkgs.zstd
-    pkgs.sqlite
     pkgs.android-tools
     # (pkgs.ripgrep.override { withPCRE2 = true; })
-    pkgs.ripgrep
     pkgsUnstable.rclone
     pkgs.veracrypt
     pkgs.graphviz
@@ -311,15 +325,12 @@ in {
       '';
       meta.mainProgram = "opencode";
     })
-    pkgsUnstable.claude-code
     # pkgs.gnome.file-roller
     # pkgs.gnome.eog
 
     # Fonts
-    pkgs.noto-fonts
     # pkgs.noto-fonts-cjk
     # pkgs.noto-fonts-emoji
-    pkgs.liberation_ttf
     pkgs.dina-font
     pkgs.mononoki
     # pkgs.font-awesome_4
@@ -327,14 +338,12 @@ in {
     # (Papirus icons installed via gtk.iconTheme.package below.)
     pkgs.corefonts
     # pkgs.vistafonts
-    pkgs.fira-code
     # pkgs.wine64
     # pkgs.wineWow64Packages.full
     # pkgs.wineWowPackages.stable
     pkgs.phockup
     # (pkgs.callPackage ./spotube.nix {})
     pkgs.iosevka
-    pkgs.emacs-all-the-icons-fonts
     # Doom's Emacs packages are provided by nix-doom-emacs-unstraightened.
     # Nerd Font (Hack) is installed system-wide via fonts.packages in
     # nixos/configuration.nix and set as the default monospace there.
