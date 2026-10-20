@@ -66,7 +66,7 @@ let
   mkChatToggle = chat: pkgs.writeShellScriptBin "toggle-${chat.name}" ''
     info=$(${cos-cli}/bin/cos-cli info --json)
     app=$(printf '%s' "$info" | ${jq} -c --arg re "${chat.pattern}" \
-      '[.apps[] | select(.app_id | test($re; "i"))][0] // empty')
+      '[.apps[] | select(.${chat.field or "app_id"} | test($re; "i"))][0] // empty')
     if [ -z "$app" ]; then
       exec ${pkgs.util-linux}/bin/setsid -f ${chat.launch}
     fi
@@ -81,6 +81,7 @@ let
         ${cos-cli}/bin/cos-cli move -i "$idx" -w "$cur_ws"
       fi
       ${cos-cli}/bin/cos-cli activate -i "$idx"
+      ${chat.onShow or ""}
     fi
   '';
 
@@ -92,6 +93,21 @@ let
     { name = "discord";  key = "d"; pattern = "discord";  launch = "discord"; }
     { name = "caprine";  key = "c"; pattern = "caprine";  launch = "caprine"; }
   ];
+
+  # Floating Harper grammar window (Super+Shift+G): a second Emacs daemon
+  # named "grammar" (started on first use by `emacsclient -a ""`), so it is
+  # independent of the main daemon's clients. Matched by frame title, since
+  # every Emacs frame shares the app_id "emacs". Showing it reloads the
+  # clipboard into the scratch buffer (see Harper section in doom config.el).
+  grammarWindow = rec {
+    name = "grammar";
+    key = "g";
+    field = "title";
+    pattern = "^Harper Grammar";
+    launch = "emacsclient -s grammar -a \"\" -c -e \"(harper-check-clipboard)\"";
+    onShow = "emacsclient -s grammar -e \"(harper-check-clipboard)\" > /dev/null";
+    toggle = mkChatToggle { inherit name field pattern launch onShow; };
+  };
 
   chatShortcut = chat: ''
     (
@@ -243,6 +259,7 @@ in
   xdg.configFile."cosmic/com.system76.CosmicSettings.WindowRules/v1/tiling_exception_custom".text = ''
     [
         ${builtins.concatStringsSep "\n    " (map floatingException floatingAppIds)}
+        (appid: "(?i)^emacs$", title: "${grammarWindow.pattern}", enabled: true),
     ]
   '';
 
@@ -277,7 +294,7 @@ in
             ],
             key: "t",
         ): Spawn("${cosmic-theme-toggle}/bin/cosmic-theme-toggle"),
-        ${builtins.concatStringsSep "\n    " (map chatShortcut chats)}
+        ${builtins.concatStringsSep "\n    " (map chatShortcut (chats ++ [ grammarWindow ]))}
     }
   '';
 }

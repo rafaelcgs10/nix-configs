@@ -295,6 +295,137 @@ With prefix argument (`C-u'), also kill the special buffers."
   :mode "\\.drv\\'")
 
 
+;;; Grammar (Harper, on demand)
+;; Harper only exists as a language server (harper-ls), i.e. a continuous
+;; checker. To keep it on demand it is confined to one scratch buffer in a
+;; dedicated major mode: nothing else ever starts it. `harper-check-region'
+;; copies the region (or buffer) into that scratch buffer, harper-ls lints it
+;; there, fixes are applied with eglot's code actions, and `harper-apply'
+;; writes the result back over the original text. `harper-check-clipboard'
+;; is the same flow for text copied from other apps; `harper-copy' puts the
+;; corrected text back on the clipboard.
+;;
+;; The scratch buffer must visit a real file (eglot needs a URI) and the
+;; server must be told the language id is "plaintext", otherwise harper-ls
+;; silently returns no diagnostics. harper-ls comes from home-manager
+;; (programs/doom/default.nix).
+(define-derived-mode harper-check-mode text-mode "Harper"
+  "Scratch mode for on-demand grammar checks with harper-ls."
+  (setq-local eglot-workspace-configuration
+              '(:harper-ls (:dialect "American"
+                            ;; Pasted fragments rarely start with a capital.
+                            :linters (:SentenceCapitalization :json-false))))
+  ;; Keep the text byte-for-byte: no final newline added on save, and no
+  ;; flyspell on top of Harper's own spell check (Doom enables it for
+  ;; text-mode, which this mode derives from).
+  (setq-local require-final-newline nil)
+  (when (bound-and-true-p flyspell-mode) (flyspell-mode -1))
+  (visual-line-mode 1))
+
+(after! eglot
+  (add-to-list 'eglot-server-programs
+               '((harper-check-mode :language-id "plaintext")
+                 . ("harper-ls" "--stdio"))))
+(add-hook 'harper-check-mode-hook #'eglot-ensure)
+
+(defvar harper--scratch-file (expand-file-name "harper/scratch.txt" doom-cache-dir)
+  "File backing the Harper scratch buffer.")
+(defvar harper--origin nil
+  "List (BUFFER BEG-MARKER END-MARKER) of the text last sent to Harper.")
+
+(defun harper--scratch-buffer (text)
+  "Return the Harper scratch buffer with TEXT as its only content."
+  (make-directory (file-name-directory harper--scratch-file) t)
+  (with-current-buffer (find-file-noselect harper--scratch-file)
+    (unless (derived-mode-p 'harper-check-mode) (harper-check-mode))
+    (erase-buffer)
+    (insert text)
+    (save-buffer)
+    (goto-char (point-min))
+    (current-buffer)))
+
+(defun harper-check-region (beg end)
+  "Check the region (or the whole buffer) with Harper in a scratch buffer."
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list (point-min) (point-max))))
+  (setq harper--origin (list (current-buffer)
+                             (copy-marker beg)
+                             (copy-marker end t)))
+  (pop-to-buffer (harper--scratch-buffer (buffer-substring-no-properties beg end)))
+  (message "Harper: fix with SPC m f, write back with SPC m a"))
+
+(defun harper-check-clipboard ()
+  "Check the clipboard contents with Harper in a scratch buffer."
+  (interactive)
+  (setq harper--origin nil)
+  (switch-to-buffer (harper--scratch-buffer
+                     (or (ignore-errors (gui-get-selection 'CLIPBOARD 'UTF8_STRING))
+                         (current-kill 0 t)
+                         "")))
+  (message "Harper: fix with SPC m f, copy back with SPC m y"))
+
+(defun harper--scratch-text ()
+  (with-current-buffer (find-file-noselect harper--scratch-file)
+    (buffer-substring-no-properties (point-min) (point-max))))
+
+(defun harper-apply ()
+  "Replace the text sent by `harper-check-region' with the corrected version."
+  (interactive)
+  (pcase harper--origin
+    (`(,buf ,beg ,end)
+     (unless (buffer-live-p buf) (user-error "Harper: the original buffer is gone"))
+     (let ((text (harper--scratch-text)))
+       (with-current-buffer buf
+         (save-excursion
+           (goto-char beg)
+           (delete-region beg end)
+           (insert text))))
+     (quit-window nil (get-buffer-window (find-file-noselect harper--scratch-file)))
+     (pop-to-buffer buf)
+     (message "Harper: corrected text written back"))
+    (_ (user-error "Harper: nothing to write back (use SPC m y to copy instead)"))))
+
+(defun harper-copy ()
+  "Put the corrected scratch text on the clipboard."
+  (interactive)
+  (gui-set-selection 'CLIPBOARD (harper--scratch-text))
+  (kill-new (harper--scratch-text))
+  (message "Harper: corrected text copied to the clipboard"))
+
+(defun harper-quit ()
+  "Leave the scratch buffer; close the frame when in the grammar daemon."
+  (interactive)
+  (if (equal (daemonp) "grammar")
+      (delete-frame)
+    (quit-window)))
+
+(map! :leader
+      (:prefix ("G" . "grammar")
+       :desc "Check region with Harper"    "g" #'harper-check-region
+       :desc "Check clipboard with Harper" "c" #'harper-check-clipboard))
+
+(map! :localleader
+      :map harper-check-mode-map
+      :desc "Fix at point (code action)" "f" #'eglot-code-actions
+      :desc "Next issue"                 "n" #'flymake-goto-next-error
+      :desc "Previous issue"             "p" #'flymake-goto-prev-error
+      :desc "Write back to origin"       "a" #'harper-apply
+      :desc "Copy to clipboard"          "y" #'harper-copy
+      :desc "Reload clipboard"           "c" #'harper-check-clipboard
+      :desc "Quit"                       "q" #'harper-quit)
+
+;; Second daemon (`emacsclient -s grammar`): a floating Harper window toggled
+;; from COSMIC with Super+Shift+G (programs/cosmic/default.nix). It is a
+;; separate Emacs process, so it never shares buffers or frames with the
+;; main daemon's clients. The fixed title is what cosmic-comp's floating
+;; rule and the toggle script match on.
+(when (equal (daemonp) "grammar")
+  (setq frame-title-format "Harper Grammar")
+  (add-to-list 'default-frame-alist '(width . 100))
+  (add-to-list 'default-frame-alist '(height . 28)))
+
+
 ;;; APL (Dyalog)
 ;; dyalog-mode for Dyalog source files; the `dyalog' interpreter comes from
 ;; home-manager (programs/languages). Glyphs are typed with the "dyalog-apl"

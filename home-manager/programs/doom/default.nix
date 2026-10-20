@@ -78,5 +78,7 @@
   # (lookup +dictionary +offline) backends: wordnut for definitions and
   # synosaurus-wordnet for synonyms. (The `dyalog` binary for dyalog-mode lives
   # with the other language toolchains in programs/languages.)
-  home.packages = [ pkgs.wordnet ];
+  # harper-ls: offline English grammar checker, driven on demand from the
+  # Harper scratch buffer in config.el (SPC G g / SPC G c).
+  home.packages = [ pkgs.wordnet pkgs.harper ];
 }
