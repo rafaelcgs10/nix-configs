@@ -57,37 +57,43 @@ let
 
   # --- Scratchpad chats (Super+Shift+<key>) ---------------------------------
 
-  # Toggle a chat app like a scratchpad: launch it if not running, minimize it
-  # if it is focused, otherwise unminimize and activate it. Activating a
-  # window on another workspace switches to that workspace (verified
-  # 2026-10-20); it is NOT moved here because cosmic-comp's move_to_workspace
-  # re-inserts a floating window into the tiling tree, even when the target
-  # is the workspace it is already on - that was the "comes back tiled" bug.
-  # Apps that can cheaply recreate their window (the Emacs daemon below) pass
-  # `relocate`: run instead of activate when the window sits on another
-  # workspace, so a fresh window appears on the current one and floats.
-  # The current workspace is inferred from the focused window, since cos-cli
-  # does not expose workspace focus. Sticky windows would be an alternative,
-  # but cosmic-comp neither minimizes them reliably nor reports their state.
+  # Toggle a scratchpad window (chats, the notes Emacs): launch it if not
+  # running, minimize it if it is focused, otherwise unminimize and focus it.
+  # The window is made *sticky* (shown on every workspace), so it always
+  # comes back on the workspace you are on. Moving it instead is not an
+  # option: cosmic-comp's move_to_workspace maps a window into the tiling
+  # layer whenever the target workspace tiles, so it came back tiled
+  # (verified with screenshots 2026-10-20); activating a non-sticky window
+  # on another workspace switches to that workspace instead.
+  # Order matters: set_sticky is a no-op on a minimized window, so unminimize
+  # first; activate on a sticky window focuses it without a workspace switch.
+  # cos-cli does not report the sticky/minimized state of sticky windows, so
+  # the hide/show decision is based on "activated" (focused) only: a visible
+  # but unfocused scratchpad gets focused on the first press, hidden on the
+  # second.
   mkChatToggle = chat: pkgs.writeShellScriptBin "toggle-${chat.name}" ''
-    info=$(${cos-cli}/bin/cos-cli info --json)
-    app=$(printf '%s' "$info" | ${jq} -c --arg re "${chat.pattern}" \
-      '[.apps[] | select(.${chat.field or "app_id"} | test($re; "i"))][0] // empty')
+    find_app() {
+      ${cos-cli}/bin/cos-cli info --json | ${jq} -c --arg re "${chat.pattern}" \
+        '[.apps[] | select(.${chat.field or "app_id"} | test($re; "i"))][0] // empty'
+    }
+    app=$(find_app)
     if [ -z "$app" ]; then
-      exec ${pkgs.util-linux}/bin/setsid -f ${chat.launch}
+      ${pkgs.util-linux}/bin/setsid -f ${chat.launch}
+      # Wait for the window, then pin it to every workspace.
+      for _ in $(seq 1 60); do
+        sleep 0.5
+        app=$(find_app)
+        [ -n "$app" ] && break
+      done
+      [ -n "$app" ] && ${cos-cli}/bin/cos-cli state -i "$(printf '%s' "$app" | ${jq} .index)" --sticky
+      exit 0
     fi
     idx=$(printf '%s' "$app" | ${jq} .index)
     if printf '%s' "$app" | ${jq} -e '.state | index("activated")' > /dev/null; then
       ${cos-cli}/bin/cos-cli state -i "$idx" --minimize
     else
-      cur_ws=$(printf '%s' "$info" | ${jq} -r \
-        'first(.apps[] | select(.state | index("activated"))).workspaces[0].index // empty')
-      win_ws=$(printf '%s' "$app" | ${jq} -r '.workspaces[0].index // empty')
-      relocate() { ${chat.relocate or "return 1"}; }
-      if [ -n "$cur_ws" ] && [ -n "$win_ws" ] && [ "$cur_ws" != "$win_ws" ] && relocate; then
-        exit 0
-      fi
       ${cos-cli}/bin/cos-cli state -i "$idx" --unminimize
+      ${cos-cli}/bin/cos-cli state -i "$idx" --sticky   # no-op if already sticky
       ${cos-cli}/bin/cos-cli activate -i "$idx"
     fi
   '';
@@ -101,23 +107,44 @@ let
     { name = "caprine";  key = "c"; pattern = "caprine";  launch = "caprine"; }
   ];
 
-  # Floating "Notes & Grammar" Emacs (Super+Shift+G, same show/hide toggle as
-  # the chats): a second Emacs daemon named "grammar", started on first use
-  # by `emacsclient -a ""`, so it is independent of the main daemon's
-  # clients. It opens ~/Documents/notes/scratch.org, a writable note in the
-  # notes project. Matched by frame title, since every Emacs frame shares the
-  # app_id "emacs"; the title is set for that daemon in the Grammar section
-  # of doom config.el. When the window lives on another workspace the toggle
-  # closes its frame(s) and opens a new one here instead of moving it (see
-  # mkChatToggle); the daemon and its buffers survive.
+  # Floating "Notes & Grammar" Emacs (Super+Shift+G): a second Emacs daemon
+  # named "grammar", started on first use by `emacsclient -a ""`, so it is
+  # independent of the main daemon's clients. It opens
+  # ~/Documents/notes/scratch.org, a writable note in the notes project.
+  # Matched by frame title, since every Emacs frame shares the app_id
+  # "emacs"; the title is set for that daemon in the Grammar section of doom
+  # config.el. Unlike the chats this is NOT minimized/stickied: a pgtk Emacs
+  # frame comes back black after cosmic-comp re-maps it into the sticky layer
+  # (verified 2026-10-20; cosmic-term and GTK4 apps render fine). Instead
+  # hide = delete the frame(s), show = open a new frame, which always lands
+  # floating on the current workspace via the window rule below. Buffers
+  # live in the daemon, so nothing is lost. A minimized pgtk frame stops
+  # Emacs' event loop entirely (no frame callbacks from the compositor), and
+  # a hidden-by-minimize frame would hang the emacsclient below, so the
+  # window is unminimized first in case it was minimized by hand.
   grammarWindow = rec {
     name = "grammar";
     key = "g";
-    field = "title";
     pattern = "^Notes & Grammar";
-    launch = "emacsclient -s grammar -a \"\" -c /home/rafael/Documents/notes/scratch.org";
-    relocate = "emacsclient -s grammar -e '(dolist (f (frame-list)) (when (frame-parameter f (quote window-system)) (delete-frame f t)))' >/dev/null 2>&1; ${pkgs.util-linux}/bin/setsid -f ${launch}";
-    toggle = mkChatToggle { inherit name field pattern launch relocate; };
+    note = "/home/rafael/Documents/notes/scratch.org";
+    launch = "emacsclient -s grammar -a \"\" -c ${note}";
+    toggle = pkgs.writeShellScriptBin "toggle-grammar" ''
+      idx=$(${cos-cli}/bin/cos-cli info --json | ${jq} --arg re "${pattern}" \
+        '[.apps[] | select(.title | test($re))][0].index // empty')
+      if [ -n "$idx" ]; then
+        ${cos-cli}/bin/cos-cli state -i "$idx" --unminimize > /dev/null 2>&1
+        ${pkgs.coreutils}/bin/timeout 10 emacsclient -s grammar -e \
+          '(dolist (f (frame-list)) (when (window-system f) (delete-frame f t)))' > /dev/null
+      else
+        # The note must exist on disk: visiting a non-existent file whose
+        # buffer Doom's file template already modified makes the next
+        # `emacsclient -c <file>` stop at "File no longer exists, write
+        # buffer to file? (y or n)" and the daemon ignores clients until
+        # answered.
+        [ -e "${note}" ] || printf '#+title: Scratch\n\n' > "${note}"
+        exec ${pkgs.util-linux}/bin/setsid -f ${launch}
+      fi
+    '';
   };
 
   chatShortcut = chat: ''
