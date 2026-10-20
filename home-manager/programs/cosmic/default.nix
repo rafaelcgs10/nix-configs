@@ -1,4 +1,4 @@
-{ pkgs, inputs, lib, ... }:
+{ config, pkgs, inputs, lib, ... }:
 
 let
   # Rosé Pine theme for COSMIC (rose-pine/cosmic-desktop). Stylix has no COSMIC
@@ -243,6 +243,23 @@ in
       "-max-dedupe-search" "100"
       "-max-items" "1000000"
     ];
+  };
+
+  # `wl-paste --watch` runs `cliphist store` synchronously per clipboard
+  # change and waits for it. If the selection owner never answers the
+  # compositor's receive request (seen 2026-10-19 with an Xwayland-proxied
+  # source: cosmic-comp kept the pipe open and never wrote), that one store
+  # blocks forever and every later copy is silently dropped. Wrap the store
+  # in a timeout so a hung receive costs 10 s, not the rest of the session.
+  # The text watcher also gets --type text so binary offers (raw BMP was
+  # stored as text right before the hang) never reach it.
+  systemd.user.services = let
+    store = "${pkgs.coreutils}/bin/timeout 10 ${config.services.cliphist.package}/bin/cliphist "
+      + "${lib.escapeShellArgs config.services.cliphist.extraOptions} store";
+    wlPaste = "${pkgs.wl-clipboard}/bin/wl-paste";
+  in {
+    cliphist.Service.ExecStart = lib.mkForce "${wlPaste} --type text --watch ${store}";
+    cliphist-images.Service.ExecStart = lib.mkForce "${wlPaste} --type image --watch ${store}";
   };
 
   # The clipboard-picker / clipboard-forget scripts above display cliphist
