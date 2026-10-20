@@ -387,6 +387,11 @@ With prefix argument (`C-u'), also kill the special buffers."
 (when (equal (daemonp) "grammar")
   (setq frame-title-format "Notes & Grammar")
   (setq default-directory (expand-file-name grammar-notes-dir))
+  ;; Notes must survive the window being closed: never let the server kill
+  ;; a buffer because the emacsclient that opened it went away, and write
+  ;; visited files to disk after a short idle instead of relying on C-x C-s.
+  (setq server-kill-new-buffers nil)
+  (auto-save-visited-mode 1)
   (add-to-list 'default-frame-alist '(width . 100))
   (add-to-list 'default-frame-alist '(height . 30))
   (after! projectile

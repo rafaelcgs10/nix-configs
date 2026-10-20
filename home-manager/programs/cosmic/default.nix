@@ -109,42 +109,24 @@ let
 
   # Floating "Notes & Grammar" Emacs (Super+Shift+G): a second Emacs daemon
   # named "grammar", started on first use by `emacsclient -a ""`, so it is
-  # independent of the main daemon's clients. It opens
-  # ~/Documents/notes/scratch.org, a writable note in the notes project.
-  # Matched by frame title, since every Emacs frame shares the app_id
-  # "emacs"; the title is set for that daemon in the Grammar section of doom
-  # config.el. Unlike the chats this is NOT minimized/stickied: a pgtk Emacs
-  # frame comes back black after cosmic-comp re-maps it into the sticky layer
-  # (verified 2026-10-20; cosmic-term and GTK4 apps render fine). Instead
-  # hide = delete the frame(s), show = open a new frame, which always lands
-  # floating on the current workspace via the window rule below. Buffers
-  # live in the daemon, so nothing is lost. A minimized pgtk frame stops
-  # Emacs' event loop entirely (no frame callbacks from the compositor), and
-  # a hidden-by-minimize frame would hang the emacsclient below, so the
-  # window is unminimized first in case it was minimized by hand.
+  # independent of the main daemon's clients. Same sticky show/hide toggle
+  # as the chats. Matched by frame title, since every Emacs frame shares the
+  # app_id "emacs"; the title is set for that daemon in the Grammar section
+  # of doom config.el. The launcher creates the note file first: visiting a
+  # non-existent file whose buffer Doom's file template already modified
+  # makes a later `emacsclient -c <file>` stop the daemon at "File no longer
+  # exists, write buffer to file? (y or n)" until answered.
   grammarWindow = rec {
     name = "grammar";
     key = "g";
+    field = "title";
     pattern = "^Notes & Grammar";
-    note = "/home/rafael/Documents/notes/scratch.org";
-    launch = "emacsclient -s grammar -a \"\" -c ${note}";
-    toggle = pkgs.writeShellScriptBin "toggle-grammar" ''
-      idx=$(${cos-cli}/bin/cos-cli info --json | ${jq} --arg re "${pattern}" \
-        '[.apps[] | select(.title | test($re))][0].index // empty')
-      if [ -n "$idx" ]; then
-        ${cos-cli}/bin/cos-cli state -i "$idx" --unminimize > /dev/null 2>&1
-        ${pkgs.coreutils}/bin/timeout 10 emacsclient -s grammar -e \
-          '(dolist (f (frame-list)) (when (window-system f) (delete-frame f t)))' > /dev/null
-      else
-        # The note must exist on disk: visiting a non-existent file whose
-        # buffer Doom's file template already modified makes the next
-        # `emacsclient -c <file>` stop at "File no longer exists, write
-        # buffer to file? (y or n)" and the daemon ignores clients until
-        # answered.
-        [ -e "${note}" ] || printf '#+title: Scratch\n\n' > "${note}"
-        exec ${pkgs.util-linux}/bin/setsid -f ${launch}
-      fi
-    '';
+    launch = "${pkgs.writeShellScriptBin "notes-emacs" ''
+      note=/home/rafael/Documents/notes/scratch.org
+      [ -e "$note" ] || printf '#+title: Scratch\n\n' > "$note"
+      exec emacsclient -s grammar -a "" -c "$note"
+    ''}/bin/notes-emacs";
+    toggle = mkChatToggle { inherit name field pattern launch; };
   };
 
   chatShortcut = chat: ''
