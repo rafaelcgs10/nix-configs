@@ -58,11 +58,17 @@ let
   # --- Scratchpad chats (Super+Shift+<key>) ---------------------------------
 
   # Toggle a chat app like a scratchpad: launch it if not running, minimize it
-  # if it is focused, and otherwise bring it to the current workspace and
-  # focus it - so the same key shows and hides it from any workspace. The
-  # current workspace is inferred from the focused window, since cos-cli does
-  # not expose workspace focus. Sticky windows would be an alternative, but
-  # cosmic-comp neither minimizes them reliably nor reports their state.
+  # if it is focused, otherwise unminimize and activate it. Activating a
+  # window on another workspace switches to that workspace (verified
+  # 2026-10-20); it is NOT moved here because cosmic-comp's move_to_workspace
+  # re-inserts a floating window into the tiling tree, even when the target
+  # is the workspace it is already on - that was the "comes back tiled" bug.
+  # Apps that can cheaply recreate their window (the Emacs daemon below) pass
+  # `relocate`: run instead of activate when the window sits on another
+  # workspace, so a fresh window appears on the current one and floats.
+  # The current workspace is inferred from the focused window, since cos-cli
+  # does not expose workspace focus. Sticky windows would be an alternative,
+  # but cosmic-comp neither minimizes them reliably nor reports their state.
   mkChatToggle = chat: pkgs.writeShellScriptBin "toggle-${chat.name}" ''
     info=$(${cos-cli}/bin/cos-cli info --json)
     app=$(printf '%s' "$info" | ${jq} -c --arg re "${chat.pattern}" \
@@ -76,10 +82,12 @@ let
     else
       cur_ws=$(printf '%s' "$info" | ${jq} -r \
         'first(.apps[] | select(.state | index("activated"))).workspaces[0].index // empty')
-      ${cos-cli}/bin/cos-cli state -i "$idx" --unminimize
-      if [ -n "$cur_ws" ]; then
-        ${cos-cli}/bin/cos-cli move -i "$idx" -w "$cur_ws"
+      win_ws=$(printf '%s' "$app" | ${jq} -r '.workspaces[0].index // empty')
+      relocate() { ${chat.relocate or "return 1"}; }
+      if [ -n "$cur_ws" ] && [ -n "$win_ws" ] && [ "$cur_ws" != "$win_ws" ] && relocate; then
+        exit 0
       fi
+      ${cos-cli}/bin/cos-cli state -i "$idx" --unminimize
       ${cos-cli}/bin/cos-cli activate -i "$idx"
     fi
   '';
@@ -96,16 +104,20 @@ let
   # Floating "Notes & Grammar" Emacs (Super+Shift+G, same show/hide toggle as
   # the chats): a second Emacs daemon named "grammar", started on first use
   # by `emacsclient -a ""`, so it is independent of the main daemon's
-  # clients. It opens in ~/Documents/notes. Matched by frame title, since
-  # every Emacs frame shares the app_id "emacs"; the title is set for that
-  # daemon in the Grammar section of doom config.el.
+  # clients. It opens ~/Documents/notes/scratch.org, a writable note in the
+  # notes project. Matched by frame title, since every Emacs frame shares the
+  # app_id "emacs"; the title is set for that daemon in the Grammar section
+  # of doom config.el. When the window lives on another workspace the toggle
+  # closes its frame(s) and opens a new one here instead of moving it (see
+  # mkChatToggle); the daemon and its buffers survive.
   grammarWindow = rec {
     name = "grammar";
     key = "g";
     field = "title";
     pattern = "^Notes & Grammar";
-    launch = "emacsclient -s grammar -a \"\" -c /home/rafael/Documents/notes";
-    toggle = mkChatToggle { inherit name field pattern launch; };
+    launch = "emacsclient -s grammar -a \"\" -c /home/rafael/Documents/notes/scratch.org";
+    relocate = "emacsclient -s grammar -e '(dolist (f (frame-list)) (when (frame-parameter f (quote window-system)) (delete-frame f t)))' >/dev/null 2>&1; ${pkgs.util-linux}/bin/setsid -f ${launch}";
+    toggle = mkChatToggle { inherit name field pattern launch relocate; };
   };
 
   chatShortcut = chat: ''
