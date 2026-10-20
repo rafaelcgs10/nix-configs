@@ -78,7 +78,27 @@
   # (lookup +dictionary +offline) backends: wordnut for definitions and
   # synosaurus-wordnet for synonyms. (The `dyalog` binary for dyalog-mode lives
   # with the other language toolchains in programs/languages.)
-  # harper-ls: offline English grammar checker, driven on demand from the
-  # Harper scratch buffer in config.el (SPC G g / SPC G c).
-  home.packages = [ pkgs.wordnet pkgs.harper ];
+  home.packages = [ pkgs.wordnet ];
+
+  # LanguageTool as a warm local HTTP server, so Doom's on-demand checks
+  # (langtool.el, Grammar section of config.el) answer instantly instead of
+  # paying a JVM start per check. Binds to localhost only (no --public).
+  # Heap capped so an idle checker does not grow past ~1 GB.
+  systemd.user.services.languagetool = {
+    Unit = {
+      Description = "LanguageTool HTTP server for Emacs (localhost:8081)";
+      After = [ "default.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.languagetool}/bin/languagetool-http-server --port 8081";
+      Environment = [ "JAVA_TOOL_OPTIONS=-Xmx1g" ];
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
+
+  # Project marker for the floating "Notes & Grammar" Emacs (second daemon,
+  # see config.el): makes ~/Documents/notes a projectile project root.
+  home.file."Documents/notes/.projectile".text = "";
 }

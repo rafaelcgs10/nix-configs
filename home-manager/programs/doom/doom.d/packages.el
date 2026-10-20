@@ -22,6 +22,9 @@
 
 (package! eglot-java)
 
+;; On-demand LanguageTool client (see the Grammar section of config.el).
+(package! langtool)
+
 (package! eglot-ltex
   :recipe (:host github :repo "emacs-languagetool/eglot-ltex")
   :pin "2ae2fad68ca2520f69b8d8174afc42ca271f6146")

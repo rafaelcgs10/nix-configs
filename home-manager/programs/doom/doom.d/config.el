@@ -295,135 +295,102 @@ With prefix argument (`C-u'), also kill the special buffers."
   :mode "\\.drv\\'")
 
 
-;;; Grammar (Harper, on demand)
-;; Harper only exists as a language server (harper-ls), i.e. a continuous
-;; checker. To keep it on demand it is confined to one scratch buffer in a
-;; dedicated major mode: nothing else ever starts it. `harper-check-region'
-;; copies the region (or buffer) into that scratch buffer, harper-ls lints it
-;; there, fixes are applied with eglot's code actions, and `harper-apply'
-;; writes the result back over the original text. `harper-check-clipboard'
-;; is the same flow for text copied from other apps; `harper-copy' puts the
-;; corrected text back on the clipboard.
-;;
-;; The scratch buffer must visit a real file (eglot needs a URI) and the
-;; server must be told the language id is "plaintext", otherwise harper-ls
-;; silently returns no diagnostics. harper-ls comes from home-manager
-;; (programs/doom/default.nix).
-(define-derived-mode harper-check-mode text-mode "Harper"
-  "Scratch mode for on-demand grammar checks with harper-ls."
-  (setq-local eglot-workspace-configuration
-              '(:harper-ls (:dialect "American"
-                            ;; Pasted fragments rarely start with a capital.
-                            :linters (:SentenceCapitalization :json-false))))
-  ;; Keep the text byte-for-byte: no final newline added on save, and no
-  ;; flyspell on top of Harper's own spell check (Doom enables it for
-  ;; text-mode, which this mode derives from).
-  (setq-local require-final-newline nil)
-  (when (bound-and-true-p flyspell-mode) (flyspell-mode -1))
-  (visual-line-mode 1))
-
-(after! eglot
-  (add-to-list 'eglot-server-programs
-               '((harper-check-mode :language-id "plaintext")
-                 . ("harper-ls" "--stdio"))))
-(add-hook 'harper-check-mode-hook #'eglot-ensure)
-
-(defvar harper--scratch-file (expand-file-name "harper/scratch.txt" doom-cache-dir)
-  "File backing the Harper scratch buffer.")
-(defvar harper--origin nil
-  "List (BUFFER BEG-MARKER END-MARKER) of the text last sent to Harper.")
-
-(defun harper--scratch-buffer (text)
-  "Return the Harper scratch buffer with TEXT as its only content."
-  (make-directory (file-name-directory harper--scratch-file) t)
-  (with-current-buffer (find-file-noselect harper--scratch-file)
-    (unless (derived-mode-p 'harper-check-mode) (harper-check-mode))
-    (erase-buffer)
-    (insert text)
-    (save-buffer)
-    (goto-char (point-min))
-    (current-buffer)))
-
-(defun harper-check-region (beg end)
-  "Check the region (or the whole buffer) with Harper in a scratch buffer."
-  (interactive (if (use-region-p)
-                   (list (region-beginning) (region-end))
-                 (list (point-min) (point-max))))
-  (setq harper--origin (list (current-buffer)
-                             (copy-marker beg)
-                             (copy-marker end t)))
-  (pop-to-buffer (harper--scratch-buffer (buffer-substring-no-properties beg end)))
-  (message "Harper: fix with SPC m f, write back with SPC m a"))
-
-(defun harper-check-clipboard ()
-  "Check the clipboard contents with Harper in a scratch buffer."
-  (interactive)
-  (setq harper--origin nil)
-  (switch-to-buffer (harper--scratch-buffer
-                     (or (ignore-errors (gui-get-selection 'CLIPBOARD 'UTF8_STRING))
-                         (current-kill 0 t)
-                         "")))
-  (message "Harper: fix with SPC m f, copy back with SPC m y"))
-
-(defun harper--scratch-text ()
-  (with-current-buffer (find-file-noselect harper--scratch-file)
-    (buffer-substring-no-properties (point-min) (point-max))))
-
-(defun harper-apply ()
-  "Replace the text sent by `harper-check-region' with the corrected version."
-  (interactive)
-  (pcase harper--origin
-    (`(,buf ,beg ,end)
-     (unless (buffer-live-p buf) (user-error "Harper: the original buffer is gone"))
-     (let ((text (harper--scratch-text)))
-       (with-current-buffer buf
-         (save-excursion
-           (goto-char beg)
-           (delete-region beg end)
-           (insert text))))
-     (quit-window nil (get-buffer-window (find-file-noselect harper--scratch-file)))
-     (pop-to-buffer buf)
-     (message "Harper: corrected text written back"))
-    (_ (user-error "Harper: nothing to write back (use SPC m y to copy instead)"))))
-
-(defun harper-copy ()
-  "Put the corrected scratch text on the clipboard."
-  (interactive)
-  (gui-set-selection 'CLIPBOARD (harper--scratch-text))
-  (kill-new (harper--scratch-text))
-  (message "Harper: corrected text copied to the clipboard"))
-
-(defun harper-quit ()
-  "Leave the scratch buffer; close the frame when in the grammar daemon."
-  (interactive)
-  (if (equal (daemonp) "grammar")
-      (delete-frame)
-    (quit-window)))
+;;; Grammar (LanguageTool, on demand)
+;; LanguageTool runs as a user service (languagetool.service in
+;; programs/doom/default.nix) on localhost:8081, so checks are instant: no JVM
+;; start per check. langtool.el is the client; with the http-server host/port
+;; set it never spawns LanguageTool itself. Nothing checks text on its own:
+;; `langtool-check' runs only when invoked, on the active region or else the
+;; whole buffer, marks issues as overlays, `langtool-correct-buffer' walks
+;; them offering LanguageTool's suggestions, `langtool-check-done' clears.
+(use-package! langtool
+  :commands (langtool-check langtool-check-done langtool-correct-buffer
+             langtool-show-message-at-point langtool-goto-next-error
+             langtool-goto-previous-error langtool-switch-default-language)
+  :init
+  (setq langtool-http-server-host "localhost"
+        langtool-http-server-port 8081
+        langtool-default-language "en-US"
+        ;; Enables LanguageTool's false-friend rules for a pt-BR speaker.
+        langtool-mother-tongue "pt-BR"))
 
 (map! :leader
       (:prefix ("G" . "grammar")
-       :desc "Check region with Harper"    "g" #'harper-check-region
-       :desc "Check clipboard with Harper" "c" #'harper-check-clipboard))
+       :desc "Check region/buffer"     "g" #'langtool-check
+       :desc "Correct issues"          "f" #'langtool-correct-buffer
+       :desc "Next issue"              "n" #'langtool-goto-next-error
+       :desc "Previous issue"          "p" #'langtool-goto-previous-error
+       :desc "Explain issue at point"  "e" #'langtool-show-message-at-point
+       :desc "Clear marks"             "d" #'langtool-check-done
+       :desc "Check clipboard text"    "c" #'grammar-check-clipboard
+       :desc "Copy scratch to clipboard" "y" #'grammar-copy))
+
+;; Clipboard flow (text from other apps, used from the floating window
+;; below): paste the clipboard into a scratch file, check it, correct, copy
+;; back. The scratch lives in the cache dir; in the notes daemon its
+;; default-directory is the notes folder so `SPC f f' lands there.
+(defvar grammar-notes-dir "~/Documents/notes/"
+  "Project folder the floating notes/grammar Emacs opens in.")
+(defvar grammar--scratch-file (expand-file-name "grammar/scratch.txt" doom-cache-dir)
+  "File backing the clipboard grammar scratch buffer.")
+
+(define-derived-mode grammar-scratch-mode text-mode "Grammar"
+  "Scratch mode for checking clipboard text with LanguageTool."
+  (setq-local require-final-newline nil)
+  (when (bound-and-true-p flyspell-mode) (flyspell-mode -1))
+  (when (equal (daemonp) "grammar")
+    (setq-local default-directory (expand-file-name grammar-notes-dir)))
+  (visual-line-mode 1))
+
+(defun grammar-check-clipboard ()
+  "Check the clipboard contents with LanguageTool in a scratch buffer."
+  (interactive)
+  (make-directory (file-name-directory grammar--scratch-file) t)
+  (switch-to-buffer (find-file-noselect grammar--scratch-file))
+  (unless (derived-mode-p 'grammar-scratch-mode) (grammar-scratch-mode))
+  (erase-buffer)
+  (insert (or (ignore-errors (gui-get-selection 'CLIPBOARD 'UTF8_STRING))
+              (current-kill 0 t)
+              ""))
+  (save-buffer)
+  (goto-char (point-min))
+  (langtool-check)
+  (message "Grammar: correct with SPC m f, copy back with SPC m y"))
+
+(defun grammar-copy ()
+  "Put the (corrected) scratch text on the clipboard."
+  (interactive)
+  (let ((text (with-current-buffer (find-file-noselect grammar--scratch-file)
+                (buffer-substring-no-properties (point-min) (point-max)))))
+    (gui-set-selection 'CLIPBOARD text)
+    (kill-new text)
+    (message "Grammar: corrected text copied to the clipboard")))
 
 (map! :localleader
-      :map harper-check-mode-map
-      :desc "Fix at point (code action)" "f" #'eglot-code-actions
-      :desc "Next issue"                 "n" #'flymake-goto-next-error
-      :desc "Previous issue"             "p" #'flymake-goto-prev-error
-      :desc "Write back to origin"       "a" #'harper-apply
-      :desc "Copy to clipboard"          "y" #'harper-copy
-      :desc "Reload clipboard"           "c" #'harper-check-clipboard
-      :desc "Quit"                       "q" #'harper-quit)
+      :map grammar-scratch-mode-map
+      :desc "Correct issues"      "f" #'langtool-correct-buffer
+      :desc "Next issue"          "n" #'langtool-goto-next-error
+      :desc "Previous issue"      "p" #'langtool-goto-previous-error
+      :desc "Explain at point"    "e" #'langtool-show-message-at-point
+      :desc "Re-check"            "g" #'langtool-check
+      :desc "Clear marks"         "d" #'langtool-check-done
+      :desc "Copy to clipboard"   "y" #'grammar-copy
+      :desc "Reload clipboard"    "c" #'grammar-check-clipboard)
 
-;; Second daemon (`emacsclient -s grammar`): a floating Harper window toggled
-;; from COSMIC with Super+Shift+G (programs/cosmic/default.nix). It is a
-;; separate Emacs process, so it never shares buffers or frames with the
-;; main daemon's clients. The fixed title is what cosmic-comp's floating
-;; rule and the toggle script match on.
+;; Second daemon (`emacsclient -s grammar`): the floating "Notes & Grammar"
+;; window toggled from COSMIC with Super+Shift+G (programs/cosmic/default.nix).
+;; A separate Emacs process, so it never shares buffers or frames with the
+;; main daemon's clients. It opens in ~/Documents/notes (a projectile project
+;; via the .projectile file home-manager puts there), so new buffers save
+;; there by default. The fixed title is what cosmic-comp's floating rule and
+;; the toggle script match on.
 (when (equal (daemonp) "grammar")
-  (setq frame-title-format "Harper Grammar")
+  (setq frame-title-format "Notes & Grammar")
+  (setq default-directory (expand-file-name grammar-notes-dir))
   (add-to-list 'default-frame-alist '(width . 100))
-  (add-to-list 'default-frame-alist '(height . 28)))
+  (add-to-list 'default-frame-alist '(height . 30))
+  (after! projectile
+    (projectile-add-known-project (expand-file-name grammar-notes-dir))))
 
 
 ;;; APL (Dyalog)
