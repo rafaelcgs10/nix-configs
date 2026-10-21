@@ -4,8 +4,9 @@
 #
 # Layout (all under ~/Games; add `saves` - and `bios`/`roms` if wanted - as
 # Syncthing folders on each host):
-#   roms/<es-de system name>/   you provide the games (ES-DE naming:
-#                               snes mastersystem gb gbc gba psx ps2 ps3 gc wii)
+#   roms/<es-de system name>/   you provide the games (ES-DE naming: snes
+#                               mastersystem megadrive gb gbc gba n64 nds psx
+#                               ps2 psp ps3 gc wii xbox xbox360 switch)
 #   bios/                       RetroArch system dir (PS1 scph*.bin ...); bios/ps2
 #                               is PCSX2's BIOS folder
 #   saves/retroarch             SRAM/memory cards of every RetroArch core
@@ -23,10 +24,18 @@
 #     RetroAchievements (log in once in RetroArch: Settings > Achievements).
 #     Alternatives: the other cores below, plus the standalone mednafen, ares,
 #     SameBoy, mGBA, Snes9x and DuckStation.
-#   ps2 gc wii -> PCSX2 / Dolphin standalone (achievements: log in once in
-#     each emulator's settings); alternatives: the LRPS2 and Dolphin RetroArch
-#     cores. ps3 -> RPCS3 (firmware PS3UPDAT.PUP installed once via its menu;
-#     no achievements, trophies only), no alternative exists.
+#   megadrive n64 nds -> RetroArch cores (BlastEm, Mupen64Plus-Next, melonDS),
+#     alternatives ParaLLEl N64, DeSmuME and the standalone blastem, simple64,
+#     RMG, melonDS, DeSmuME, ares, mednafen.
+#   ps2 gc wii psp -> PCSX2 / Dolphin / PPSSPP standalone (achievements: log
+#     in once in each emulator's settings); alternatives: the LRPS2, Dolphin
+#     and PPSSPP RetroArch cores. ps3 -> RPCS3 (firmware PS3UPDAT.PUP
+#     installed once via its menu; no achievements, trophies only).
+#   xbox -> xemu (needs bios/xbox/mcpx_1.0.bin + Complex_4627v1.03.bin from
+#     your console; a blank HDD image is provided). xbox360 -> Xenia Canary
+#     (native Linux build, early). switch -> Eden, alternative Ryujinx
+#     (Ryubing); both need prod.keys + firmware dumped from your console
+#     (Eden: ~/.local/share/eden/keys, Ryujinx: ~/.config/Ryujinx/system).
 # ES-DE's own config lives in ~/ES-DE; the seeds below are written only when
 # absent, since ES-DE rewrites them.
 #
@@ -42,49 +51,69 @@ let
   es-de = pkgs.callPackage ./es-de.nix { };
   duckstation = pkgs.callPackage ./duckstation.nix { };
   rpcs3 = pkgs.callPackage ./rpcs3.nix { };
+  xenia = pkgs.callPackage ./xenia.nix { };
+  # Blank 8 GB (sparse) Xbox HDD image for xemu, copied into saves/xemu once.
+  xemuHdd = pkgs.fetchzip {
+    url = "https://github.com/xemu-project/xemu-hdd-image/releases/download/1.0/xbox_hdd.qcow2.zip";
+    hash = "sha256-Ia+GW3CqIyYQlQ5yUx5Fs9KWwM5cr+B/0qiMIcJm0EM=";
+    stripRoot = false;
+  };
   shaders = pkgs.callPackage ./retro-crisis.nix { };
 
   # Retro Crisis ships per-resolution presets; bbstation drives a 4K panel,
   # the thinkpad is 1080p. "Flat" = no screen curvature.
   rcRes = if hostName == "bbstation" then "4K Flat" else "1080p Flat";
-  rcPreset = system: "${shaders}/RetroCrisis/retro crisis/${rcRes}/RC GDV-NTSC - ${system} - Clean.slangp";
+  rcPreset = name: "${shaders}/RetroCrisis/retro crisis/${rcRes}/RC GDV-NTSC - ${name}.slangp";
   # RetroArch auto-loads ~/.config/retroarch/config/<corename>/<corename>.slangp
-  # for a core. corename as in the core .info files.
+  # for a core. corename as in the core .info files; value = preset name in
+  # the pack (after "RC GDV-NTSC - ").
   corePresets = {
     # SNES
-    "bsnes" = "SNES";
-    "bsnes-hd beta" = "SNES";
-    "bsnes-mercury Accuracy" = "SNES";
-    "Beetle Supafaust" = "SNES";
-    "Mesen-S" = "SNES";
-    # Master System
-    "SMS Plus GX" = "Master System";
+    "bsnes" = "SNES - Clean";
+    "bsnes-hd beta" = "SNES - Clean";
+    "bsnes-mercury Accuracy" = "SNES - Clean";
+    "Beetle Supafaust" = "SNES - Clean";
+    "Mesen-S" = "SNES - Clean";
+    # Master System / Mega Drive
+    "SMS Plus GX" = "Master System - Clean";
+    "BlastEm" = "Mega Drive - Clean";
     # Game Boy family: no dedicated Game Boy preset in the pack, GBA is closest
-    "Gambatte" = "GBA";
-    "SameBoy" = "GBA";
-    "TGB Dual" = "GBA";
-    "mGBA" = "GBA";
-    "VBA-M" = "GBA";
-    "VBA Next" = "GBA";
-    "gpSP" = "GBA";
-    "Beetle GBA" = "GBA";
+    "Gambatte" = "GBA - Clean";
+    "SameBoy" = "GBA - Clean";
+    "TGB Dual" = "GBA - Clean";
+    "mGBA" = "GBA - Clean";
+    "VBA-M" = "GBA - Clean";
+    "VBA Next" = "GBA - Clean";
+    "gpSP" = "GBA - Clean";
+    "Beetle GBA" = "GBA - Clean";
+    # N64 / DS
+    "Mupen64Plus-Next" = "N64";
+    "ParaLLEl N64" = "N64";
+    "melonDS" = "DS";
+    "DeSmuME" = "DS";
     # PlayStation
-    "Beetle PSX HW" = "PlayStation";
-    "Beetle PSX" = "PlayStation";
-    "SwanStation" = "PlayStation";
-    "PCSX-ReARMed" = "PlayStation";
-    # PS2 core; the Dolphin core gets none (no GameCube preset in the pack)
-    "LRPS2" = "PS2";
+    "Beetle PSX HW" = "PlayStation - Clean";
+    "Beetle PSX" = "PlayStation - Clean";
+    "SwanStation" = "PlayStation - Clean";
+    "PCSX-ReARMed" = "PlayStation - Clean";
+    # PS2 core; Dolphin and PPSSPP cores get none (no preset in the pack)
+    "LRPS2" = "PS2 - Clean";
   };
   presetMarker = "# seeded by nix-configs (home-manager/programs/emulation); delete this line to keep your own";
 
-  esSystems = [ "snes" "mastersystem" "gb" "gbc" "gba" "psx" "ps2" "ps3" "gc" "wii" ];
+  esSystems = [
+    "snes" "mastersystem" "megadrive" "gb" "gbc" "gba" "n64" "nds"
+    "psx" "ps2" "psp" "ps3" "gc" "wii" "xbox" "xbox360" "switch"
+  ];
   # ES-DE defaults that point at cores/emulators we do not install; pin the
   # installed ones instead (ES-DE stores this at the top of each gamelist).
   esAltEmulators = {
     snes = "bsnes";
     mastersystem = "SMS Plus GX";
+    megadrive = "BlastEm";
+    nds = "melonDS";
     psx = "Beetle PSX HW";
+    psp = "PPSSPP (Standalone)";
     ps2 = "PCSX2 (Standalone)";
     gc = "Dolphin (Standalone)";
     wii = "Dolphin (Standalone)";
@@ -97,8 +126,18 @@ in
     pkgs.pcsx2       # PS2 (pcsx2-qt)
     pkgs.dolphin-emu # GameCube / Wii
     rpcs3            # PS3 (AppImage)
+    pkgs.ppsspp      # PSP: "PPSSPP (Standalone)"
+    pkgs.xemu        # Xbox
+    xenia            # Xbox 360: "xenia (Standalone)"
+    pkgs.eden        # Switch: "Eden (Standalone)"
+    pkgs.ryubing     # Switch: "Ryujinx (Standalone)"
     # Standalone alternatives ES-DE knows by binary name:
     duckstation      # psx: "DuckStation (Standalone)"
+    pkgs.blastem     # megadrive: "BlastEm (Standalone)"
+    pkgs.simple64    # n64: "simple64 (Standalone)"
+    pkgs.rmg         # n64: "Rosalie's Mupen GUI (Standalone)"
+    pkgs.melonDS     # nds: "melonDS (Standalone)"
+    pkgs.desmume     # nds: "DeSmuME (Standalone)"
     pkgs.mednafen    # gb gbc gba snes mastersystem psx: "Mednafen (Standalone)"
     pkgs.ares        # gb gbc gba snes mastersystem psx: "ares (Standalone)"
     pkgs.sameboy     # gb gbc: "SameBoy (Standalone)"
@@ -120,6 +159,16 @@ in
       mesen-s.enable = true;
       # Master System (also Game Gear)
       smsplus-gx.enable = true;
+      # Mega Drive
+      blastem.enable = true;
+      # Nintendo 64
+      mupen64plus.enable = true;       # Mupen64Plus-Next (ES-DE default)
+      parallel-n64.enable = true;
+      # Nintendo DS
+      melonds.enable = true;
+      desmume.enable = true;
+      # PSP (standalone PPSSPP is the default)
+      ppsspp.enable = true;
       # Game Boy / Color
       gambatte.enable = true;
       sameboy.enable = true;           # accuracy
@@ -179,6 +228,12 @@ in
     ".local/share/duckstation/memcards".source = link "${games}/saves/duckstation";
     ".local/share/duckstation/bios".source = link "${games}/bios"; # finds the scph*.bin there
     ".mednafen/sav".source = link "${games}/saves/mednafen";
+    ".config/ppsspp/PSP/SAVEDATA".source = link "${games}/saves/ppsspp";
+    ".local/share/xemu/xemu/xbox_hdd.qcow2".source = link "${games}/saves/xemu/xbox_hdd.qcow2";
+    ".local/share/xemu/xemu/eeprom.bin".source = link "${games}/saves/xemu/eeprom.bin";
+    ".local/share/xenia/content".source = link "${games}/saves/xenia";
+    ".local/share/eden/nand/user/save".source = link "${games}/saves/eden";
+    ".config/Ryujinx/bis/user/save".source = link "${games}/saves/ryujinx";
     # ares, SameBoy, mGBA and Snes9x standalone save next to the ROM.
   };
 
@@ -189,7 +244,9 @@ in
       "$games/bios/ps2" "$games/saves/retroarch" "$games/saves/pcsx2" \
       "$games/saves/dolphin/GC" "$games/saves/dolphin/Wii" \
       "$games/saves/rpcs3/savedata" "$games/saves/rpcs3/trophy" \
-      "$games/saves/duckstation" "$games/saves/mednafen" \
+      "$games/saves/duckstation" "$games/saves/mednafen" "$games/saves/ppsspp" \
+      "$games/saves/xemu" "$games/saves/xenia" "$games/saves/eden" "$games/saves/ryujinx" \
+      "$games/bios/xbox" "$games/bios/nds" \
       "$games/states/retroarch" "$games/screenshots"
 
     # Retro Crisis preset per core, re-seeded while it still carries our
@@ -201,6 +258,21 @@ in
         run printf '%s\n#reference "%s"\n' "${presetMarker}" ${lib.escapeShellArg (rcPreset system)} > "$f"
       fi
     '') corePresets)}
+
+    # xemu: blank HDD image once, and a config pointing at the bios/saves
+    # tree (xemu rewrites the file, so only when absent).
+    if [ ! -e "$games/saves/xemu/xbox_hdd.qcow2" ]; then
+      run install -Dm644 "${xemuHdd}/xbox_hdd.qcow2" "$games/saves/xemu/xbox_hdd.qcow2"
+    fi
+    xemu_cfg="${config.home.homeDirectory}/.local/share/xemu/xemu/xemu.toml"
+    if [ ! -e "$xemu_cfg" ]; then
+      run mkdir -p "$(dirname "$xemu_cfg")"
+      run printf '%s\n' '[sys.files]' \
+        "bootrom_path = '$games/bios/xbox/mcpx_1.0.bin'" \
+        "flashrom_path = '$games/bios/xbox/Complex_4627v1.03.bin'" \
+        "eeprom_path = '$games/saves/xemu/eeprom.bin'" \
+        "hdd_path = '$games/saves/xemu/xbox_hdd.qcow2'" > "$xemu_cfg"
+    fi
 
     # ES-DE seeds (only when absent: ES-DE owns these files afterwards).
     es="${config.home.homeDirectory}/ES-DE"
