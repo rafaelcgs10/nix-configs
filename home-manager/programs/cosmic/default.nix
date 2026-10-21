@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, lib, ... }:
+{ config, pkgs, pkgsUnstable, inputs, lib, ... }:
 
 let
   # Rosé Pine theme for COSMIC (rose-pine/cosmic-desktop). Stylix has no COSMIC
@@ -19,6 +19,28 @@ let
 
   # Docker/Podman container manager applet for the panel (see the file).
   container-manager-applet = pkgs.callPackage ./container-manager-applet.nix { };
+
+  # Panel monitors (cosmic-utils, both in nixpkgs):
+  # - minimon: CPU + memory ring charts and two network line charts (download
+  #   and upload), all interfaces, adaptive scale. Settings live in
+  #   cosmic-config (configFile below).
+  # - sysinfo: one text item from a template; used for the disk figure only,
+  #   `{disk_usage}` = used % over all local disks (deduplicated by device, no
+  #   device names involved, so the same config fits every host). Needs the
+  #   unstable build: the disk variables landed after the stable snapshot.
+  # Applet ids (desktop file names) for the panel's plugins list:
+  monitorApplets = [
+    "io.github.cosmic_utils.sysinfo-applet"
+    "io.github.cosmic_utils.minimon-applet"
+  ];
+  # Each entry is a partial NetworkConfig; serde fills the rest with defaults.
+  minimonConfig = {
+    version = 1;
+    entries = {
+      network1.variant = cosmicLib.cosmic.ron.mkRON "enum" "Download";
+      network2.variant = cosmicLib.cosmic.ron.mkRON "enum" "Upload";
+    };
+  };
   jq = "${pkgs.jq}/bin/jq";
 
   # --- Clipboard history (cliphist) -----------------------------------------
@@ -192,6 +214,19 @@ in
       entries.auto_switch = true;
     };
 
+    # sysinfo applet: only the disk figure; CPU/RAM/network come from minimon.
+    configFile."io.github.cosmic-utils.cosmic-ext-applet-sysinfo" = {
+      version = 1;
+      entries.template = "Disk {disk_usage}";
+    };
+
+    # minimon: two network charts, download and upload, instead of the default
+    # combined + upload pair. Each entry is a partial NetworkConfig (serde
+    # fills the rest with defaults). minimon reads the base id at start and
+    # the per-panel id afterwards (and writes there), so set both.
+    configFile."io.github.cosmic_utils.minimon-applet" = minimonConfig;
+    configFile."io.github.cosmic_utils.minimon-applet-panel" = minimonConfig;
+
     # COSMIC Terminal: font + Rosé Pine colour schemes. syntax_theme_dark /
     # _light follow the system dark/light mode, so the terminal tracks the
     # day/night auto switch too (Dawn by day, Main by night). The colour scheme
@@ -211,23 +246,30 @@ in
     };
   };
 
-  home.packages = [ pkgs.cliphist clipboard-picker clipboard-forget cosmic-theme-toggle cos-cli container-manager-applet ]
-    ++ map (chat: chat.toggle) chats;
+  home.packages = [
+    pkgs.cliphist clipboard-picker clipboard-forget cosmic-theme-toggle cos-cli
+    container-manager-applet
+    pkgs.cosmic-ext-applet-minimon
+    pkgsUnstable.cosmic-ext-applet-sysinfo
+  ] ++ map (chat: chat.toggle) chats;
 
-  # Pin the Container Manager applet in the panel's right wing, next to the
-  # status area, without taking over the whole applet list: panel layouts
-  # differ per host and are otherwise left to Settings > Panel. The RON file
-  # is `Some(([left...], [right...]))`; insert the applet id as the first entry
-  # of the right list if it is not present anywhere yet. cosmic-panel watches
-  # the file and reloads live. Skipped when the panel has never written its
-  # config (fresh host): add it once via Settings > Panel > Applets then.
-  home.activation.pinContainerManagerApplet = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  # Pin the monitor applets and the Container Manager in the panel's right
+  # wing, next to the status area, without taking over the whole applet list:
+  # panel layouts differ per host and are otherwise left to Settings > Panel.
+  # The RON file is `Some(([left...], [right...]))`; each id is inserted as
+  # the first entry of the right list if it is not present anywhere yet, in
+  # reverse order so the result reads sysinfo, minimon, container manager.
+  # cosmic-panel watches the file and reloads live. Skipped when the panel has
+  # never written its config (fresh host): add them once via Settings > Panel
+  # > Applets then.
+  home.activation.pinPanelApplets = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     wings="$HOME/.config/cosmic/com.system76.CosmicPanel.Panel/v1/plugins_wings"
-    applet="org.cosmic_utils.CosmicExtAppletContainerManager"
-    if [ -f "$wings" ] && ! ${pkgs.gnugrep}/bin/grep -q "$applet" "$wings" \
-       && ${pkgs.gnugrep}/bin/grep -q '^\], \[$' "$wings"; then
-      $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i "/^\], \[\$/a\\    \"$applet\"," "$wings"
-    fi
+    for applet in ${lib.escapeShellArgs (lib.reverseList (monitorApplets ++ [ "org.cosmic_utils.CosmicExtAppletContainerManager" ]))}; do
+      if [ -f "$wings" ] && ! ${pkgs.gnugrep}/bin/grep -q "$applet" "$wings" \
+         && ${pkgs.gnugrep}/bin/grep -q '^\], \[$' "$wings"; then
+        $DRY_RUN_CMD ${pkgs.gnused}/bin/sed -i "/^\], \[\$/a\\    \"$applet\"," "$wings"
+      fi
+    done
   '';
 
   # Match GTK apps to the COSMIC interface font. Set here (not in home.nix)
