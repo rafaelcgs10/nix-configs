@@ -15,13 +15,18 @@
 #   states/retroarch            save states (local, not synced: large and
 #                               core-version specific)
 #
-# Frontend: ES-DE launches everything from one controller UI. Per system:
+# Frontend: ES-DE launches everything from one controller UI. Defaults per
+# system (the seeded choice), with the alternatives ES-DE lists under
+# Other settings > Alternative emulators (only installed ones are offered):
 #   snes mastersystem gb gbc gba psx -> RetroArch cores (Snes9x, Genesis Plus
 #     GX, Gambatte, mGBA, Beetle PSX HW): Retro Crisis CRT shaders +
 #     RetroAchievements (log in once in RetroArch: Settings > Achievements).
+#     Alternatives: the other cores below, plus the standalone mednafen, ares,
+#     SameBoy, mGBA, Snes9x and DuckStation.
 #   ps2 gc wii -> PCSX2 / Dolphin standalone (achievements: log in once in
-#     each emulator's settings); ps3 -> RPCS3 (firmware PS3UPDAT.PUP installed
-#     once via its menu; no achievements, trophies only).
+#     each emulator's settings); alternatives: the LRPS2 and Dolphin RetroArch
+#     cores. ps3 -> RPCS3 (firmware PS3UPDAT.PUP installed once via its menu;
+#     no achievements, trophies only), no alternative exists.
 # ES-DE's own config lives in ~/ES-DE; the seeds below are written only when
 # absent, since ES-DE rewrites them.
 let
@@ -30,6 +35,7 @@ let
   link = config.lib.file.mkOutOfStoreSymlink;
 
   es-de = pkgs.callPackage ./es-de.nix { };
+  duckstation = pkgs.callPackage ./duckstation.nix { };
   shaders = pkgs.callPackage ./retro-crisis.nix { };
 
   # Retro Crisis ships per-resolution presets; bbstation drives a 4K panel,
@@ -39,12 +45,34 @@ let
   # RetroArch auto-loads ~/.config/retroarch/config/<corename>/<corename>.slangp
   # for a core. corename as in the core .info files.
   corePresets = {
+    # SNES
     "Snes9x" = "SNES";
+    "Snes9x 2010" = "SNES";
+    "bsnes" = "SNES";
+    "bsnes-hd beta" = "SNES";
+    "bsnes-mercury Accuracy" = "SNES";
+    "Beetle Supafaust" = "SNES";
+    "Mesen-S" = "SNES";
+    # Master System (PicoDrive/Genesis Plus GX also run Mega Drive)
     "Genesis Plus GX" = "Master System";
+    "SMS Plus GX" = "Master System";
+    "PicoDrive" = "Master System";
+    # Game Boy family: no dedicated Game Boy preset in the pack, GBA is closest
+    "Gambatte" = "GBA";
+    "SameBoy" = "GBA";
+    "TGB Dual" = "GBA";
     "mGBA" = "GBA";
-    "Gambatte" = "GBA"; # no dedicated Game Boy preset in the pack
+    "VBA-M" = "GBA";
+    "VBA Next" = "GBA";
+    "gpSP" = "GBA";
+    "Beetle GBA" = "GBA";
+    # PlayStation
     "Beetle PSX HW" = "PlayStation";
+    "Beetle PSX" = "PlayStation";
     "SwanStation" = "PlayStation";
+    "PCSX-ReARMed" = "PlayStation";
+    # PS2 core; the Dolphin core gets none (no GameCube preset in the pack)
+    "LRPS2" = "PS2";
   };
   presetMarker = "# seeded by nix-configs (home-manager/programs/emulation); delete this line to keep your own";
 
@@ -65,19 +93,51 @@ in
     pkgs.pcsx2       # PS2 (pcsx2-qt)
     pkgs.dolphin-emu # GameCube / Wii
     pkgs.rpcs3       # PS3
+    # Standalone alternatives ES-DE knows by binary name:
+    duckstation      # psx: "DuckStation (Standalone)"
+    pkgs.mednafen    # gb gbc gba snes mastersystem psx: "Mednafen (Standalone)"
+    pkgs.ares        # gb gbc gba snes mastersystem psx: "ares (Standalone)"
+    pkgs.sameboy     # gb gbc: "SameBoy (Standalone)"
+    pkgs.mgba        # gba gb gbc: "mGBA (Standalone)"
+    # pkgs.snes9x-gtk fails to build in nixpkgs 26.05 (missing unzip.h); the
+    # SNES cores above are plenty.
   ];
 
   programs.retroarch = {
     enable = true;
+    # First of each group is the one ES-DE uses by default (its own default
+    # or the seed below); the rest show up as alternatives in ES-DE.
     cores = {
-      snes9x.enable = true;          # SNES
-      genesis-plus-gx.enable = true; # Master System (also Game Gear/Mega Drive)
-      gambatte.enable = true;        # Game Boy / Color
-      mgba.enable = true;            # Game Boy Advance
-      beetle-psx-hw.enable = true;   # PlayStation (accurate; default in ES-DE seed)
-      swanstation.enable = true;     # PlayStation (DuckStation-based: faster,
-                                     # upscaling; pick it in ES-DE under
-                                     # Other settings > Alternative emulators > psx)
+      # SNES
+      snes9x.enable = true;
+      snes9x2010.enable = true;        # lighter
+      bsnes.enable = true;             # accuracy
+      bsnes-hd.enable = true;          # widescreen / HD mode 7
+      bsnes-mercury.enable = true;
+      beetle-supafaust.enable = true;
+      mesen-s.enable = true;
+      # Master System (Genesis Plus GX / PicoDrive also cover Game Gear, Mega Drive)
+      genesis-plus-gx.enable = true;
+      smsplus-gx.enable = true;
+      picodrive.enable = true;
+      # Game Boy / Color
+      gambatte.enable = true;
+      sameboy.enable = true;           # accuracy
+      tgbdual.enable = true;           # link cable
+      # Game Boy Advance
+      mgba.enable = true;
+      vba-m.enable = true;
+      vba-next.enable = true;
+      gpsp.enable = true;              # lightest
+      beetle-gba.enable = true;
+      # PlayStation
+      beetle-psx-hw.enable = true;     # accurate, GPU renderer
+      beetle-psx.enable = true;        # accurate, software renderer
+      swanstation.enable = true;       # DuckStation-based: fast, upscaling
+      pcsx-rearmed.enable = true;      # lightest
+      # PS2 and GameCube/Wii inside RetroArch (standalones are the default)
+      pcsx2.enable = true;             # LRPS2
+      dolphin.enable = true;
     };
     # Appended to retroarch.cfg on every start, so these always win; keep it
     # to paths and infrastructure so everything else stays tweakable in-menu.
@@ -109,6 +169,10 @@ in
     ".local/share/dolphin-emu/Wii".source = link "${games}/saves/dolphin/Wii";
     ".config/rpcs3/dev_hdd0/home/00000001/savedata".source = link "${games}/saves/rpcs3/savedata";
     ".config/rpcs3/dev_hdd0/home/00000001/trophy".source = link "${games}/saves/rpcs3/trophy";
+    ".local/share/duckstation/memcards".source = link "${games}/saves/duckstation";
+    ".local/share/duckstation/bios".source = link "${games}/bios"; # finds the scph*.bin there
+    ".mednafen/sav".source = link "${games}/saves/mednafen";
+    # ares, SameBoy, mGBA and Snes9x standalone save next to the ROM.
   };
 
   home.activation.emulationSetup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -118,6 +182,7 @@ in
       "$games/bios/ps2" "$games/saves/retroarch" "$games/saves/pcsx2" \
       "$games/saves/dolphin/GC" "$games/saves/dolphin/Wii" \
       "$games/saves/rpcs3/savedata" "$games/saves/rpcs3/trophy" \
+      "$games/saves/duckstation" "$games/saves/mednafen" \
       "$games/states/retroarch" "$games/screenshots"
 
     # Retro Crisis preset per core, re-seeded while it still carries our
