@@ -44,6 +44,7 @@ let
     "mGBA" = "GBA";
     "Gambatte" = "GBA"; # no dedicated Game Boy preset in the pack
     "Beetle PSX HW" = "PlayStation";
+    "SwanStation" = "PlayStation";
   };
   presetMarker = "# seeded by nix-configs (home-manager/programs/emulation); delete this line to keep your own";
 
@@ -73,7 +74,10 @@ in
       genesis-plus-gx.enable = true; # Master System (also Game Gear/Mega Drive)
       gambatte.enable = true;        # Game Boy / Color
       mgba.enable = true;            # Game Boy Advance
-      beetle-psx-hw.enable = true;   # PlayStation
+      beetle-psx-hw.enable = true;   # PlayStation (accurate; default in ES-DE seed)
+      swanstation.enable = true;     # PlayStation (DuckStation-based: faster,
+                                     # upscaling; pick it in ES-DE under
+                                     # Other settings > Alternative emulators > psx)
     };
     # Appended to retroarch.cfg on every start, so these always win; keep it
     # to paths and infrastructure so everything else stays tweakable in-menu.
