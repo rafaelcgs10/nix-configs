@@ -12,6 +12,7 @@
     ../programs/music/beets.nix
     ../programs/non-arm/default.nix
     ../programs/wine-apps/default.nix
+    ../programs/emulation/default.nix
     ../programs/nix-configs-autoupdate.nix
   ];
 }
