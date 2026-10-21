@@ -18,8 +18,8 @@
 # Frontend: ES-DE launches everything from one controller UI. Defaults per
 # system (the seeded choice), with the alternatives ES-DE lists under
 # Other settings > Alternative emulators (only installed ones are offered):
-#   snes mastersystem gb gbc gba psx -> RetroArch cores (Snes9x, Genesis Plus
-#     GX, Gambatte, mGBA, Beetle PSX HW): Retro Crisis CRT shaders +
+#   snes mastersystem gb gbc gba psx -> RetroArch cores (bsnes, SMS Plus GX,
+#     Gambatte, mGBA, Beetle PSX HW): Retro Crisis CRT shaders +
 #     RetroAchievements (log in once in RetroArch: Settings > Achievements).
 #     Alternatives: the other cores below, plus the standalone mednafen, ares,
 #     SameBoy, mGBA, Snes9x and DuckStation.
@@ -29,6 +29,11 @@
 #     no achievements, trophies only), no alternative exists.
 # ES-DE's own config lives in ~/ES-DE; the seeds below are written only when
 # absent, since ES-DE rewrites them.
+#
+# Only binary-cached packages (checked against cache.nixos.org 2026-10-21):
+# nothing here compiles locally. That is why Snes9x, Genesis Plus GX and
+# PicoDrive are absent and RPCS3 is the official AppImage. Re-check with
+#   curl -sI https://cache.nixos.org/$(basename $(nix eval --raw .#...outPath) | cut -d- -f1).narinfo
 let
   hostName = if osConfig == null then "" else osConfig.networking.hostName or "";
   games = "${config.home.homeDirectory}/Games";
@@ -36,6 +41,7 @@ let
 
   es-de = pkgs.callPackage ./es-de.nix { };
   duckstation = pkgs.callPackage ./duckstation.nix { };
+  rpcs3 = pkgs.callPackage ./rpcs3.nix { };
   shaders = pkgs.callPackage ./retro-crisis.nix { };
 
   # Retro Crisis ships per-resolution presets; bbstation drives a 4K panel,
@@ -46,17 +52,13 @@ let
   # for a core. corename as in the core .info files.
   corePresets = {
     # SNES
-    "Snes9x" = "SNES";
-    "Snes9x 2010" = "SNES";
     "bsnes" = "SNES";
     "bsnes-hd beta" = "SNES";
     "bsnes-mercury Accuracy" = "SNES";
     "Beetle Supafaust" = "SNES";
     "Mesen-S" = "SNES";
-    # Master System (PicoDrive/Genesis Plus GX also run Mega Drive)
-    "Genesis Plus GX" = "Master System";
+    # Master System
     "SMS Plus GX" = "Master System";
-    "PicoDrive" = "Master System";
     # Game Boy family: no dedicated Game Boy preset in the pack, GBA is closest
     "Gambatte" = "GBA";
     "SameBoy" = "GBA";
@@ -80,6 +82,8 @@ let
   # ES-DE defaults that point at cores/emulators we do not install; pin the
   # installed ones instead (ES-DE stores this at the top of each gamelist).
   esAltEmulators = {
+    snes = "bsnes";
+    mastersystem = "SMS Plus GX";
     psx = "Beetle PSX HW";
     ps2 = "PCSX2 (Standalone)";
     gc = "Dolphin (Standalone)";
@@ -92,7 +96,7 @@ in
     es-de
     pkgs.pcsx2       # PS2 (pcsx2-qt)
     pkgs.dolphin-emu # GameCube / Wii
-    pkgs.rpcs3       # PS3
+    rpcs3            # PS3 (AppImage)
     # Standalone alternatives ES-DE knows by binary name:
     duckstation      # psx: "DuckStation (Standalone)"
     pkgs.mednafen    # gb gbc gba snes mastersystem psx: "Mednafen (Standalone)"
@@ -109,17 +113,13 @@ in
     # or the seed below); the rest show up as alternatives in ES-DE.
     cores = {
       # SNES
-      snes9x.enable = true;
-      snes9x2010.enable = true;        # lighter
-      bsnes.enable = true;             # accuracy
+      bsnes.enable = true;             # accuracy (ES-DE default via seed)
       bsnes-hd.enable = true;          # widescreen / HD mode 7
       bsnes-mercury.enable = true;
       beetle-supafaust.enable = true;
       mesen-s.enable = true;
-      # Master System (Genesis Plus GX / PicoDrive also cover Game Gear, Mega Drive)
-      genesis-plus-gx.enable = true;
+      # Master System (also Game Gear)
       smsplus-gx.enable = true;
-      picodrive.enable = true;
       # Game Boy / Color
       gambatte.enable = true;
       sameboy.enable = true;           # accuracy
