@@ -353,6 +353,12 @@ in {
   };
   nix.settings.trusted-users = [ "root" "rafael" ];
 
+  # RPCS3 (PS3 emulation) wants to lock 2 GiB+ of memory and warns, then runs
+  # slower, with the default 8 MiB memlock limit. Applies at next login.
+  security.pam.loginLimits = [
+    { domain = "rafael"; type = "-"; item = "memlock"; value = "unlimited"; }
+  ];
+
   users.extraUsers.rafael = {
     shell = pkgs.zsh;
   };
