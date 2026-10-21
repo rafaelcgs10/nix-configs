@@ -161,6 +161,13 @@ in
   xdg.configFile."retroarch/cores".source =
     "${config.programs.retroarch.finalPackage}/lib/retroarch/cores";
 
+  # psx/ps2 without .bin in the extension list (see the file): a bin/cue dump
+  # is listed once. For a game that is a folder of files, name the folder
+  # after the file to launch, e.g. roms/psx/Game.cue/Game.cue + Game.bin:
+  # ES-DE then shows the folder as that single game. Multi-disc: Game.m3u/
+  # with the .m3u and all discs inside.
+  home.file."ES-DE/custom_systems/es_systems.xml".source = ./es-systems.xml;
+
   # Standalone emulators keep their saves where Syncthing sees them.
   home.file = {
     ".config/PCSX2/memcards".source = link "${games}/saves/pcsx2";
