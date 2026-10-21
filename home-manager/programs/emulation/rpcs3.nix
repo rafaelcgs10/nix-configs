@@ -4,7 +4,7 @@
 # is used either way, so switching back to pkgs.rpcs3 later keeps the data.
 # Update: https://github.com/RPCS3/rpcs3-binaries-linux/releases/latest, then
 #   nix store prefetch-file <AppImage url>
-{ lib, appimageTools, fetchurl, runCommand }:
+{ lib, appimageTools, fetchurl, runCommand, dwarfs }:
 let
   pname = "rpcs3";
   version = "0.0.43-20366";
@@ -12,13 +12,12 @@ let
     url = "https://github.com/RPCS3/rpcs3-binaries-linux/releases/download/build-4e078e07a847d1b07edcb4dd9657bc6e99eb7e35/rpcs3-v0.0.43-20366-4e078e07_linux64.AppImage";
     hash = "sha256-wYpThUBeQtmBVohdbCTAxIMkWjB3T2Z+qcLgInYrMx8=";
   };
-  # RPCS3 ships a DwarFS AppImage, which appimageTools.extract (unsquashfs)
-  # cannot read; its static runtime can extract itself, so use that.
-  extracted = runCommand "${pname}-${version}-extracted" { } ''
-    cp ${src} app.AppImage
-    chmod +x app.AppImage
-    ./app.AppImage --appimage-extract > /dev/null
-    mv squashfs-root $out
+  # RPCS3 ships a DwarFS AppImage: appimageTools.extract (unsquashfs) cannot
+  # read it and the runtime's own --appimage-extract needs FUSE, which the
+  # build sandbox lacks. dwarfsextract reads the image directly.
+  extracted = runCommand "${pname}-${version}-extracted" { nativeBuildInputs = [ dwarfs ]; } ''
+    mkdir -p $out
+    dwarfsextract -i ${src} --image-offset=auto -o $out
   '';
 in
 appimageTools.wrapAppImage {
