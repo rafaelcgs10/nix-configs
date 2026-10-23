@@ -57,6 +57,10 @@
 # stick and d-pad apart: W A S D = left stick, arrows = d-pad only,
 # Z X C V = cross circle square triangle, Q E = L1 R1, R T = L2 R2, 1 2 =
 # L3 R3, I J K L = right stick.
+# N64 only (Mupen64Plus-Next and ParaLLEl N64 overrides): Z = A, X = B,
+# C = Z trigger (gas in Road Rash 64, Mupen maps it to RetroPad L2), Q W =
+# L R, I J K L = C-buttons, arrows = stick and d-pad, Enter = Start; the
+# RetroPad A/X slots (C-right/C-up duplicates) are unbound so X stays B.
 # RetroArch leaves L2/R2/L3/R3 and both sticks unbound on the keyboard by
 # default and uses letters as hotkeys (R rewind, L fast-forward, E slow
 # motion, K frame advance, I netplay), so those binds are added and those
@@ -196,6 +200,17 @@ let
   '' + lib.concatStringsSep "\n" (lib.concatLists (lib.mapAttrsToList
     (k: vs: map (v: "${k} = ${v}") vs) pcsx2Binds)) + "\n");
   pcsx2Pad = pkgs.writers.writePython3Bin "pcsx2-pad" { } (builtins.readFile ./pcsx2-pad.py);
+
+  # N64 cores: RetroPad B/Y/L2 are N64 A/B/Z (see the Input note).
+  n64Override = ''
+    input_player1_b = "z"
+    input_player1_y = "x"
+    input_player1_l2 = "c"
+    input_player1_a = "nul"
+    input_player1_x = "nul"
+    input_player1_l3 = "nul"
+    input_player1_r3 = "nul"
+  '';
   duckstation = pkgs.callPackage ./duckstation.nix { };
   rpcs3 = pkgs.callPackage ./rpcs3.nix { };
   # PS3 system software, straight from Sony's update server (the same file
@@ -453,6 +468,8 @@ in
   # loads config/<core name>/<core name>.cfg on top of the main config when
   # that core starts. Managed file, so "Save Core Overrides" in the menu
   # cannot replace it; edit here instead.
+  xdg.configFile."retroarch/config/Mupen64Plus-Next/Mupen64Plus-Next.cfg".text = n64Override;
+  xdg.configFile."retroarch/config/ParaLLEl N64/ParaLLEl N64.cfg".text = n64Override;
   xdg.configFile."retroarch/config/LRPS2/LRPS2.cfg".text = ''
     input_player1_l_y_minus = "w"
     input_player1_l_y_plus = "s"
