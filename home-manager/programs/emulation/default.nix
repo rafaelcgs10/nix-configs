@@ -27,9 +27,11 @@
 #   megadrive n64 nds -> RetroArch cores (BlastEm, Mupen64Plus-Next, melonDS),
 #     alternatives ParaLLEl N64, DeSmuME and the standalone blastem, simple64,
 #     RMG, melonDS, DeSmuME, ares, mednafen.
-#   ps2 gc wii psp -> PCSX2 / Dolphin / PPSSPP standalone (achievements: log
-#     in once in each emulator's settings); alternatives: the LRPS2, Dolphin
-#     and PPSSPP RetroArch cores. ps3 -> RPCS3: Sony's firmware (PS3UPDAT.PUP
+#   ps2 gc wii psp -> RetroArch cores too (LRPS2, Dolphin, PPSSPP), so one
+#     frontend, one input setup and one shader/achievement config cover them;
+#     PCSX2, Dolphin and PPSSPP standalone remain as alternatives. The core
+#     data they need is linked under bios/ (pcsx2/bios -> ps2, dolphin-emu/Sys
+#     and PPSSPP from the cores' own sources). ps3 -> RPCS3: Sony's firmware (PS3UPDAT.PUP
 #     4.93, fetched from Sony) is installed into ~/.config/rpcs3 by the
 #     activation step below when missing, so nothing is needed in its menu.
 #     Disc dumps go in roms/ps3/<Game>.ps3dir/ (the folder holding PS3_GAME/);
@@ -44,18 +46,25 @@
 # ES-DE's own config lives in ~/ES-DE; the seeds below are written only when
 # absent, since ES-DE rewrites them.
 #
-# Input: keyboard first, a DualShock 4 as a drop-in. RetroArch ships keyboard
-# defaults (arrows, Z/X/A/S, Q/W, Enter, RShift) and auto-binds any pad it
-# recognises, so the libretro systems need nothing. The standalones are set
-# here (see `padInput` below): the same keys as RetroArch where the pad has
-# the same buttons, arrows driving the main/left stick (what 3D and racing
-# games read) as well as the d-pad on PS2, IJKL for the second stick, and
-# every binding doubled with the DS4's SDL name, so plugging the pad in just
-# works and unplugging it falls back to the keys. Dolphin has no Wayland input
-# backend at all (its keyboard device is XInput2), so it is wrapped to run on
-# XWayland. RPCS3 keeps its own keyboard defaults (WASD move, arrows d-pad,
-# X/C/Z/V = cross/circle/square/triangle); a DS4 there is a one-time switch
-# in Pads > Player 1 (handler SDL), since RPCS3 binds one handler per player.
+# Input: keyboard first, a DualShock 4 as a drop-in. One keyboard layout for
+# every emulator, built on RetroArch's defaults:
+#   arrows = d-pad AND left stick (what 3D and racing games read)
+#   Z X A S = RetroPad B A Y X (PS cross circle square triangle; GC B A X Y)
+#   Q W = L1 R1 (GC: W = Z)     E R = L2 R2 (GC: the L and R triggers)
+#   C V = L3 R3                 I J K L = right stick / C-stick
+#   Enter = Start, Right Shift (or Backspace) = Select
+# RetroArch leaves L2/R2/L3/R3 and both sticks unbound on the keyboard by
+# default and uses letters as hotkeys (R rewind, L fast-forward, E slow
+# motion, K frame advance, I netplay), so those binds are added and those
+# five hotkeys cleared below; the rest (F1 menu, Esc, F-keys, F fullscreen, P
+# pause, H reset) stay. RetroArch auto-binds any pad it recognises. The
+# standalones (PCSX2, Dolphin) carry every binding twice, keyboard and the
+# DS4's SDL name, so plugging the pad in just works and unplugging it falls
+# back to the keys. Dolphin has no Wayland input backend at all (its keyboard
+# device is XInput2), so it is wrapped to run on XWayland. RPCS3 keeps its
+# own keyboard defaults (WASD move, arrows d-pad, X/C/Z/V = cross/circle/
+# square/triangle); a DS4 there is a one-time switch in Pads > Player 1
+# (handler SDL), since RPCS3 binds one handler per player.
 #
 # Only binary-cached packages (checked against cache.nixos.org 2026-10-21):
 # nothing here compiles locally. That is why Snes9x, Genesis Plus GX and
@@ -88,10 +97,10 @@ let
   # under another name and adjust here.
   ds4Dolphin = "SDL/0/PS4 Controller";
   ds4Pcsx2 = "SDL-0";
-  # Dolphin GameCube pad: its default keyboard layout plus the DS4 on every
-  # control (`a | b` = either source). Keyboard: X/Z/C/S = A/B/X/Y, D = Z,
-  # arrows = main stick (Shift = walk), IJKL = C-stick, Q/W = L/R, TGFH =
-  # d-pad, Enter = Start.
+  # Dolphin GameCube pad: the shared layout above plus the DS4 on every
+  # control (`a | b` = either source): X/Z/C/S = A/B/X/Y, W = Z, E/R = L/R
+  # triggers (same keys as the RetroArch Dolphin core, where they are L2/R2),
+  # arrows = main stick (Shift = walk), IJKL = C-stick, TGFH = d-pad.
   gcPadIni = ''
     [GCPad1]
     Device = XInput2/0/Virtual core pointer
@@ -99,7 +108,7 @@ let
     Buttons/B = `Z` | `${ds4Dolphin}:Button B`
     Buttons/X = `C` | `${ds4Dolphin}:Button X`
     Buttons/Y = `S` | `${ds4Dolphin}:Button Y`
-    Buttons/Z = `D` | `${ds4Dolphin}:Shoulder R`
+    Buttons/Z = `W` | `${ds4Dolphin}:Shoulder R`
     Buttons/Start = `Return` | `${ds4Dolphin}:Start`
     Main Stick/Up = `Up` | `${ds4Dolphin}:Left Y+`
     Main Stick/Down = `Down` | `${ds4Dolphin}:Left Y-`
@@ -113,8 +122,8 @@ let
     C-Stick/Right = `L` | `${ds4Dolphin}:Right X+`
     C-Stick/Modifier = `Ctrl`
     C-Stick/Calibration = 100.00 141.42 100.00 141.42 100.00 141.42 100.00 141.42
-    Triggers/L = `Q` | `${ds4Dolphin}:Trigger L`
-    Triggers/R = `W` | `${ds4Dolphin}:Trigger R`
+    Triggers/L = `E` | `${ds4Dolphin}:Trigger L`
+    Triggers/R = `R` | `${ds4Dolphin}:Trigger R`
     Triggers/L-Analog = `${ds4Dolphin}:Trigger L`
     Triggers/R-Analog = `${ds4Dolphin}:Trigger R`
     D-Pad/Up = `T` | `${ds4Dolphin}:Pad N`
@@ -132,7 +141,7 @@ let
   # PCSX2 pad 1 (DualShock 2). A binding with several sources is stored as
   # the key repeated once per source. Keyboard follows RetroArch's PS1 layout
   # (Z/X/A/S = cross/circle/square/triangle, Q/W = L1/R1, Enter/Backspace or
-  # Shift = Start/Select) with E/R = L2/R2, F/G = L3/R3, arrows = d-pad AND
+  # Shift = Start/Select) with E/R = L2/R2, C/V = L3/R3, arrows = d-pad AND
   # left stick, IJKL = right stick.
   pcsx2Binds = {
     Up = [ "Keyboard/Up" "${ds4Pcsx2}/DPadUp" ];
@@ -147,8 +156,8 @@ let
     R1 = [ "Keyboard/W" "${ds4Pcsx2}/RightShoulder" ];
     L2 = [ "Keyboard/E" "${ds4Pcsx2}/+LeftTrigger" ];
     R2 = [ "Keyboard/R" "${ds4Pcsx2}/+RightTrigger" ];
-    L3 = [ "Keyboard/F" "${ds4Pcsx2}/LeftStick" ];
-    R3 = [ "Keyboard/G" "${ds4Pcsx2}/RightStick" ];
+    L3 = [ "Keyboard/C" "${ds4Pcsx2}/LeftStick" ];
+    R3 = [ "Keyboard/V" "${ds4Pcsx2}/RightStick" ];
     Start = [ "Keyboard/Return" "${ds4Pcsx2}/Start" ];
     Select = [ "Keyboard/Backspace" "Keyboard/Shift" "${ds4Pcsx2}/Back" ];
     LUp = [ "Keyboard/Up" "${ds4Pcsx2}/-LeftY" ];
@@ -297,20 +306,30 @@ let
     "snes" "mastersystem" "megadrive" "gb" "gbc" "gba" "n64" "nds"
     "psx" "ps2" "psp" "ps3" "gc" "wii" "xbox" "xbox360" "switch"
   ];
-  # ES-DE defaults that point at cores/emulators we do not install; pin the
-  # installed ones instead (ES-DE stores this at the top of each gamelist).
+  # Default emulator per system, asserted into the top of each gamelist on
+  # every activation (ES-DE stores the choice there; labels as in its
+  # es_systems.xml and our es-systems.xml override). RetroArch cores wherever
+  # one exists; standalones only where there is no core.
   esAltEmulators = {
     snes = "bsnes";
     mastersystem = "SMS Plus GX";
     megadrive = "BlastEm";
+    gb = "Gambatte";
+    gbc = "Gambatte";
+    gba = "mGBA";
+    n64 = "Mupen64Plus-Next";
     nds = "melonDS";
     psx = "Beetle PSX HW";
-    psp = "PPSSPP (Standalone)";
-    ps2 = "PCSX2 (Standalone)";
-    gc = "Dolphin (Standalone)";
-    wii = "Dolphin (Standalone)";
+    ps2 = "LRPS2";
+    psp = "PPSSPP";
+    gc = "Dolphin";
+    wii = "Dolphin";
     ps3 = "RPCS3 Directory (Standalone)"; # games as roms/ps3/<name>.ps3dir/ folders
+    xbox = "xemu (Standalone)";
+    xbox360 = "xenia (Standalone)";
+    switch = "Eden (Standalone)";
   };
+  esAltEmulator = pkgs.writers.writePython3Bin "es-alt-emulator" { } (builtins.readFile ./es-alt-emulator.py);
 in
 {
   home.packages = [
@@ -395,6 +414,28 @@ in
       video_shader_enable = "true";
       cheevos_enable = "true"; # credentials entered once in the menu
       quit_press_twice = "false";
+      # Keyboard: the shared layout (see the Input note at the top). RetroArch
+      # binds nothing to these by default, which left the Dolphin core's GC
+      # triggers (L2/R2) and main stick without keys.
+      input_player1_l2 = "e";
+      input_player1_r2 = "r";
+      input_player1_l3 = "c";
+      input_player1_r3 = "v";
+      input_player1_l_x_minus = "left";
+      input_player1_l_x_plus = "right";
+      input_player1_l_y_minus = "up";
+      input_player1_l_y_plus = "down";
+      input_player1_r_x_minus = "j";
+      input_player1_r_x_plus = "l";
+      input_player1_r_y_minus = "i";
+      input_player1_r_y_plus = "k";
+      # Letter hotkeys that would fire on those pad keys.
+      input_rewind = "nul";
+      input_hold_fast_forward = "nul";
+      input_hold_slowmotion = "nul";
+      input_toggle_slowmotion = "nul";
+      input_frame_advance = "nul";
+      input_netplay_game_watch = "nul";
     };
   };
 
@@ -417,6 +458,13 @@ in
   # Dolphin GameCube pad: fully managed (Dolphin cannot save over it, so
   # mapping changes belong here).
   home.file.".config/dolphin-emu/GCPadNew.ini" = { text = gcPadIni; force = true; };
+
+  # Data the RetroArch cores look for under the system dir (bios/): LRPS2
+  # reads pcsx2/bios (same files as PCSX2's bios/ps2), the Dolphin core needs
+  # Dolphin's Sys tree, PPSSPP its assets; both come from the cores' sources.
+  home.file."Games/bios/pcsx2/bios".source = link "${games}/bios/ps2";
+  home.file."Games/bios/dolphin-emu/Sys".source = "${pkgs.libretro.dolphin.src}/Data/Sys";
+  home.file."Games/bios/PPSSPP".source = "${pkgs.libretro.ppsspp.src}/assets";
 
   # Standalone emulators keep their saves where Syncthing sees them.
   home.file = {
@@ -539,13 +587,12 @@ in
       set_es_setting ThemeColorScheme ps5-custom
       set_es_setting ROMDirectory "${romsDir}"
     fi
+    # Default emulator per system (see esAltEmulators). ES-DE rewrites the
+    # gamelists itself, so only while it is not running.
+    if ! ${pkgs.procps}/bin/pgrep -x es-de >/dev/null 2>&1; then
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList (system: label: ''
-      g="$es/gamelists/${system}/gamelist.xml"
-      if [ ! -e "$g" ]; then
-        run mkdir -p "$(dirname "$g")"
-        run printf '%s\n' '<?xml version="1.0"?>' '<alternativeEmulator>' \
-          '	<label>${label}</label>' '</alternativeEmulator>' '<gameList />' > "$g"
-      fi
+      run ${esAltEmulator}/bin/es-alt-emulator "$es/gamelists/${system}/gamelist.xml" ${lib.escapeShellArg label}
     '') esAltEmulators)}
+    fi
   '';
 }
