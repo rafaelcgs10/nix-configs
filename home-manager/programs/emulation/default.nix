@@ -44,6 +44,19 @@
 # ES-DE's own config lives in ~/ES-DE; the seeds below are written only when
 # absent, since ES-DE rewrites them.
 #
+# Input: keyboard first, a DualShock 4 as a drop-in. RetroArch ships keyboard
+# defaults (arrows, Z/X/A/S, Q/W, Enter, RShift) and auto-binds any pad it
+# recognises, so the libretro systems need nothing. The standalones are set
+# here (see `padInput` below): the same keys as RetroArch where the pad has
+# the same buttons, arrows driving the main/left stick (what 3D and racing
+# games read) as well as the d-pad on PS2, IJKL for the second stick, and
+# every binding doubled with the DS4's SDL name, so plugging the pad in just
+# works and unplugging it falls back to the keys. Dolphin has no Wayland input
+# backend at all (its keyboard device is XInput2), so it is wrapped to run on
+# XWayland. RPCS3 keeps its own keyboard defaults (WASD move, arrows d-pad,
+# X/C/Z/V = cross/circle/square/triangle); a DS4 there is a one-time switch
+# in Pads > Player 1 (handler SDL), since RPCS3 binds one handler per player.
+#
 # Only binary-cached packages (checked against cache.nixos.org 2026-10-21):
 # nothing here compiles locally. That is why Snes9x, Genesis Plus GX and
 # PicoDrive are absent and RPCS3 is the official AppImage. Re-check with
@@ -58,6 +71,119 @@ let
   link = config.lib.file.mkOutOfStoreSymlink;
 
   es-de = pkgs.callPackage ./es-de.nix { };
+  # Dolphin only exposes keyboard/mouse through XInput2, i.e. under X11. With
+  # the session's QT_QPA_PLATFORM=wayland;xcb it starts natively on Wayland and
+  # lists no input device, so every keyboard binding is dead. Force XWayland.
+  dolphin = pkgs.symlinkJoin {
+    name = "dolphin-emu-xwayland";
+    paths = [ pkgs.dolphin-emu ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/dolphin-emu --set QT_QPA_PLATFORM xcb
+    '';
+  };
+
+  # DS4 as SDL names it (both the hidapi and the evdev path). Check with
+  # Dolphin's controller dialog or PCSX2's binding dialog if a pad shows up
+  # under another name and adjust here.
+  ds4Dolphin = "SDL/0/PS4 Controller";
+  ds4Pcsx2 = "SDL-0";
+  # Dolphin GameCube pad: its default keyboard layout plus the DS4 on every
+  # control (`a | b` = either source). Keyboard: X/Z/C/S = A/B/X/Y, D = Z,
+  # arrows = main stick (Shift = walk), IJKL = C-stick, Q/W = L/R, TGFH =
+  # d-pad, Enter = Start.
+  gcPadIni = ''
+    [GCPad1]
+    Device = XInput2/0/Virtual core pointer
+    Buttons/A = `X` | `${ds4Dolphin}:Button A`
+    Buttons/B = `Z` | `${ds4Dolphin}:Button B`
+    Buttons/X = `C` | `${ds4Dolphin}:Button X`
+    Buttons/Y = `S` | `${ds4Dolphin}:Button Y`
+    Buttons/Z = `D` | `${ds4Dolphin}:Shoulder R`
+    Buttons/Start = `Return` | `${ds4Dolphin}:Start`
+    Main Stick/Up = `Up` | `${ds4Dolphin}:Left Y+`
+    Main Stick/Down = `Down` | `${ds4Dolphin}:Left Y-`
+    Main Stick/Left = `Left` | `${ds4Dolphin}:Left X-`
+    Main Stick/Right = `Right` | `${ds4Dolphin}:Left X+`
+    Main Stick/Modifier = `Shift`
+    Main Stick/Calibration = 100.00 141.42 100.00 141.42 100.00 141.42 100.00 141.42
+    C-Stick/Up = `I` | `${ds4Dolphin}:Right Y+`
+    C-Stick/Down = `K` | `${ds4Dolphin}:Right Y-`
+    C-Stick/Left = `J` | `${ds4Dolphin}:Right X-`
+    C-Stick/Right = `L` | `${ds4Dolphin}:Right X+`
+    C-Stick/Modifier = `Ctrl`
+    C-Stick/Calibration = 100.00 141.42 100.00 141.42 100.00 141.42 100.00 141.42
+    Triggers/L = `Q` | `${ds4Dolphin}:Trigger L`
+    Triggers/R = `W` | `${ds4Dolphin}:Trigger R`
+    Triggers/L-Analog = `${ds4Dolphin}:Trigger L`
+    Triggers/R-Analog = `${ds4Dolphin}:Trigger R`
+    D-Pad/Up = `T` | `${ds4Dolphin}:Pad N`
+    D-Pad/Down = `G` | `${ds4Dolphin}:Pad S`
+    D-Pad/Left = `F` | `${ds4Dolphin}:Pad W`
+    D-Pad/Right = `H` | `${ds4Dolphin}:Pad E`
+    Rumble/Motor = `${ds4Dolphin}:Motor L` | `${ds4Dolphin}:Motor R`
+    [GCPad2]
+    Device = XInput2/0/Virtual core pointer
+    [GCPad3]
+    Device = XInput2/0/Virtual core pointer
+    [GCPad4]
+    Device = XInput2/0/Virtual core pointer
+  '';
+  # PCSX2 pad 1 (DualShock 2). A binding with several sources is stored as
+  # the key repeated once per source. Keyboard follows RetroArch's PS1 layout
+  # (Z/X/A/S = cross/circle/square/triangle, Q/W = L1/R1, Enter/Backspace or
+  # Shift = Start/Select) with E/R = L2/R2, F/G = L3/R3, arrows = d-pad AND
+  # left stick, IJKL = right stick.
+  pcsx2Binds = {
+    Up = [ "Keyboard/Up" "${ds4Pcsx2}/DPadUp" ];
+    Down = [ "Keyboard/Down" "${ds4Pcsx2}/DPadDown" ];
+    Left = [ "Keyboard/Left" "${ds4Pcsx2}/DPadLeft" ];
+    Right = [ "Keyboard/Right" "${ds4Pcsx2}/DPadRight" ];
+    Cross = [ "Keyboard/Z" "${ds4Pcsx2}/FaceSouth" ];
+    Circle = [ "Keyboard/X" "${ds4Pcsx2}/FaceEast" ];
+    Square = [ "Keyboard/A" "${ds4Pcsx2}/FaceWest" ];
+    Triangle = [ "Keyboard/S" "${ds4Pcsx2}/FaceNorth" ];
+    L1 = [ "Keyboard/Q" "${ds4Pcsx2}/LeftShoulder" ];
+    R1 = [ "Keyboard/W" "${ds4Pcsx2}/RightShoulder" ];
+    L2 = [ "Keyboard/E" "${ds4Pcsx2}/+LeftTrigger" ];
+    R2 = [ "Keyboard/R" "${ds4Pcsx2}/+RightTrigger" ];
+    L3 = [ "Keyboard/F" "${ds4Pcsx2}/LeftStick" ];
+    R3 = [ "Keyboard/G" "${ds4Pcsx2}/RightStick" ];
+    Start = [ "Keyboard/Return" "${ds4Pcsx2}/Start" ];
+    Select = [ "Keyboard/Backspace" "Keyboard/Shift" "${ds4Pcsx2}/Back" ];
+    LUp = [ "Keyboard/Up" "${ds4Pcsx2}/-LeftY" ];
+    LDown = [ "Keyboard/Down" "${ds4Pcsx2}/+LeftY" ];
+    LLeft = [ "Keyboard/Left" "${ds4Pcsx2}/-LeftX" ];
+    LRight = [ "Keyboard/Right" "${ds4Pcsx2}/+LeftX" ];
+    RUp = [ "Keyboard/I" "${ds4Pcsx2}/-RightY" ];
+    RDown = [ "Keyboard/K" "${ds4Pcsx2}/+RightY" ];
+    RLeft = [ "Keyboard/J" "${ds4Pcsx2}/-RightX" ];
+    RRight = [ "Keyboard/L" "${ds4Pcsx2}/+RightX" ];
+    LargeMotor = [ "${ds4Pcsx2}/LargeMotor" ];
+    SmallMotor = [ "${ds4Pcsx2}/SmallMotor" ];
+  };
+  pcsx2PadBlock = pkgs.writeText "pcsx2-pad.ini" (''
+    [InputSources]
+    Keyboard = true
+    Mouse = true
+    SDL = true
+    SDLControllerEnhancedMode = true
+    SDLPS5PlayerLED = true
+
+
+    [Pad1]
+    Type = DualShock2
+    InvertL = 0
+    InvertR = 0
+    Deadzone = 0
+    AxisScale = 1.33
+    LargeMotorScale = 1
+    SmallMotorScale = 1
+    ButtonDeadzone = 0
+    PressureModifier = 0.5
+  '' + lib.concatStringsSep "\n" (lib.concatLists (lib.mapAttrsToList
+    (k: vs: map (v: "${k} = ${v}") vs) pcsx2Binds)) + "\n");
+  pcsx2Pad = pkgs.writers.writePython3Bin "pcsx2-pad" { } (builtins.readFile ./pcsx2-pad.py);
   duckstation = pkgs.callPackage ./duckstation.nix { };
   rpcs3 = pkgs.callPackage ./rpcs3.nix { };
   # PS3 system software, straight from Sony's update server (the same file
@@ -190,7 +316,7 @@ in
   home.packages = [
     es-de
     pkgs.pcsx2       # PS2 (pcsx2-qt)
-    pkgs.dolphin-emu # GameCube / Wii
+    dolphin          # GameCube / Wii (pkgs.dolphin-emu forced onto XWayland)
     rpcs3            # PS3 (AppImage)
     pkgs.ppsspp      # PSP: "PPSSPP (Standalone)"
     pkgs.xemu        # Xbox
@@ -288,6 +414,10 @@ in
   # below, since home-manager will not replace a real directory.
   home.file."ES-DE/themes/playstation-x-es-de".source = playstation-x-theme;
 
+  # Dolphin GameCube pad: fully managed (Dolphin cannot save over it, so
+  # mapping changes belong here).
+  home.file.".config/dolphin-emu/GCPadNew.ini" = { text = gcPadIni; force = true; };
+
   # Standalone emulators keep their saves where Syncthing sees them.
   home.file = {
     ".config/PCSX2/memcards".source = link "${games}/saves/pcsx2";
@@ -355,6 +485,14 @@ in
         "flashrom_path = '$games/bios/xbox/Complex_4627v1.03.bin'" \
         "eeprom_path = '$games/saves/xemu/eeprom.bin'" \
         "hdd_path = '$games/saves/xemu/xbox_hdd.qcow2'" > "$xemu_cfg"
+    fi
+
+    # PCSX2 pad 1 + input sources: asserted on every activation while PCSX2 is
+    # not running (it rewrites the ini on exit). Other sections are untouched.
+    pcsx2_ini="${config.xdg.configHome}/PCSX2/inis/PCSX2.ini"
+    if ! ${pkgs.procps}/bin/pgrep -x pcsx2-qt >/dev/null 2>&1; then
+      run mkdir -p "$(dirname "$pcsx2_ini")"
+      run ${pcsx2Pad}/bin/pcsx2-pad "$pcsx2_ini" ${pcsx2PadBlock}
     fi
 
     # RPCS3: install the PS3 firmware once (headless, ~30 s), and make it quit

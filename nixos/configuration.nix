@@ -353,6 +353,11 @@ in {
   };
   nix.settings.trusted-users = [ "root" "rafael" ];
 
+  # udev rules granting the user access to game controllers (DualShock 4 over
+  # USB/Bluetooth incl. hidraw for rumble/motion, Xbox, Switch pads). Used by
+  # the emulators in home-manager/programs/emulation.
+  hardware.steam-hardware.enable = true;
+
   # RPCS3 (PS3 emulation) wants to lock 2 GiB+ of memory and warns, then runs
   # slower, with the default 8 MiB memlock limit. Applies at next login.
   security.pam.loginLimits = [
