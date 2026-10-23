@@ -53,6 +53,10 @@
 #   Q W = L1 R1 (GC: W = Z)     E R = L2 R2 (GC: the L and R triggers)
 #   C V = L3 R3                 I J K L = right stick / C-stick
 #   Enter = Start, Right Shift (or Backspace) = Select
+# PS2 only (LRPS2 core override + PCSX2 standalone), for 3D games that need
+# stick and d-pad apart: W A S D = left stick, arrows = d-pad only,
+# Z X C V = cross circle square triangle, Q E = L1 R1, R T = L2 R2, 1 2 =
+# L3 R3, I J K L = right stick.
 # RetroArch leaves L2/R2/L3/R3 and both sticks unbound on the keyboard by
 # default and uses letters as hotkeys (R rewind, L fast-forward, E slow
 # motion, K frame advance, I netplay), so those binds are added and those
@@ -139,10 +143,9 @@ let
     Device = XInput2/0/Virtual core pointer
   '';
   # PCSX2 pad 1 (DualShock 2). A binding with several sources is stored as
-  # the key repeated once per source. Keyboard follows RetroArch's PS1 layout
-  # (Z/X/A/S = cross/circle/square/triangle, Q/W = L1/R1, Enter/Backspace or
-  # Shift = Start/Select) with E/R = L2/R2, C/V = L3/R3, arrows = d-pad AND
-  # left stick, IJKL = right stick.
+  # the key repeated once per source. Keyboard = the PS2 layout from the
+  # Input note (WASD stick, arrows d-pad, ZXCV face, QE/RT shoulders, 1/2
+  # stick clicks, IJKL right stick, Enter/Backspace or Shift Start/Select).
   pcsx2Binds = {
     Up = [ "Keyboard/Up" "${ds4Pcsx2}/DPadUp" ];
     Down = [ "Keyboard/Down" "${ds4Pcsx2}/DPadDown" ];
@@ -150,20 +153,20 @@ let
     Right = [ "Keyboard/Right" "${ds4Pcsx2}/DPadRight" ];
     Cross = [ "Keyboard/Z" "${ds4Pcsx2}/FaceSouth" ];
     Circle = [ "Keyboard/X" "${ds4Pcsx2}/FaceEast" ];
-    Square = [ "Keyboard/A" "${ds4Pcsx2}/FaceWest" ];
-    Triangle = [ "Keyboard/S" "${ds4Pcsx2}/FaceNorth" ];
+    Square = [ "Keyboard/C" "${ds4Pcsx2}/FaceWest" ];
+    Triangle = [ "Keyboard/V" "${ds4Pcsx2}/FaceNorth" ];
     L1 = [ "Keyboard/Q" "${ds4Pcsx2}/LeftShoulder" ];
-    R1 = [ "Keyboard/W" "${ds4Pcsx2}/RightShoulder" ];
-    L2 = [ "Keyboard/E" "${ds4Pcsx2}/+LeftTrigger" ];
-    R2 = [ "Keyboard/R" "${ds4Pcsx2}/+RightTrigger" ];
-    L3 = [ "Keyboard/C" "${ds4Pcsx2}/LeftStick" ];
-    R3 = [ "Keyboard/V" "${ds4Pcsx2}/RightStick" ];
+    R1 = [ "Keyboard/E" "${ds4Pcsx2}/RightShoulder" ];
+    L2 = [ "Keyboard/R" "${ds4Pcsx2}/+LeftTrigger" ];
+    R2 = [ "Keyboard/T" "${ds4Pcsx2}/+RightTrigger" ];
+    L3 = [ "Keyboard/1" "${ds4Pcsx2}/LeftStick" ];
+    R3 = [ "Keyboard/2" "${ds4Pcsx2}/RightStick" ];
     Start = [ "Keyboard/Return" "${ds4Pcsx2}/Start" ];
     Select = [ "Keyboard/Backspace" "Keyboard/Shift" "${ds4Pcsx2}/Back" ];
-    LUp = [ "Keyboard/Up" "${ds4Pcsx2}/-LeftY" ];
-    LDown = [ "Keyboard/Down" "${ds4Pcsx2}/+LeftY" ];
-    LLeft = [ "Keyboard/Left" "${ds4Pcsx2}/-LeftX" ];
-    LRight = [ "Keyboard/Right" "${ds4Pcsx2}/+LeftX" ];
+    LUp = [ "Keyboard/W" "${ds4Pcsx2}/-LeftY" ];
+    LDown = [ "Keyboard/S" "${ds4Pcsx2}/+LeftY" ];
+    LLeft = [ "Keyboard/A" "${ds4Pcsx2}/-LeftX" ];
+    LRight = [ "Keyboard/D" "${ds4Pcsx2}/+LeftX" ];
     RUp = [ "Keyboard/I" "${ds4Pcsx2}/-RightY" ];
     RDown = [ "Keyboard/K" "${ds4Pcsx2}/+RightY" ];
     RLeft = [ "Keyboard/J" "${ds4Pcsx2}/-RightX" ];
@@ -436,12 +439,36 @@ in
       input_toggle_slowmotion = "nul";
       input_frame_advance = "nul";
       input_netplay_game_watch = "nul";
+      input_cheat_index_minus = "nul"; # t
+      input_cheat_index_plus = "nul";  # y
+      input_cheat_toggle = "nul";      # u
     };
   };
 
   # ES-DE finds RetroArch cores in ~/.config/retroarch/cores.
   xdg.configFile."retroarch/cores".source =
     "${config.programs.retroarch.finalPackage}/lib/retroarch/cores";
+
+  # Core override for LRPS2: the PS2 keyboard layout (Input note). RetroArch
+  # loads config/<core name>/<core name>.cfg on top of the main config when
+  # that core starts. Managed file, so "Save Core Overrides" in the menu
+  # cannot replace it; edit here instead.
+  xdg.configFile."retroarch/config/LRPS2/LRPS2.cfg".text = ''
+    input_player1_l_y_minus = "w"
+    input_player1_l_y_plus = "s"
+    input_player1_l_x_minus = "a"
+    input_player1_l_x_plus = "d"
+    input_player1_b = "z"
+    input_player1_a = "x"
+    input_player1_y = "c"
+    input_player1_x = "v"
+    input_player1_l = "q"
+    input_player1_r = "e"
+    input_player1_l2 = "r"
+    input_player1_r2 = "t"
+    input_player1_l3 = "1"
+    input_player1_r3 = "2"
+  '';
 
   # psx/ps2 without .bin in the extension list (see the file): a bin/cue dump
   # is listed once. For a game that is a folder of files, name the folder
