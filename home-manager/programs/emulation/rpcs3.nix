@@ -35,6 +35,9 @@ appimageTools.wrapAppImage {
       install -Dm644 "$i" "$out/share/icons/hicolor/scalable/apps/$(basename "$i")"
     done
   '';
+  # The unpacked AppDir, for the launcher that enumerates pads with RPCS3's
+  # own SDL (programs/emulation/rpcs3-launch.py).
+  passthru.extracted = extracted;
   meta = {
     description = "PlayStation 3 emulator";
     homepage = "https://rpcs3.net";

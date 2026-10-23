@@ -73,13 +73,13 @@
 # DS4's SDL name, so plugging the pad in just works and unplugging it falls
 # back to the keys. Dolphin has no Wayland input backend at all (its keyboard
 # device is XInput2), so it is wrapped to run on XWayland. RPCS3 binds one
-# handler per player and never falls back, so it gets two managed input
-# profiles (input_configs/global/ds4.yml: native DualShock 4 handler over
-# hidraw, USB or Bluetooth; keyboard.yml: the PS2 layout above incl. both
-# sticks) and a launcher that passes --input-config for whichever applies,
-# by looking for a DS4 in /proc/bus/input/devices at start. That only works
-# with --no-gui, i.e. launches from ES-DE; the GUI uses its own active
-# profile, where the same two can be picked under Pads.
+# handler per player and never falls back, so `rpcs3` is a launcher
+# (rpcs3-launch.py): for --no-gui boots (ES-DE) it enumerates the connected
+# pads with RPCS3's own SDL, any model (DualShock, Xbox, ...), writes
+# input_configs/global/auto.yml with pad 1..n as players 1..n on the SDL
+# handler, or the keyboard profile as player 1 when none is connected, and
+# passes --input-config auto. The GUI uses its own active profile; the
+# managed keyboard.yml (PS2 layout incl. both sticks) is available there.
 #
 # Only binary-cached packages (checked against cache.nixos.org 2026-10-21):
 # nothing here compiles locally. That is why Snes9x, Genesis Plus GX and
@@ -217,71 +217,55 @@ let
   '';
   duckstation = pkgs.callPackage ./duckstation.nix { };
   rpcs3Appimage = pkgs.callPackage ./rpcs3.nix { };
-  # DualShock 4 USB (05c4, 09cc), the official USB wireless adaptor (0ba0).
-  ds4Present = "${pkgs.gnugrep}/bin/grep -qE 'Vendor=054c Product=(05c4|09cc|0ba0)' /proc/bus/input/devices";
+  rpcs3Launch = pkgs.writers.writePython3Bin "rpcs3-launch" { } (builtins.readFile ./rpcs3-launch.py);
   rpcs3 = pkgs.symlinkJoin {
     name = "rpcs3-autopad";
     paths = [ rpcs3Appimage ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       rm $out/bin/rpcs3
-      cat > $out/bin/rpcs3 <<EOF
-      #!${pkgs.runtimeShell}
-      # Pick the input profile for CLI boots unless one was given explicitly.
-      nogui=0; given=0
-      for a in "\$@"; do
-        case "\$a" in
-          --no-gui) nogui=1 ;;
-          --input-config|--input-config=*) given=1 ;;
-        esac
-      done
-      if [ "\$nogui" = 1 ] && [ "\$given" = 0 ]; then
-        if ${ds4Present}; then set -- --input-config ds4 "\$@"; else set -- --input-config keyboard "\$@"; fi
-      fi
-      exec ${rpcs3Appimage}/bin/rpcs3 "\$@"
-      EOF
-      chmod +x $out/bin/rpcs3
+      makeWrapper ${rpcs3Launch}/bin/rpcs3-launch $out/bin/rpcs3 \
+        --set RPCS3_BIN ${rpcs3Appimage}/bin/rpcs3 \
+        --set RPCS3_SDL ${rpcs3Appimage.extracted}/usr/lib/libSDL3.so.0 \
+        --set RPCS3_KEYBOARD_YML ${pkgs.writeText "rpcs3-keyboard.yml" rpcs3KeyboardProfile}
     '';
   };
-  # RPCS3 input profiles (names as the handlers' own button lists; keyboard
-  # keys are Qt key names). Vibration off in both.
-  rpcs3Ds4Profile = ''
-    Player 1 Input:
-      Handler: DualShock 4
-      Device: DS4 Pad #1
-      Config:
-        Left Stick Left: LS X-
-        Left Stick Down: LS Y-
-        Left Stick Right: LS X+
-        Left Stick Up: LS Y+
-        Right Stick Left: RS X-
-        Right Stick Down: RS Y-
-        Right Stick Right: RS X+
-        Right Stick Up: RS Y+
-        Start: Options
-        Select: Share
-        PS Button: PS Button
-        Square: Square
-        Cross: Cross
-        Circle: Circle
-        Triangle: Triangle
-        Left: Left
-        Down: Down
-        Right: Right
-        Up: Up
-        R1: R1
-        R2: R2
-        R3: R3
-        L1: L1
-        L2: L2
-        L3: L3
-        Left Stick Deadzone: 40
-        Right Stick Deadzone: 40
-        Left Stick Anti-Deadzone: 33
-        Right Stick Anti-Deadzone: 33
-        Large Vibration Motor Multiplier: 0
-        Small Vibration Motor Multiplier: 0
-      Buddy Device: "Null"
+  # RPCS3's official game patch list, the same file its "Download latest
+  # patches" button fetches (served as JSON by rpcs3.net; the yml is the
+  # "patch" field). Pinned by hash, so it is a snapshot: when the team
+  # publishes new patches the hash changes and the build fails until updated:
+  #   nix store prefetch-file --name rpcs3-patches-api.json \
+  #     'https://rpcs3.net/compatibility?patch&api=v1&v=1.2'
+  # (v=1.2 is RPCS3's patch engine version; bump if a newer RPCS3 rejects it.)
+  rpcs3PatchFeed = pkgs.fetchurl {
+    url = "https://rpcs3.net/compatibility?patch&api=v1&v=1.2";
+    name = "rpcs3-patches-api.json";
+    hash = "sha256-7Vvmw+N6g7fYDGHtFJJgvs2qjdSVBqzKFelX9zZb8oU=";
+  };
+  rpcs3Patches = pkgs.runCommand "rpcs3-patch.yml" { nativeBuildInputs = [ pkgs.jq ]; } ''
+    jq -r .patch ${rpcs3PatchFeed} > $out
+    grep -q '^Version: 1.2' $out
   '';
+  # Patches switched on, per EBOOT hash / title / serial / app version, in
+  # RPCS3's own patch_config.yml layout. Demon's Souls US 01.00: the official
+  # "Unlock FPS" patch (60 FPS cap; needs default clock scale and vblank
+  # rate, which the global config has) and "Disable Motion Blur".
+  rpcs3PatchConfig = ''
+    PPU-83681f6110d33442329073b72b8dc88a2f677172:
+      Unlock FPS:
+        "Demon's Souls":
+          BLUS30443:
+            "01.00":
+              Enabled: true
+      Disable Motion Blur:
+        "Demon's Souls":
+          BLUS30443:
+            "01.00":
+              Enabled: true
+  '';
+
+  # RPCS3 keyboard profile (keys are Qt key names), also installed as a
+  # selectable profile for the GUI. Vibration off.
   rpcs3KeyboardProfile = ''
     Player 1 Input:
       Handler: Keyboard
@@ -457,7 +441,7 @@ in
     es-de
     pkgs.pcsx2       # PS2 (pcsx2-qt)
     dolphin          # GameCube / Wii (pkgs.dolphin-emu forced onto XWayland)
-    rpcs3            # PS3 (AppImage + input-profile picking launcher)
+    rpcs3            # PS3 (AppImage behind the pad-picking launcher)
     pkgs.ppsspp      # PSP: "PPSSPP (Standalone)"
     pkgs.xemu        # Xbox
     xenia            # Xbox 360: "xenia (Standalone)"
@@ -622,8 +606,11 @@ in
   #   colour buffers that the CPU reads back; without Write Color Buffers
   #   only the HUD renders over black (RPCS3 names this game in the option's
   #   own tooltip).
-  home.file.".config/rpcs3/input_configs/global/ds4.yml" = { text = rpcs3Ds4Profile; force = true; };
   home.file.".config/rpcs3/input_configs/global/keyboard.yml" = { text = rpcs3KeyboardProfile; force = true; };
+  # Official patch list + which patches are on (managed: the GUI's patch
+  # downloader and toggles cannot write over them; change them here).
+  home.file.".config/rpcs3/patches/patch.yml" = { source = rpcs3Patches; force = true; };
+  home.file.".config/rpcs3/patch_config.yml" = { text = rpcs3PatchConfig; force = true; };
 
   home.file.".config/rpcs3/custom_configs/config_BLUS30443.yml" = {
     force = true;
