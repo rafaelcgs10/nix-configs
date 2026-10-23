@@ -29,8 +29,13 @@
 #     RMG, melonDS, DeSmuME, ares, mednafen.
 #   ps2 gc wii psp -> PCSX2 / Dolphin / PPSSPP standalone (achievements: log
 #     in once in each emulator's settings); alternatives: the LRPS2, Dolphin
-#     and PPSSPP RetroArch cores. ps3 -> RPCS3 (firmware PS3UPDAT.PUP
-#     installed once via its menu; no achievements, trophies only).
+#     and PPSSPP RetroArch cores. ps3 -> RPCS3: Sony's firmware (PS3UPDAT.PUP
+#     4.93, fetched from Sony) is installed into ~/.config/rpcs3 by the
+#     activation step below when missing, so nothing is needed in its menu.
+#     Disc dumps go in roms/ps3/<Game>.ps3dir/ (the folder holding PS3_GAME/);
+#     PSN titles installed from a .pkg are launched through a roms/ps3/
+#     <SERIAL>.ps3 text file (ES-DE "RPCS3 Game Serial"). No achievements,
+#     trophies only.
 #   xbox -> xemu (needs bios/xbox/mcpx_1.0.bin + Complex_4627v1.03.bin from
 #     your console; a blank HDD image is provided). xbox360 -> Xenia Canary
 #     (native Linux build, early). switch -> Eden, alternative Ryujinx
@@ -46,11 +51,25 @@
 let
   hostName = if osConfig == null then "" else osConfig.networking.hostName or "";
   games = "${config.home.homeDirectory}/Games";
+  # ES-DE's ROM root: one folder per system name below. Asserted into
+  # es_settings.xml on every activation (not just seeded), so this is the
+  # single place to move the library (e.g. onto a mount).
+  romsDir = "${games}/roms";
   link = config.lib.file.mkOutOfStoreSymlink;
 
   es-de = pkgs.callPackage ./es-de.nix { };
   duckstation = pkgs.callPackage ./duckstation.nix { };
   rpcs3 = pkgs.callPackage ./rpcs3.nix { };
+  # PS3 system software, straight from Sony's update server (the same file
+  # the console downloads). RPCS3 needs it installed once; the activation
+  # step does that headlessly. Update: new URL from
+  # https://www.playstation.com/support/hardware/ps3/system-software/ then
+  #   nix store prefetch-file <url>
+  ps3Firmware = pkgs.fetchurl {
+    url = "http://dus01.ps3.update.playstation.net/update/ps3/image/us/2026_0318_a2b60b6ac1d2e49e230144345616927c/PS3UPDAT.PUP";
+    hash = "sha256-FYRx/YNPjqgDYTa2qrQ82Gx7pz15yjDgrzwP4AAc82U=";
+    name = "PS3UPDAT-4.93.PUP";
+  };
   xenia = pkgs.callPackage ./xenia.nix { };
   # PlayStation-X: the ES-DE theme, pinned and patched.
   #
@@ -304,7 +323,7 @@ in
   home.activation.emulationSetup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     games="${games}"
     run mkdir -p \
-      ${lib.concatMapStringsSep " " (s: ''"$games/roms/${s}"'') esSystems} \
+      ${lib.concatMapStringsSep " " (s: ''"${romsDir}/${s}"'') esSystems} \
       "$games/bios/ps2" "$games/saves/retroarch" "$games/saves/pcsx2" \
       "$games/saves/dolphin/GC" "$games/saves/dolphin/Wii" \
       "$games/saves/rpcs3/savedata" "$games/saves/rpcs3/trophy" \
@@ -338,12 +357,27 @@ in
         "hdd_path = '$games/saves/xemu/xbox_hdd.qcow2'" > "$xemu_cfg"
     fi
 
+    # RPCS3: install the PS3 firmware once (headless, ~30 s), and make it quit
+    # when the game does so ES-DE gets the screen back (RPCS3 rewrites
+    # config.yml on exit but keeps values; only touched while it is not
+    # running). config.yml appears with the firmware install.
+    rpcs3_cfg="${config.xdg.configHome}/rpcs3"
+    if [ ! -e "$rpcs3_cfg/dev_flash/vsh/module/vsh.self" ]; then
+      run ${rpcs3}/bin/rpcs3 --headless --installfw ${ps3Firmware} >/dev/null 2>&1 \
+        || echo "emulation: PS3 firmware install failed; run: rpcs3 --installfw ${ps3Firmware}"
+    fi
+    if [ -e "$rpcs3_cfg/config.yml" ] && ! ${pkgs.procps}/bin/pgrep -x rpcs3 >/dev/null 2>&1; then
+      run ${pkgs.gnused}/bin/sed -i \
+        's|^  Exit RPCS3 when process finishes: false$|  Exit RPCS3 when process finishes: true|' \
+        "$rpcs3_cfg/config.yml"
+    fi
+
     # ES-DE seeds (only when absent: ES-DE owns these files afterwards).
     es="${config.home.homeDirectory}/ES-DE"
     if [ ! -e "$es/settings/es_settings.xml" ]; then
       run mkdir -p "$es/settings"
       run printf '%s\n' '<?xml version="1.0"?>' \
-        '<string name="ROMDirectory" value="~/Games/roms" />' > "$es/settings/es_settings.xml"
+        '<string name="ROMDirectory" value="${romsDir}" />' > "$es/settings/es_settings.xml"
     fi
 
     # Theme selection. Unlike the seeds above these are re-asserted on every
@@ -365,6 +399,7 @@ in
       }
       set_es_setting Theme playstation-x-es-de
       set_es_setting ThemeColorScheme ps5-custom
+      set_es_setting ROMDirectory "${romsDir}"
     fi
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList (system: label: ''
       g="$es/gamelists/${system}/gamelist.xml"
