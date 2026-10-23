@@ -52,6 +52,53 @@ let
   duckstation = pkgs.callPackage ./duckstation.nix { };
   rpcs3 = pkgs.callPackage ./rpcs3.nix { };
   xenia = pkgs.callPackage ./xenia.nix { };
+  # PlayStation-X: the ES-DE theme, pinned and patched.
+  #
+  # The theme ships `resources/customizations.xml` as a TEMPLATE; the custom
+  # colour schemes actually read `theme-customizations/customizations.xml`
+  # (colors.xml sets customizationsPath to that, and the dir does not exist in
+  # the repo). So we copy the template there and flip one flag:
+  # characterOverlayVisible, which theme.xml reads in <image name="overlay-arts">
+  # — the full-height character render on the system view (Lara Croft on psx,
+  # and the equivalent on every other system). Everything else stays on, so the
+  # console TV adverts (systemVideoVisible) are untouched.
+  #
+  # Patched in the store rather than in ~/ES-DE/themes so ES-DE's own theme
+  # updater cannot overwrite it. Requires the *-custom colour scheme to take
+  # effect, which the es_settings seed below selects.
+  playstation-x-theme = pkgs.stdenvNoCC.mkDerivation {
+    pname = "playstation-x-es-de";
+    version = "0-unstable-2026-10-14";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "RobZombie9043";
+      repo = "playstation-x-es-de";
+      rev = "78a6517bc75502951182442b136e0dc50b0ec432";
+      hash = "sha256-pDz9YOvcshtF9cGn7KM7iPDfj00sPFO5Zgx52Cd0LKg=";
+    };
+
+    dontBuild = true;
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out"
+      cp -r ./* "$out"/
+      mkdir -p "$out/theme-customizations"
+      sed 's|<characterOverlayVisible>true</characterOverlayVisible>|<characterOverlayVisible>false</characterOverlayVisible>|' \
+        resources/customizations.xml > "$out/theme-customizations/customizations.xml"
+      # Fail loudly if upstream renames the flag instead of silently shipping
+      # a theme that still has the characters.
+      grep -q '<characterOverlayVisible>false</characterOverlayVisible>' \
+        "$out/theme-customizations/customizations.xml"
+      runHook postInstall
+    '';
+
+    meta = {
+      description = "PlayStation-X ES-DE theme, with the character overlay art disabled";
+      homepage = "https://github.com/RobZombie9043/playstation-x-es-de";
+      platforms = lib.platforms.all;
+    };
+  };
+
   # Blank 8 GB (sparse) Xbox HDD image for xemu, copied into saves/xemu once.
   xemuHdd = pkgs.fetchzip {
     url = "https://github.com/xemu-project/xemu-hdd-image/releases/download/1.0/xbox_hdd.qcow2.zip";
@@ -217,6 +264,11 @@ in
   # with the .m3u and all discs inside.
   home.file."ES-DE/custom_systems/es_systems.xml".source = ./es-systems.xml;
 
+  # The theme itself is read-only in the store; ES-DE only reads from here.
+  # A hand-downloaded copy at this path is moved aside by the activation step
+  # below, since home-manager will not replace a real directory.
+  home.file."ES-DE/themes/playstation-x-es-de".source = playstation-x-theme;
+
   # Standalone emulators keep their saves where Syncthing sees them.
   home.file = {
     ".config/PCSX2/memcards".source = link "${games}/saves/pcsx2";
@@ -236,6 +288,18 @@ in
     ".config/Ryujinx/bis/user/save".source = link "${games}/saves/ryujinx";
     # ares, SameBoy, mGBA and Snes9x standalone save next to the ROM.
   };
+
+  # home-manager refuses to replace a real directory with its symlink, and the
+  # theme downloader leaves a git clone at exactly this path. Move it aside
+  # once, before the link check runs, so switching to the packaged theme does
+  # not need a manual rm.
+  home.activation.emulationThemeTakeover =
+    lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+      t="${config.home.homeDirectory}/ES-DE/themes/playstation-x-es-de"
+      if [ -d "$t" ] && [ ! -L "$t" ]; then
+        run mv "$t" "$t.downloaded-backup-$(date +%Y%m%d%H%M%S)"
+      fi
+    '';
 
   home.activation.emulationSetup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     games="${games}"
@@ -280,6 +344,27 @@ in
       run mkdir -p "$es/settings"
       run printf '%s\n' '<?xml version="1.0"?>' \
         '<string name="ROMDirectory" value="~/Games/roms" />' > "$es/settings/es_settings.xml"
+    fi
+
+    # Theme selection. Unlike the seeds above these are re-asserted on every
+    # activation, so the theme stays the default: ES-DE rewrites
+    # es_settings.xml wholesale when it exits, so an edit made while it runs is
+    # lost — hence the guard. ps5-custom (not ps5) is what makes ES-DE read
+    # theme-customizations/customizations.xml, i.e. what actually drops the
+    # character art; selecting the theme without it would bring Lara back.
+    if ! ${pkgs.procps}/bin/pgrep -x es-de >/dev/null 2>&1; then
+      set_es_setting() {
+        if ${pkgs.gnugrep}/bin/grep -q "<string name=\"$1\" " "$es/settings/es_settings.xml"; then
+          run ${pkgs.gnused}/bin/sed -i \
+            "s|<string name=\"$1\" value=\"[^\"]*\" />|<string name=\"$1\" value=\"$2\" />|" \
+            "$es/settings/es_settings.xml"
+        else
+          run ${pkgs.gnused}/bin/sed -i \
+            "\$a<string name=\"$1\" value=\"$2\" />" "$es/settings/es_settings.xml"
+        fi
+      }
+      set_es_setting Theme playstation-x-es-de
+      set_es_setting ThemeColorScheme ps5-custom
     fi
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList (system: label: ''
       g="$es/gamelists/${system}/gamelist.xml"
