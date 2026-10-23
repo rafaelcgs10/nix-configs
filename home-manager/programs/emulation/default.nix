@@ -72,10 +72,14 @@
 # standalones (PCSX2, Dolphin) carry every binding twice, keyboard and the
 # DS4's SDL name, so plugging the pad in just works and unplugging it falls
 # back to the keys. Dolphin has no Wayland input backend at all (its keyboard
-# device is XInput2), so it is wrapped to run on XWayland. RPCS3 keeps its
-# own keyboard defaults (WASD move, arrows d-pad, X/C/Z/V = cross/circle/
-# square/triangle); a DS4 there is a one-time switch in Pads > Player 1
-# (handler SDL), since RPCS3 binds one handler per player.
+# device is XInput2), so it is wrapped to run on XWayland. RPCS3 binds one
+# handler per player and never falls back, so it gets two managed input
+# profiles (input_configs/global/ds4.yml: native DualShock 4 handler over
+# hidraw, USB or Bluetooth; keyboard.yml: the PS2 layout above incl. both
+# sticks) and a launcher that passes --input-config for whichever applies,
+# by looking for a DS4 in /proc/bus/input/devices at start. That only works
+# with --no-gui, i.e. launches from ES-DE; the GUI uses its own active
+# profile, where the same two can be picked under Pads.
 #
 # Only binary-cached packages (checked against cache.nixos.org 2026-10-21):
 # nothing here compiles locally. That is why Snes9x, Genesis Plus GX and
@@ -212,7 +216,106 @@ let
     input_player1_r3 = "nul"
   '';
   duckstation = pkgs.callPackage ./duckstation.nix { };
-  rpcs3 = pkgs.callPackage ./rpcs3.nix { };
+  rpcs3Appimage = pkgs.callPackage ./rpcs3.nix { };
+  # DualShock 4 USB (05c4, 09cc), the official USB wireless adaptor (0ba0).
+  ds4Present = "${pkgs.gnugrep}/bin/grep -qE 'Vendor=054c Product=(05c4|09cc|0ba0)' /proc/bus/input/devices";
+  rpcs3 = pkgs.symlinkJoin {
+    name = "rpcs3-autopad";
+    paths = [ rpcs3Appimage ];
+    postBuild = ''
+      rm $out/bin/rpcs3
+      cat > $out/bin/rpcs3 <<EOF
+      #!${pkgs.runtimeShell}
+      # Pick the input profile for CLI boots unless one was given explicitly.
+      nogui=0; given=0
+      for a in "\$@"; do
+        case "\$a" in
+          --no-gui) nogui=1 ;;
+          --input-config|--input-config=*) given=1 ;;
+        esac
+      done
+      if [ "\$nogui" = 1 ] && [ "\$given" = 0 ]; then
+        if ${ds4Present}; then set -- --input-config ds4 "\$@"; else set -- --input-config keyboard "\$@"; fi
+      fi
+      exec ${rpcs3Appimage}/bin/rpcs3 "\$@"
+      EOF
+      chmod +x $out/bin/rpcs3
+    '';
+  };
+  # RPCS3 input profiles (names as the handlers' own button lists; keyboard
+  # keys are Qt key names). Vibration off in both.
+  rpcs3Ds4Profile = ''
+    Player 1 Input:
+      Handler: DualShock 4
+      Device: DS4 Pad #1
+      Config:
+        Left Stick Left: LS X-
+        Left Stick Down: LS Y-
+        Left Stick Right: LS X+
+        Left Stick Up: LS Y+
+        Right Stick Left: RS X-
+        Right Stick Down: RS Y-
+        Right Stick Right: RS X+
+        Right Stick Up: RS Y+
+        Start: Options
+        Select: Share
+        PS Button: PS Button
+        Square: Square
+        Cross: Cross
+        Circle: Circle
+        Triangle: Triangle
+        Left: Left
+        Down: Down
+        Right: Right
+        Up: Up
+        R1: R1
+        R2: R2
+        R3: R3
+        L1: L1
+        L2: L2
+        L3: L3
+        Left Stick Deadzone: 40
+        Right Stick Deadzone: 40
+        Left Stick Anti-Deadzone: 33
+        Right Stick Anti-Deadzone: 33
+        Large Vibration Motor Multiplier: 0
+        Small Vibration Motor Multiplier: 0
+      Buddy Device: "Null"
+  '';
+  rpcs3KeyboardProfile = ''
+    Player 1 Input:
+      Handler: Keyboard
+      Device: Keyboard
+      Config:
+        Left Stick Left: A
+        Left Stick Down: S
+        Left Stick Right: D
+        Left Stick Up: W
+        Right Stick Left: J
+        Right Stick Down: K
+        Right Stick Right: L
+        Right Stick Up: I
+        Start: Return
+        Select: Backspace
+        PS Button: ""
+        Square: C
+        Cross: Z
+        Circle: X
+        Triangle: V
+        Left: Left
+        Down: Down
+        Right: Right
+        Up: Up
+        R1: E
+        R2: T
+        R3: "2"
+        L1: Q
+        L2: R
+        L3: "1"
+        Large Vibration Motor Multiplier: 0
+        Small Vibration Motor Multiplier: 0
+      Buddy Device: "Null"
+  '';
   # PS3 system software, straight from Sony's update server (the same file
   # the console downloads). RPCS3 needs it installed once; the activation
   # step does that headlessly. Update: new URL from
@@ -354,7 +457,7 @@ in
     es-de
     pkgs.pcsx2       # PS2 (pcsx2-qt)
     dolphin          # GameCube / Wii (pkgs.dolphin-emu forced onto XWayland)
-    rpcs3            # PS3 (AppImage)
+    rpcs3            # PS3 (AppImage + input-profile picking launcher)
     pkgs.ppsspp      # PSP: "PPSSPP (Standalone)"
     pkgs.xemu        # Xbox
     xenia            # Xbox 360: "xenia (Standalone)"
@@ -519,6 +622,9 @@ in
   #   colour buffers that the CPU reads back; without Write Color Buffers
   #   only the HUD renders over black (RPCS3 names this game in the option's
   #   own tooltip).
+  home.file.".config/rpcs3/input_configs/global/ds4.yml" = { text = rpcs3Ds4Profile; force = true; };
+  home.file.".config/rpcs3/input_configs/global/keyboard.yml" = { text = rpcs3KeyboardProfile; force = true; };
+
   home.file.".config/rpcs3/custom_configs/config_BLUS30443.yml" = {
     force = true;
     text = ''
@@ -620,7 +726,7 @@ in
       # Input profiles only exist once a pad handler was picked in the GUI;
       # whatever they contain, vibration stays off.
       for f in "$rpcs3_cfg"/input_configs/*/*.yml; do
-        [ -e "$f" ] || continue
+        [ -e "$f" ] && [ ! -L "$f" ] || continue   # managed ones are symlinks
         run ${pkgs.gnused}/bin/sed -i -E \
           's|^(\s*(Large\|Small) Vibration Motor Multiplier:) [0-9]+$|\1 0|' "$f"
       done
