@@ -61,6 +61,9 @@
 # C = Z trigger (gas in Road Rash 64, Mupen maps it to RetroPad L2), Q W =
 # L R, I J K L = C-buttons, arrows = stick and d-pad, Enter = Start; the
 # RetroPad A/X slots (C-right/C-up duplicates) are unbound so X stays B.
+# Controller vibration is off everywhere: RetroArch rumble gain 0, no motor
+# bindings and zero motor scale in PCSX2, no Rumble/Motor line in Dolphin's
+# pad, RPCS3's vibration multipliers forced to 0 in any saved input profile.
 # RetroArch leaves L2/R2/L3/R3 and both sticks unbound on the keyboard by
 # default and uses letters as hotkeys (R rewind, L fast-forward, E slow
 # motion, K frame advance, I netplay), so those binds are added and those
@@ -138,7 +141,6 @@ let
     D-Pad/Down = `G` | `${ds4Dolphin}:Pad S`
     D-Pad/Left = `F` | `${ds4Dolphin}:Pad W`
     D-Pad/Right = `H` | `${ds4Dolphin}:Pad E`
-    Rumble/Motor = `${ds4Dolphin}:Motor L` | `${ds4Dolphin}:Motor R`
     [GCPad2]
     Device = XInput2/0/Virtual core pointer
     [GCPad3]
@@ -175,8 +177,6 @@ let
     RDown = [ "Keyboard/K" "${ds4Pcsx2}/+RightY" ];
     RLeft = [ "Keyboard/J" "${ds4Pcsx2}/-RightX" ];
     RRight = [ "Keyboard/L" "${ds4Pcsx2}/+RightX" ];
-    LargeMotor = [ "${ds4Pcsx2}/LargeMotor" ];
-    SmallMotor = [ "${ds4Pcsx2}/SmallMotor" ];
   };
   pcsx2PadBlock = pkgs.writeText "pcsx2-pad.ini" (''
     [InputSources]
@@ -193,8 +193,8 @@ let
     InvertR = 0
     Deadzone = 0
     AxisScale = 1.33
-    LargeMotorScale = 1
-    SmallMotorScale = 1
+    LargeMotorScale = 0
+    SmallMotorScale = 0
     ButtonDeadzone = 0
     PressureModifier = 0.5
   '' + lib.concatStringsSep "\n" (lib.concatLists (lib.mapAttrsToList
@@ -457,6 +457,7 @@ in
       input_cheat_index_minus = "nul"; # t
       input_cheat_index_plus = "nul";  # y
       input_cheat_toggle = "nul";      # u
+      input_rumble_gain = "0";         # no vibration in any core
     };
   };
 
@@ -616,6 +617,13 @@ in
       run ${pkgs.gnused}/bin/sed -i \
         's|^  Exit RPCS3 when process finishes: false$|  Exit RPCS3 when process finishes: true|' \
         "$rpcs3_cfg/config.yml"
+      # Input profiles only exist once a pad handler was picked in the GUI;
+      # whatever they contain, vibration stays off.
+      for f in "$rpcs3_cfg"/input_configs/*/*.yml; do
+        [ -e "$f" ] || continue
+        run ${pkgs.gnused}/bin/sed -i -E \
+          's|^(\s*(Large\|Small) Vibration Motor Multiplier:) [0-9]+$|\1 0|' "$f"
+      done
     fi
 
     # ES-DE seeds (only when absent: ES-DE owns these files afterwards).
