@@ -510,6 +510,22 @@ in
   home.file."Games/bios/dolphin-emu/Sys".source = "${pkgs.libretro.dolphin.src}/Data/Sys";
   home.file."Games/bios/PPSSPP".source = "${pkgs.libretro.ppsspp.src}/assets";
 
+  # RPCS3 per-game settings (custom_configs/config_<serial>.yml): only the
+  # keys listed are overridden, the rest comes from the global config. RPCS3
+  # applies them automatically when that serial boots. Managed files, so
+  # "Create Custom Configuration" in the GUI cannot save over them.
+  #   BLUS30443 Demon's Souls (US): the game draws the world into off-screen
+  #   colour buffers that the CPU reads back; without Write Color Buffers
+  #   only the HUD renders over black (RPCS3 names this game in the option's
+  #   own tooltip).
+  home.file.".config/rpcs3/custom_configs/config_BLUS30443.yml" = {
+    force = true;
+    text = ''
+      Video:
+        Write Color Buffers: true
+    '';
+  };
+
   # Standalone emulators keep their saves where Syncthing sees them.
   home.file = {
     ".config/PCSX2/memcards".source = link "${games}/saves/pcsx2";
