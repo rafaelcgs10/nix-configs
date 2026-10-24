@@ -1,5 +1,28 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
+let
+  # LanguageTool English n-gram data. `null` disables it (the server then
+  # runs without --languageModel). Update: new file name from
+  # https://languagetool.org/download/ngram-data/ then
+  #   TMPDIR=/var/tmp nix store prefetch-file --name <file> <url>
+  # (TMPDIR on disk: the 9 GB download is staged there, not in the 8 GB
+  # tmpfs /tmp).
+  ngramsEnHash = "sha256-EOVIcx2fWBifw2pVP39oVwO+MNoNm7QtH3tb9fi7Iyw=";
+  ngramsEnZip = pkgs.fetchurl {
+    url = "https://languagetool.org/download/ngram-data/ngrams-en-20150817.zip";
+    name = "ngrams-en-20150817.zip";
+    hash = ngramsEnHash;
+  };
+  # --languageModel expects <dir>/en/{1grams,2grams,3grams}.
+  languagetoolNgrams = if ngramsEnHash == null then null else
+    pkgs.runCommand "languagetool-ngrams-en-20150817" {
+      nativeBuildInputs = [ pkgs.unzip ];
+    } ''
+      mkdir -p "$out"
+      unzip -q ${ngramsEnZip} -d "$out"
+      test -d "$out/en/1grams" || { echo "unexpected archive layout:"; ls "$out"; exit 1; }
+    '';
+in
 {
   # Doom Emacs via nix-doom-emacs-unstraightened. The config in ./doom.d and
   # its entire package set are built into the Nix store, so there is no
@@ -83,15 +106,25 @@
   # LanguageTool as a warm local HTTP server, so Doom's on-demand checks
   # (langtool.el, Grammar section of config.el) answer instantly instead of
   # paying a JVM start per check. Binds to localhost only (no --public).
-  # Heap capped so an idle checker does not grow past ~1 GB.
+  #
+  # With LanguageTool's English n-gram data (--languageModel): the 782
+  # statistical confusion pairs in resource/en/confusion_sets.txt
+  # (there/their, affect/effect, then/than, ...) are only checked when this
+  # Lucene index is present. 9 GB download from languagetool.org (the zip
+  # lands straight in the store, so the 8 GB tmpfs /tmp is not involved),
+  # ~15 GB unpacked; the zip itself is garbage-collected once unpacked. Both
+  # COSMIC hosts carry it (SSD required: random reads). word2vec rules were
+  # removed from LanguageTool, fastText only does language detection, so
+  # this is the only data add-on left. Heap raised for the index.
   systemd.user.services.languagetool = {
     Unit = {
       Description = "LanguageTool HTTP server for Emacs (localhost:8081)";
       After = [ "default.target" ];
     };
     Service = {
-      ExecStart = "${pkgs.languagetool}/bin/languagetool-http-server --port 8081";
-      Environment = [ "JAVA_TOOL_OPTIONS=-Xmx1g" ];
+      ExecStart = "${pkgs.languagetool}/bin/languagetool-http-server --port 8081"
+        + lib.optionalString (languagetoolNgrams != null) " --languageModel ${languagetoolNgrams}";
+      Environment = [ "JAVA_TOOL_OPTIONS=-Xmx2g" ];
       Restart = "on-failure";
       RestartSec = 5;
     };
