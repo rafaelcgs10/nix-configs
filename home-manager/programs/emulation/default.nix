@@ -49,14 +49,19 @@
 # Input: keyboard first, a DualShock 4 as a drop-in. One keyboard layout for
 # every emulator, built on RetroArch's defaults:
 #   arrows = d-pad AND left stick (what 3D and racing games read)
-#   Z X A S = RetroPad B A Y X (PS cross circle square triangle; GC B A X Y)
-#   Q W = L1 R1 (GC: W = Z)     E R = L2 R2 (GC: the L and R triggers)
-#   C V = L3 R3                 I J K L = right stick / C-stick
+#   Z X A S = RetroPad B A Y X (PS cross circle square triangle)
+#   Q W = L1 R1                 E R = L2 R2
+#   C V = L3 R3                 I J K L = right stick
 #   Enter = Start, Right Shift (or Backspace) = Select
-# PS2 only (LRPS2 core override + PCSX2 standalone), for 3D games that need
-# stick and d-pad apart: W A S D = left stick, arrows = d-pad only,
-# Z X C V = cross circle square triangle, Q E = L1 R1, R T = L2 R2, 1 2 =
-# L3 R3, I J K L = right stick.
+# PS2 (LRPS2 core override + PCSX2 standalone) and GameCube (Dolphin core
+# override), whose pads have a stick and a d-pad that games read apart:
+# W A S D = left stick, arrows = d-pad only, Q E = L1 R1, R T = L2 R2,
+# 1 2 = L3 R3, I J K L = right stick, Enter = Start, Right Shift = Select.
+# PS2 face: Z X C V = cross circle square triangle; PCSX2 only: 3 = the
+# Analog mode button (LRPS2 has no RetroPad slot for it). GameCube face:
+# Z X C V = B A X Y, E = Z, R T = the L and R triggers (full press), 1 2 =
+# their half press (the Dolphin core reads RetroPad L3/R3 as "soft press").
+# That is every control of a DualShock 2 and of a GameCube pad.
 # N64 only (Mupen64Plus-Next and ParaLLEl N64 overrides): Z = A, X = B,
 # C = Z trigger (gas in Road Rash 64, Mupen maps it to RetroPad L2), Q W =
 # L R, I J K L = C-buttons, arrows = stick and d-pad, Enter = Start; the
@@ -155,7 +160,8 @@ let
   # PCSX2 pad 1 (DualShock 2). A binding with several sources is stored as
   # the key repeated once per source. Keyboard = the PS2 layout from the
   # Input note (WASD stick, arrows d-pad, ZXCV face, QE/RT shoulders, 1/2
-  # stick clicks, IJKL right stick, Enter/Backspace or Shift Start/Select).
+  # stick clicks, 3 Analog mode, IJKL right stick, Enter/Backspace or Shift
+  # Start/Select). The pad's PS button doubles as Analog.
   pcsx2Binds = {
     Up = [ "Keyboard/Up" "${ds4Pcsx2}/DPadUp" ];
     Down = [ "Keyboard/Down" "${ds4Pcsx2}/DPadDown" ];
@@ -173,6 +179,7 @@ let
     R3 = [ "Keyboard/2" "${ds4Pcsx2}/RightStick" ];
     Start = [ "Keyboard/Return" "${ds4Pcsx2}/Start" ];
     Select = [ "Keyboard/Backspace" "Keyboard/Shift" "${ds4Pcsx2}/Back" ];
+    Analog = [ "Keyboard/3" "${ds4Pcsx2}/Guide" ];
     LUp = [ "Keyboard/W" "${ds4Pcsx2}/-LeftY" ];
     LDown = [ "Keyboard/S" "${ds4Pcsx2}/+LeftY" ];
     LLeft = [ "Keyboard/A" "${ds4Pcsx2}/-LeftX" ];
@@ -214,6 +221,20 @@ let
     input_player1_x = "nul"
     input_player1_l3 = "nul"
     input_player1_r3 = "nul"
+  '';
+  # PS2/GC cores: left stick off the arrows onto W A S D, shoulders Q E R T,
+  # stick clicks 1 2 (frees C V for the face buttons); see the Input note.
+  twoStickOverride = ''
+    input_player1_l_y_minus = "w"
+    input_player1_l_y_plus = "s"
+    input_player1_l_x_minus = "a"
+    input_player1_l_x_plus = "d"
+    input_player1_l = "q"
+    input_player1_r = "e"
+    input_player1_l2 = "r"
+    input_player1_r2 = "t"
+    input_player1_l3 = "1"
+    input_player1_r3 = "2"
   '';
   duckstation = pkgs.callPackage ./duckstation.nix { };
   rpcs3Appimage = pkgs.callPackage ./rpcs3.nix { };
@@ -552,27 +573,26 @@ in
   xdg.configFile."retroarch/cores".source =
     "${config.programs.retroarch.finalPackage}/lib/retroarch/cores";
 
-  # Core override for LRPS2: the PS2 keyboard layout (Input note). RetroArch
-  # loads config/<core name>/<core name>.cfg on top of the main config when
-  # that core starts. Managed file, so "Save Core Overrides" in the menu
-  # cannot replace it; edit here instead.
+  # Core overrides (Input note). RetroArch loads config/<library name>/<library
+  # name>.cfg on top of the main config when that core starts. Managed files,
+  # so "Save Core Overrides" in the menu cannot replace them; edit here.
+  # LRPS2 and the Dolphin core ("dolphin-emu") share the two-stick layout and
+  # differ only in the face buttons: PS2 Z X C V = cross circle square
+  # triangle (RetroPad B A Y X), GC Z X C V = B A X Y (RetroPad B A X Y, the
+  # core maps them by name; Z is RetroPad R, L/R are L2/R2, soft L/R L3/R3).
   xdg.configFile."retroarch/config/Mupen64Plus-Next/Mupen64Plus-Next.cfg".text = n64Override;
   xdg.configFile."retroarch/config/ParaLLEl N64/ParaLLEl N64.cfg".text = n64Override;
-  xdg.configFile."retroarch/config/LRPS2/LRPS2.cfg".text = ''
-    input_player1_l_y_minus = "w"
-    input_player1_l_y_plus = "s"
-    input_player1_l_x_minus = "a"
-    input_player1_l_x_plus = "d"
+  xdg.configFile."retroarch/config/LRPS2/LRPS2.cfg".text = twoStickOverride + ''
     input_player1_b = "z"
     input_player1_a = "x"
     input_player1_y = "c"
     input_player1_x = "v"
-    input_player1_l = "q"
-    input_player1_r = "e"
-    input_player1_l2 = "r"
-    input_player1_r2 = "t"
-    input_player1_l3 = "1"
-    input_player1_r3 = "2"
+  '';
+  xdg.configFile."retroarch/config/dolphin-emu/dolphin-emu.cfg".text = twoStickOverride + ''
+    input_player1_b = "z"
+    input_player1_a = "x"
+    input_player1_x = "c"
+    input_player1_y = "v"
   '';
 
   # psx/ps2 without .bin in the extension list (see the file): a bin/cue dump
