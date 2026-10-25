@@ -445,7 +445,7 @@ let
     gba = "mGBA";
     n64 = "Mupen64Plus-Next";
     nds = "melonDS";
-    psx = "Beetle PSX HW";
+    psx = "SwanStation";  # DuckStation core: ~27% faster than Beetle PSX HW on Vulkan
     ps2 = "LRPS2";
     psp = "PPSSPP";
     gc = "Dolphin";
@@ -529,6 +529,7 @@ in
     # to paths and infrastructure so everything else stays tweakable in-menu.
     settings = {
       video_driver = "vulkan";
+      video_threaded = "false"; # slow-driver fallback, costs time on Vulkan
       video_fullscreen = "true";
       audio_driver = "pulse"; # pipewire-pulse
       menu_driver = "ozone";
@@ -693,6 +694,20 @@ in
         run printf '%s\n#reference "%s"\n' "${presetMarker}" ${lib.escapeShellArg (rcPreset system)} > "$f"
       fi
     '') corePresets)}
+
+    # Mupen64Plus-Next: ParaLLEl-RDP (Vulkan). The core's default, GLideN64,
+    # demands an OpenGL context and never falls back, so RetroArch silently
+    # switched from Vulkan to GL for N64 and the shaders ran on the GL path.
+    # RetroArch rewrites the .opt file on core unload, so the key is asserted
+    # here rather than managed as a file.
+    o="${config.xdg.configHome}/retroarch/config/Mupen64Plus-Next/Mupen64Plus-Next.opt"
+    if [ ! -e "$o" ]; then
+      run mkdir -p "$(dirname "$o")"
+      run printf '%s\n' 'mupen64plus-rdp-plugin = "parallel"' > "$o"
+    elif ! grep -qx 'mupen64plus-rdp-plugin = "parallel"' "$o"; then
+      run sed -i '/^mupen64plus-rdp-plugin = /d' "$o"
+      run printf '%s\n' 'mupen64plus-rdp-plugin = "parallel"' >> "$o"
+    fi
 
     # xemu: blank HDD image once, and a config pointing at the bios/saves
     # tree (xemu rewrites the file, so only when absent).
