@@ -394,11 +394,10 @@ let
   rcPreset = name: "${shaders}/RetroCrisis/retro crisis/${rcRes}/RC GDV-NTSC - ${name}.slangp";
   # The same look without the NTSC passes (retro-crisis.nix), for a core
   # whose output is too big for the full chain on RetroArch's OpenGL path
-  # (at 640x480 the NTSC passes cost ~8 ms a frame there). None at the
-  # moment: N64 at native 320x240 affords the full chain (82 fps on Road
-  # Rash 64 unthrottled).
+  # (at 640x480 the NTSC passes cost ~8 ms a frame there). PS2 uses it
+  # (chosen by eye); N64 at native 320x240 affords the full chain.
   rcFastPreset = name: "${shaders}/RetroCrisis/fast/${rcRes}/RC GDV-NTSC - ${name}.slangp";
-  fastPresetCores = [ ];
+  fastPresetCores = [ "LRPS2" ];
   # Cores seeded with a preset outside the pack (full path), chosen by eye
   # in RetroArch's menu: N64 on crtsim (libretro slang library).
   corePresetPaths = {
@@ -459,7 +458,6 @@ let
     "Beetle PSX" = rcTrim;
     "SwanStation" = rcTrim;
     "PCSX-ReARMed" = rcTrim;
-    "LRPS2" = rcTrim;
     "dolphin-emu" = rcTrim;
     "PPSSPP" = rcTrim;
   };
@@ -642,6 +640,7 @@ in
       input_enable_hotkey_btn = "8";
       input_save_state_btn = "5";
       input_load_state_btn = "4";
+      input_exit_emulator_btn = "9";  # Share + Options = quit (back to ES-DE), like Esc
       savestate_auto_index = "true";
       savestate_max_keep = "0";
       # Rewind: hold Tab, or Share + L2 (an axis on the DualShock 4
