@@ -72,7 +72,7 @@
 # RetroArch leaves L2/R2/L3/R3 and both sticks unbound on the keyboard by
 # default and uses letters as hotkeys (R rewind, L fast-forward, E slow
 # motion, K frame advance, I netplay), so those binds are added and those
-# five hotkeys cleared below (rewind moves to Tab, and to Share + L2 on
+# five hotkeys cleared below (rewind moves to Tab, and to PS + L2 on
 # the pad); the rest (F1 menu, Esc, F-keys, F fullscreen, P
 # pause, H reset) stay. RetroArch auto-binds any pad it recognises. The
 # standalones (PCSX2, Dolphin) carry every binding twice, keyboard and the
@@ -642,16 +642,19 @@ in
       savestate_auto_save = "true";
       savestate_auto_load = "true";
       # Pad hotkeys (button numbers from RetroArch's DualShock 4 udev
-      # profile: 8 Share, 4 L1, 5 R1): hold Share, press R1 = save state,
-      # L1 = load state. Every save goes to a new slot and load takes the
-      # newest one (auto index); nothing is deleted (max_keep 0).
-      input_enable_hotkey_btn = "8";
+      # profile: 10 PS, 4 L1, 5 R1, 9 Options, L2 = axis +2): hold the PS
+      # button, press R1 = save state, L1 = load state, L2 = rewind,
+      # Options = quit. The profile also binds PS alone to the menu, which
+      # RetroArch keeps for a lone press (hotkeys fire only with a second
+      # button). Every save goes to a new slot and load takes the newest
+      # one (auto index); nothing is deleted (max_keep 0).
+      input_enable_hotkey_btn = "10";
       input_save_state_btn = "5";
       input_load_state_btn = "4";
-      input_exit_emulator_btn = "9";  # Share + Options = quit (back to ES-DE), like Esc
+      input_exit_emulator_btn = "9";  # PS + Options = quit (back to ES-DE), like Esc
       savestate_auto_index = "true";
       savestate_max_keep = "0";
-      # Rewind: hold Tab, or Share + L2 (an axis on the DualShock 4
+      # Rewind: hold Tab, or PS + L2 (an axis on the DualShock 4
       # profile), to go back in time. 256 MB buffer; off for the cores
       # whose states are tens of MB (PS2, GameCube, PSP) in their overrides.
       rewind_enable = "true";
