@@ -398,6 +398,12 @@ let
   # Rash 64 unthrottled).
   rcFastPreset = name: "${shaders}/RetroCrisis/fast/${rcRes}/RC GDV-NTSC - ${name}.slangp";
   fastPresetCores = [ ];
+  # Cores seeded with a preset outside the pack (full path), chosen by eye
+  # in RetroArch's menu: N64 on crtsim (libretro slang library).
+  corePresetPaths = {
+    "Mupen64Plus-Next" = "${shaders}/shaders_slang/crt/crtsim.slangp";
+    "ParaLLEl N64" = "${shaders}/shaders_slang/crt/crtsim.slangp";
+  };
   # RetroArch auto-loads ~/.config/retroarch/config/<corename>/<corename>.slangp
   # for a core. corename as in the core .info files; value = preset name in
   # the pack (after "RC GDV-NTSC - ").
@@ -448,8 +454,6 @@ let
   # 3D cores only: the 2D cores run the full chain at ~95 fps unthrottled
   # here, so they keep it.
   presetParams = {
-    "Mupen64Plus-Next" = rcTrim;
-    "ParaLLEl N64" = rcTrim;
     "Beetle PSX HW" = rcTrim;
     "Beetle PSX" = rcTrim;
     "SwanStation" = rcTrim;
@@ -774,7 +778,7 @@ in
       if [ ! -e "$f" ] || [ "$(head -n1 "$f")" = "${presetMarker}" ] || head -n1 "$f" | grep -q '^printf '; then
         run mkdir -p "$(dirname "$f")"
         run write_file "$f" ${lib.escapeShellArg (presetMarker + "\n#reference \""
-          + (if builtins.elem core fastPresetCores then rcFastPreset system else rcPreset system)
+          + (corePresetPaths.${core} or (if builtins.elem core fastPresetCores then rcFastPreset system else rcPreset system))
           + "\"\n" + (presetParams.${core} or ""))}
       fi
     '') corePresets)}
