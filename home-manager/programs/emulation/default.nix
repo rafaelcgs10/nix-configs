@@ -72,7 +72,8 @@
 # RetroArch leaves L2/R2/L3/R3 and both sticks unbound on the keyboard by
 # default and uses letters as hotkeys (R rewind, L fast-forward, E slow
 # motion, K frame advance, I netplay), so those binds are added and those
-# five hotkeys cleared below; the rest (F1 menu, Esc, F-keys, F fullscreen, P
+# five hotkeys cleared below (rewind moves to Tab, and to Share + L2 on
+# the pad); the rest (F1 menu, Esc, F-keys, F fullscreen, P
 # pause, H reset) stay. RetroArch auto-binds any pad it recognises. The
 # standalones (PCSX2, Dolphin) carry every binding twice, keyboard and the
 # DS4's SDL name, so plugging the pad in just works and unplugging it falls
@@ -609,6 +610,14 @@ in
       input_load_state_btn = "4";
       savestate_auto_index = "true";
       savestate_max_keep = "0";
+      # Rewind: hold Tab, or Share + L2 (an axis on the DualShock 4
+      # profile), to go back in time. 256 MB buffer; off for the cores
+      # whose states are tens of MB (PS2, GameCube, PSP) in their overrides.
+      rewind_enable = "true";
+      rewind_granularity = "1";
+      rewind_buffer_size = "268435456";
+      input_rewind = "tab";
+      input_rewind_axis = "+2";
       menu_driver = "ozone";
       system_directory = "${games}/bios";
       savefile_directory = "${games}/saves/retroarch";
@@ -634,7 +643,6 @@ in
       input_player1_r_y_minus = "i";
       input_player1_r_y_plus = "k";
       # Letter hotkeys that would fire on those pad keys.
-      input_rewind = "nul";
       input_hold_fast_forward = "nul";
       input_hold_slowmotion = "nul";
       input_toggle_slowmotion = "nul";
@@ -665,12 +673,17 @@ in
     input_player1_a = "x"
     input_player1_y = "c"
     input_player1_x = "v"
+    rewind_enable = "false"
   '';
   xdg.configFile."retroarch/config/dolphin-emu/dolphin-emu.cfg".text = twoStickOverride + ''
     input_player1_b = "z"
     input_player1_a = "x"
     input_player1_x = "c"
     input_player1_y = "v"
+    rewind_enable = "false"
+  '';
+  xdg.configFile."retroarch/config/PPSSPP/PPSSPP.cfg".text = ''
+    rewind_enable = "false"
   '';
 
   # psx/ps2 without .bin in the extension list (see the file): a bin/cue dump
