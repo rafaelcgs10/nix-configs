@@ -501,7 +501,10 @@ let
       "beetle_psx_skip_bios" = "disabled";
     };
     "PCSX-ReARMed" = { "pcsx_rearmed_show_bios_bootlogo" = "enabled"; };
-    "LRPS2" = { "pcsx2_fastboot" = "disabled"; }; # PS2 boot sequence
+    # LRPS2: fast boot back on. With it off the core sat on a black screen
+    # (the selected v1.00 Japanese BIOS never reached the game) and the
+    # exit-time auto state captured that black screen.
+    "LRPS2" = { "pcsx2_fastboot" = "enabled"; };
     # Dolphin: dolphin_skip_gc_bios stays enabled, the GameCube animation
     # needs a dumped IPL.bin under bios/dolphin-emu/Sys/GC/ that is absent.
     "mGBA" = {
