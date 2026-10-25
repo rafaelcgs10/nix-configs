@@ -444,7 +444,23 @@ let
   '';
   # 3D cores only: the 2D cores run the full chain at ~95 fps unthrottled
   # here, so they keep it.
+  # N64 (fast chain): the pack's scanline values are tuned for the NTSC
+  # chain's scanline gamma, which the fast chain lacks, and came out hard.
+  # Lighter beam on the fast chain's own scanline type (montage 2026-10-25).
+  n64Scanlines = ''
+    gsl = "0.000000"
+    scanline1 = "4.000000"
+    scanline2 = "6.000000"
+    beam_min = "1.700000"
+    beam_max = "1.200000"
+    beam_size = "0.600000"
+    scans = "0.500000"
+    scan_falloff = "1.000000"
+    spike = "1.000000"
+  '';
   presetParams = {
+    "Mupen64Plus-Next" = n64Scanlines;
+    "ParaLLEl N64" = n64Scanlines;
     "Beetle PSX HW" = rcTrim;
     "Beetle PSX" = rcTrim;
     "SwanStation" = rcTrim;
@@ -586,6 +602,15 @@ in
       # and loaded on the next launch. Manual slots are untouched.
       savestate_auto_save = "true";
       savestate_auto_load = "true";
+      # Pad hotkeys (button numbers from RetroArch's DualShock 4 udev
+      # profile: 8 Share, 4 L1, 5 R1): hold Share, press R1 = save state,
+      # L1 = load state. Every save goes to a new slot and load takes the
+      # newest one (auto index); nothing is deleted (max_keep 0).
+      input_enable_hotkey_btn = "8";
+      input_save_state_btn = "5";
+      input_load_state_btn = "4";
+      savestate_auto_index = "true";
+      savestate_max_keep = "0";
       menu_driver = "ozone";
       system_directory = "${games}/bios";
       savefile_directory = "${games}/saves/retroarch";
