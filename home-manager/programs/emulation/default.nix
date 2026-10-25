@@ -423,8 +423,11 @@ let
     "Beetle PSX" = "PlayStation - Clean";
     "SwanStation" = "PlayStation - Clean";
     "PCSX-ReARMed" = "PlayStation - Clean";
-    # PS2 core; Dolphin and PPSSPP cores get none (no preset in the pack)
+    # PS2 core; the Dolphin core shares the PS2 (480i era) preset, PPSSPP
+    # the pack's handheld DS preset. Library names as the cores report them.
     "LRPS2" = "PS2 - Clean";
+    "dolphin-emu" = "PS2 - Clean";
+    "PPSSPP" = "DS";
   };
   # Parameter lines appended to the seeded preset for the 3D cores: guest.r's
   # speed advice for crt-guest-advanced-ntsc (fewer NTSC filter taps, "Speedup
@@ -435,6 +438,8 @@ let
     ntsc_taps = "19.000000"
     speedup = "2.000000"
   '';
+  # 3D cores only: the 2D cores run the full chain at ~95 fps unthrottled
+  # here, so they keep it.
   presetParams = {
     "Mupen64Plus-Next" = rcTrim;
     "ParaLLEl N64" = rcTrim;
@@ -442,6 +447,19 @@ let
     "Beetle PSX" = rcTrim;
     "SwanStation" = rcTrim;
     "PCSX-ReARMed" = rcTrim;
+    "LRPS2" = rcTrim;
+    "dolphin-emu" = rcTrim;
+    "PPSSPP" = rcTrim;
+  };
+  # Core options asserted into config/<core>/<core>.opt on activation
+  # (RetroArch rewrites those files, so they cannot be managed files).
+  # Mupen64Plus-Next: ParaLLEl-RDP (Vulkan). The core's default, GLideN64,
+  # demands an OpenGL context and never falls back, so RetroArch silently
+  # switched from Vulkan to GL for N64 and the shaders ran on the GL path.
+  # melonDS: threaded software renderer, idle cores otherwise.
+  coreOptionAsserts = {
+    "Mupen64Plus-Next" = { "mupen64plus-rdp-plugin" = "parallel"; };
+    "melonDS" = { "melonds_threaded_renderer" = "enabled"; };
   };
   presetMarker = "# seeded by nix-configs (home-manager/programs/emulation); delete this line to keep your own";
 
@@ -633,6 +651,8 @@ in
   # reads pcsx2/bios (same files as PCSX2's bios/ps2), the Dolphin core needs
   # Dolphin's Sys tree, PPSSPP its assets; both come from the cores' sources.
   home.file."Games/bios/pcsx2/bios".source = link "${games}/bios/ps2";
+  # LRPS2 game database (per-game fixes), looked up as pcsx2/resources/GameIndex.yaml
+  home.file."Games/bios/pcsx2/resources".source = "${pkgs.libretro.pcsx2.src}/bin/resources";
   home.file."Games/bios/dolphin-emu/Sys".source = "${pkgs.libretro.dolphin.src}/Data/Sys";
   home.file."Games/bios/PPSSPP".source = "${pkgs.libretro.ppsspp.src}/assets";
 
@@ -719,19 +739,18 @@ in
       fi
     '') corePresets)}
 
-    # Mupen64Plus-Next: ParaLLEl-RDP (Vulkan). The core's default, GLideN64,
-    # demands an OpenGL context and never falls back, so RetroArch silently
-    # switched from Vulkan to GL for N64 and the shaders ran on the GL path.
-    # RetroArch rewrites the .opt file on core unload, so the key is asserted
-    # here rather than managed as a file.
-    o="${config.xdg.configHome}/retroarch/config/Mupen64Plus-Next/Mupen64Plus-Next.opt"
-    if [ ! -e "$o" ]; then
-      run mkdir -p "$(dirname "$o")"
-      run write_file "$o" 'mupen64plus-rdp-plugin = "parallel"
-'
-    elif ! grep -qx 'mupen64plus-rdp-plugin = "parallel"' "$o"; then
-      run sed -i -e '/^mupen64plus-rdp-plugin = /d' -e '$a mupen64plus-rdp-plugin = "parallel"' "$o"
-    fi
+    # Core options (coreOptionAsserts): add or replace the key in the .opt.
+    ${lib.concatStringsSep "\n" (lib.concatLists (lib.mapAttrsToList (core: opts: lib.mapAttrsToList (k: v: let
+      line = ''${k} = "${v}"'';
+    in ''
+      o="${config.xdg.configHome}/retroarch/config/${core}/${core}.opt"
+      if [ ! -e "$o" ]; then
+        run mkdir -p "$(dirname "$o")"
+        run write_file "$o" ${lib.escapeShellArg (line + "\n")}
+      elif ! grep -qxF ${lib.escapeShellArg line} "$o"; then
+        run sed -i -e ${lib.escapeShellArg ("/^" + k + " = /d")} -e ${lib.escapeShellArg ("$a " + line)} "$o"
+      fi
+    '') opts) coreOptionAsserts))}
 
     # xemu: blank HDD image once, and a config pointing at the bios/saves
     # tree (xemu rewrites the file, so only when absent).
