@@ -565,6 +565,12 @@ in
     settings = {
       video_driver = "vulkan";
       video_threaded = "false"; # slow-driver fallback, costs time on Vulkan
+      # Pixel-exact scaling that fills the screen: "Smart" rounds up to the
+      # next integer when that only crops overscan (1080p: 224/240-line
+      # content x5 instead of x4, GBA x7, PSP x4), otherwise rounds down
+      # (480-line PS2/GC x2, Game Boy x7).
+      video_scale_integer = "true";
+      video_scale_integer_scaling = "2";
       video_fullscreen = "true";
       audio_driver = "pulse"; # pipewire-pulse
       menu_driver = "ozone";
