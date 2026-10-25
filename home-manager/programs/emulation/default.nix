@@ -217,23 +217,24 @@ let
   # running). Key names are unique at their indentation. Tekken 6 on the
   # thinkpad's Vega 7 is GPU-bound (resolution scale 50 % fixed its 45 fps
   # stages, 2026-10-25), so: lighter GPU work (no MSAA, low shader
-  # precision, 75 % scale of the 720p framebuffer; the game renders 1024x576
-  # anyway). Kept at RPCS3's defaults on purpose: Multithreaded RSX and
-  # Relaxed ZCULL Sync hung Demon's Souls right after loading a state
-  # (RSX, "RSX Offloader" and one SPU thread spinning, 2026-10-25); frame
-  # skip is only a fixed cadence (draw N, skip M), no automatic one, and
-  # judders on stages that already run full speed. The performance overlay
-  # shows CPU/GPU/RSX load and frametime.
+  # precision, relaxed ZCULL, 75 % scale of the 720p framebuffer; the game
+  # renders 1024x576 anyway), the RSX work split over two threads, SPU
+  # block size Mega and RPCS3's own scheduler. (A Demon's Souls hang on
+  # 2026-10-25 was first blamed on these; it was a broken savestate: the
+  # game deadlocked on the audio mixer's mutexes with defaults too.) Frame
+  # skip stays off: RPCS3 only has a fixed cadence (draw N, skip M), no
+  # automatic one, and it judders on stages that already run full speed.
+  # The performance overlay shows CPU/GPU/RSX load and frametime.
   rpcs3Settings = {
     "Exit RPCS3 when process finishes" = "true";   # ES-DE gets the screen back
     "Thread Scheduler Mode" = "RPCS3 Alternative Scheduler";
     "SPU Block Size" = "Mega";
     "MSAA" = "Disabled";
     "Shader Precision" = "Low";
-    "Relaxed ZCULL Sync" = "false";
-    "Accurate ZCULL stats" = "true";
+    "Relaxed ZCULL Sync" = "true";
+    "Accurate ZCULL stats" = "false";
     "Resolution Scale" = "75";
-    "Multithreaded RSX" = "false";
+    "Multithreaded RSX" = "true";
     "Enable Frame Skip" = "false";
   };
   rpcs3OverlaySettings = { "Enabled" = "true"; };   # under "Performance Overlay:"
