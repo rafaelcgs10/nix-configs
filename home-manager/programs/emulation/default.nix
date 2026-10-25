@@ -72,7 +72,7 @@
 # RetroArch leaves L2/R2/L3/R3 and both sticks unbound on the keyboard by
 # default and uses letters as hotkeys (R rewind, L fast-forward, E slow
 # motion, K frame advance, I netplay), so those binds are added and those
-# five hotkeys cleared below (rewind moves to Tab, and to PS + L2 on
+# five hotkeys cleared below (rewind moves to Backspace, and to PS + L2 on
 # the pad); the rest (F1 menu, Esc, F-keys, F fullscreen, P
 # pause, H reset) stay. RetroArch auto-binds any pad it recognises. The
 # standalones (PCSX2, Dolphin) carry every binding twice, keyboard and the
@@ -654,13 +654,13 @@ in
       input_exit_emulator_btn = "9";  # PS + Options = quit (back to ES-DE), like Esc
       savestate_auto_index = "true";
       savestate_max_keep = "0";
-      # Rewind: hold Tab, or PS + L2 (an axis on the DualShock 4
+      # Rewind: hold Backspace, or PS + L2 (an axis on the DualShock 4
       # profile), to go back in time. 256 MB buffer; off for the cores
       # whose states are tens of MB (PS2, GameCube, PSP) in their overrides.
       rewind_enable = "true";
       rewind_granularity = "1";
       rewind_buffer_size = "268435456";
-      input_rewind = "tab";
+      input_rewind = "backspace";
       input_rewind_axis = "+2";
       menu_driver = "ozone";
       system_directory = "${games}/bios";
