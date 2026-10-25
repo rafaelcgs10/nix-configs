@@ -691,6 +691,11 @@ in
     '';
 
   home.activation.emulationSetup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    # File writes go through this helper so that `run` sees one command:
+    # in a dry run `run` only echoes its arguments, and an outer shell
+    # redirection would capture that echo as the file's content (which is
+    # exactly what happened to the preset files once).
+    write_file() { printf '%s' "$2" > "$1"; }
     games="${games}"
     run mkdir -p \
       ${lib.concatMapStringsSep " " (s: ''"${romsDir}/${s}"'') esSystems} \
@@ -706,9 +711,11 @@ in
     # marker; a preset saved from RetroArch's menu (no marker) is left alone.
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList (core: system: ''
       f="${config.xdg.configHome}/retroarch/config/${core}/${core}.slangp"
-      if [ ! -e "$f" ] || [ "$(head -n1 "$f")" = "${presetMarker}" ]; then
+      # Also re-seed a file whose first line is the echoed printf command
+      # left behind by the old redirect-in-dry-run bug.
+      if [ ! -e "$f" ] || [ "$(head -n1 "$f")" = "${presetMarker}" ] || head -n1 "$f" | grep -q '^printf '; then
         run mkdir -p "$(dirname "$f")"
-        run printf '%s\n#reference "%s"\n%s' "${presetMarker}" ${lib.escapeShellArg (rcPreset system)} ${lib.escapeShellArg (presetParams.${core} or "")} > "$f"
+        run write_file "$f" ${lib.escapeShellArg (presetMarker + "\n#reference \"" + rcPreset system + "\"\n" + (presetParams.${core} or ""))}
       fi
     '') corePresets)}
 
@@ -720,10 +727,10 @@ in
     o="${config.xdg.configHome}/retroarch/config/Mupen64Plus-Next/Mupen64Plus-Next.opt"
     if [ ! -e "$o" ]; then
       run mkdir -p "$(dirname "$o")"
-      run printf '%s\n' 'mupen64plus-rdp-plugin = "parallel"' > "$o"
+      run write_file "$o" 'mupen64plus-rdp-plugin = "parallel"
+'
     elif ! grep -qx 'mupen64plus-rdp-plugin = "parallel"' "$o"; then
-      run sed -i '/^mupen64plus-rdp-plugin = /d' "$o"
-      run printf '%s\n' 'mupen64plus-rdp-plugin = "parallel"' >> "$o"
+      run sed -i -e '/^mupen64plus-rdp-plugin = /d' -e '$a mupen64plus-rdp-plugin = "parallel"' "$o"
     fi
 
     # xemu: blank HDD image once, and a config pointing at the bios/saves
