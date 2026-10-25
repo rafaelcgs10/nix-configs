@@ -713,6 +713,10 @@ in
     input_player1_y = "c"
     input_player1_x = "v"
     rewind_enable = "false"
+    # LRPS2 hangs on quit while writing the exit-time state (reproduced
+    # 2026-10-25: 120 s timeout with it on, clean exit in 12 s without).
+    savestate_auto_save = "false"
+    savestate_auto_load = "false"
   '';
   xdg.configFile."retroarch/config/dolphin-emu/dolphin-emu.cfg".text = twoStickOverride + ''
     input_player1_b = "z"
