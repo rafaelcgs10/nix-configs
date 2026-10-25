@@ -481,6 +481,40 @@ let
       "mupen64plus-43screensize" = "320x240";
     };
     "melonDS" = { "melonds_threaded_renderer" = "enabled"; };
+    # Loading times and slowdowns (2026-10-25). Boot logos stay on
+    # everywhere: Rafael likes them. Rewind stays off for PS2, GameCube and
+    # PSP (core overrides below): the per-frame state of those cores is
+    # tens of MB and users report the cores only run with rewind disabled.
+    "SwanStation" = {
+      "swanstation_CDROM_ReadSpeedup" = "4";   # 4x; some FMVs desync beyond 2x
+      "swanstation_CDROM_SeekSpeedup" = "4";
+      "swanstation_CDROM_LoadImageToRAM" = "true";
+      "swanstation_BIOS_PatchFastBoot" = "false"; # PlayStation logo
+      "swanstation_CPU_Overclock" = "150";     # removes the games' own slowdown
+    };
+    "Beetle PSX HW" = {
+      "beetle_psx_hw_cd_fastload" = "4x";
+      "beetle_psx_hw_cd_access_method" = "precache";
+      "beetle_psx_hw_skip_bios" = "disabled";
+    };
+    "Beetle PSX" = {
+      "beetle_psx_cd_fastload" = "4x";
+      "beetle_psx_cd_access_method" = "precache";
+      "beetle_psx_skip_bios" = "disabled";
+    };
+    "PCSX-ReARMed" = { "pcsx_rearmed_show_bios_bootlogo" = "enabled"; };
+    "LRPS2" = { "pcsx2_fastboot" = "disabled"; }; # PS2 boot sequence
+    # Dolphin: dolphin_skip_gc_bios stays enabled, the GameCube animation
+    # needs a dumped IPL.bin under bios/dolphin-emu/Sys/GC/ that is absent.
+    "mGBA" = {
+      "mgba_frameskip" = "auto";   # skips only when behind (33 % threshold)
+      "mgba_skip_bios" = "OFF";    # GBA boot logo (BIOS in use)
+    };
+    "PPSSPP" = {
+      "ppsspp_auto_frameskip" = "enabled";
+      "ppsspp_frameskip" = "1";    # auto needs a non-zero maximum
+      "ppsspp_cache_iso" = "enabled";
+    };
   };
   presetMarker = "# seeded by nix-configs (home-manager/programs/emulation); delete this line to keep your own";
 
