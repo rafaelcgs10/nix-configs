@@ -512,6 +512,9 @@ let
     };
     # Dolphin: dolphin_skip_gc_bios stays enabled, the GameCube animation
     # needs a dumped IPL.bin under bios/dolphin-emu/Sys/GC/ that is absent.
+    # PAL60: European games with a 60 Hz mode use it (native, no speed
+    # change); PAL games on the other cores stay at their 50 Hz.
+    "dolphin-emu" = { "dolphin_pal60" = "enabled"; };
     "mGBA" = {
       "mgba_frameskip" = "auto";   # skips only when behind (33 % threshold)
       "mgba_skip_bios" = "OFF";    # GBA boot logo (BIOS in use)
