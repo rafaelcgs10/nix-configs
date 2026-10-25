@@ -391,6 +391,10 @@ let
   # the thinkpad is 1080p. "Flat" = no screen curvature.
   rcRes = if hostName == "bbstation" then "4K Flat" else "1080p Flat";
   rcPreset = name: "${shaders}/RetroCrisis/retro crisis/${rcRes}/RC GDV-NTSC - ${name}.slangp";
+  # The same look without the NTSC passes (retro-crisis.nix), for cores on
+  # RetroArch's OpenGL path, where the NTSC chain costs ~8 ms a frame.
+  rcFastPreset = name: "${shaders}/RetroCrisis/fast/${rcRes}/RC GDV-NTSC - ${name}.slangp";
+  fastPresetCores = [ "Mupen64Plus-Next" "ParaLLEl N64" ];
   # RetroArch auto-loads ~/.config/retroarch/config/<corename>/<corename>.slangp
   # for a core. corename as in the core .info files; value = preset name in
   # the pack (after "RC GDV-NTSC - ").
@@ -441,8 +445,6 @@ let
   # 3D cores only: the 2D cores run the full chain at ~95 fps unthrottled
   # here, so they keep it.
   presetParams = {
-    "Mupen64Plus-Next" = rcTrim;
-    "ParaLLEl N64" = rcTrim;
     "Beetle PSX HW" = rcTrim;
     "Beetle PSX" = rcTrim;
     "SwanStation" = rcTrim;
@@ -453,12 +455,16 @@ let
   };
   # Core options asserted into config/<core>/<core>.opt on activation
   # (RetroArch rewrites those files, so they cannot be managed files).
-  # Mupen64Plus-Next: ParaLLEl-RDP (Vulkan). The core's default, GLideN64,
-  # demands an OpenGL context and never falls back, so RetroArch silently
-  # switched from Vulkan to GL for N64 and the shaders ran on the GL path.
+  # Mupen64Plus-Next: GLideN64, which makes RetroArch switch to its OpenGL
+  # driver for N64 (the core demands a GL context). ParaLLEl-RDP (Vulkan)
+  # needs the low-level RSP on the CPU and left Road Rash 64 at exactly 60
+  # fps unthrottled on the thinkpad, whatever the shader; GLideN64 with the
+  # high-level RSP reaches 129 without a shader and 109 with the fast
+  # Retro Crisis preset (the full NTSC chain on GL drops it to 62, hence
+  # fastPresetCores). Measured 2026-10-25 from a save state.
   # melonDS: threaded software renderer, idle cores otherwise.
   coreOptionAsserts = {
-    "Mupen64Plus-Next" = { "mupen64plus-rdp-plugin" = "parallel"; };
+    "Mupen64Plus-Next" = { "mupen64plus-rdp-plugin" = "gliden64"; };
     "melonDS" = { "melonds_threaded_renderer" = "enabled"; };
   };
   presetMarker = "# seeded by nix-configs (home-manager/programs/emulation); delete this line to keep your own";
@@ -748,7 +754,9 @@ in
       # left behind by the old redirect-in-dry-run bug.
       if [ ! -e "$f" ] || [ "$(head -n1 "$f")" = "${presetMarker}" ] || head -n1 "$f" | grep -q '^printf '; then
         run mkdir -p "$(dirname "$f")"
-        run write_file "$f" ${lib.escapeShellArg (presetMarker + "\n#reference \"" + rcPreset system + "\"\n" + (presetParams.${core} or ""))}
+        run write_file "$f" ${lib.escapeShellArg (presetMarker + "\n#reference \""
+          + (if builtins.elem core fastPresetCores then rcFastPreset system else rcPreset system)
+          + "\"\n" + (presetParams.${core} or ""))}
       fi
     '') corePresets)}
 
