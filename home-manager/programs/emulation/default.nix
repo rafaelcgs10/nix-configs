@@ -217,21 +217,23 @@ let
   # running). Key names are unique at their indentation. Tekken 6 on the
   # thinkpad's Vega 7 is GPU-bound (resolution scale 50 % fixed its 45 fps
   # stages, 2026-10-25), so: lighter GPU work (no MSAA, low shader
-  # precision, relaxed ZCULL, 75 % scale of the 720p framebuffer; the game
-  # renders 1024x576 anyway) and the RSX work split over two threads. Frame
-  # skip stays off: RPCS3 only has a fixed cadence (draw N, skip M), no
-  # automatic one, and it judders on stages that already run full speed.
-  # The performance overlay shows CPU/GPU/RSX load and frametime.
+  # precision, 75 % scale of the 720p framebuffer; the game renders 1024x576
+  # anyway). Kept at RPCS3's defaults on purpose: Multithreaded RSX and
+  # Relaxed ZCULL Sync hung Demon's Souls right after loading a state
+  # (RSX, "RSX Offloader" and one SPU thread spinning, 2026-10-25); frame
+  # skip is only a fixed cadence (draw N, skip M), no automatic one, and
+  # judders on stages that already run full speed. The performance overlay
+  # shows CPU/GPU/RSX load and frametime.
   rpcs3Settings = {
     "Exit RPCS3 when process finishes" = "true";   # ES-DE gets the screen back
     "Thread Scheduler Mode" = "RPCS3 Alternative Scheduler";
     "SPU Block Size" = "Mega";
     "MSAA" = "Disabled";
     "Shader Precision" = "Low";
-    "Relaxed ZCULL Sync" = "true";
-    "Accurate ZCULL stats" = "false";
+    "Relaxed ZCULL Sync" = "false";
+    "Accurate ZCULL stats" = "true";
     "Resolution Scale" = "75";
-    "Multithreaded RSX" = "true";
+    "Multithreaded RSX" = "false";
     "Enable Frame Skip" = "false";
   };
   rpcs3OverlaySettings = { "Enabled" = "true"; };   # under "Performance Overlay:"
@@ -933,7 +935,7 @@ in
 
     # RPCS3 shortcuts (see rpcs3ShortcutsBlock); only while it is not running.
     rpcs3_gui="${config.xdg.configHome}/rpcs3/GuiConfigs/CurrentSettings.ini"
-    if ! ${pkgs.procps}/bin/pgrep -x rpcs3 >/dev/null 2>&1; then
+    if ! ${pkgs.procps}/bin/pgrep -f 'rpcs3[^ ]*/AppRun.wrapped' >/dev/null 2>&1; then
       run mkdir -p "$(dirname "$rpcs3_gui")"
       [ -e "$rpcs3_gui" ] || run write_file "$rpcs3_gui" ""
       run ${pcsx2Pad}/bin/pcsx2-pad "$rpcs3_gui" ${rpcs3ShortcutsBlock}
@@ -946,7 +948,7 @@ in
       run ${rpcs3}/bin/rpcs3 --headless --installfw ${ps3Firmware} >/dev/null 2>&1 \
         || echo "emulation: PS3 firmware install failed; run: rpcs3 --installfw ${ps3Firmware}"
     fi
-    if [ -e "$rpcs3_cfg/config.yml" ] && ! ${pkgs.procps}/bin/pgrep -x rpcs3 >/dev/null 2>&1; then
+    if [ -e "$rpcs3_cfg/config.yml" ] && ! ${pkgs.procps}/bin/pgrep -f 'rpcs3[^ ]*/AppRun.wrapped' >/dev/null 2>&1; then
       run ${pkgs.gnused}/bin/sed -i -f ${rpcs3SettingsSed} "$rpcs3_cfg/config.yml"
       # Input profiles only exist once a pad handler was picked in the GUI;
       # whatever they contain, vibration stays off.
