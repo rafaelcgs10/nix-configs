@@ -426,6 +426,23 @@ let
     # PS2 core; Dolphin and PPSSPP cores get none (no preset in the pack)
     "LRPS2" = "PS2 - Clean";
   };
+  # Parameter lines appended to the seeded preset for the 3D cores: guest.r's
+  # speed advice for crt-guest-advanced-ntsc (fewer NTSC filter taps, "Speedup
+  # w. higher Internal Res." 2). On the thinkpad (Vega 7, 1080p integer
+  # scale) the full chain gave 72 fps unthrottled on Mario Kart 64 and the
+  # trimmed one 76, with no visible difference in a side-by-side montage.
+  rcTrim = ''
+    ntsc_taps = "19.000000"
+    speedup = "2.000000"
+  '';
+  presetParams = {
+    "Mupen64Plus-Next" = rcTrim;
+    "ParaLLEl N64" = rcTrim;
+    "Beetle PSX HW" = rcTrim;
+    "Beetle PSX" = rcTrim;
+    "SwanStation" = rcTrim;
+    "PCSX-ReARMed" = rcTrim;
+  };
   presetMarker = "# seeded by nix-configs (home-manager/programs/emulation); delete this line to keep your own";
 
   esSystems = [
@@ -691,7 +708,7 @@ in
       f="${config.xdg.configHome}/retroarch/config/${core}/${core}.slangp"
       if [ ! -e "$f" ] || [ "$(head -n1 "$f")" = "${presetMarker}" ]; then
         run mkdir -p "$(dirname "$f")"
-        run printf '%s\n#reference "%s"\n' "${presetMarker}" ${lib.escapeShellArg (rcPreset system)} > "$f"
+        run printf '%s\n#reference "%s"\n%s' "${presetMarker}" ${lib.escapeShellArg (rcPreset system)} ${lib.escapeShellArg (presetParams.${core} or "")} > "$f"
       fi
     '') corePresets)}
 
