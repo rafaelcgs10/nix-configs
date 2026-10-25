@@ -212,6 +212,26 @@ let
   '' + lib.concatStringsSep "\n" (lib.concatLists (lib.mapAttrsToList
     (k: vs: map (v: "${k} = ${v}") vs) pcsx2Binds)) + "\n");
   pcsx2Pad = pkgs.writers.writePython3Bin "pcsx2-pad" { } (builtins.readFile ./pcsx2-pad.py);
+  # RPCS3 game-window shortcuts, aligned with RetroArch's keys: F2 save
+  # state, P pause, Space frame-limit toggle (fast-forward), F fullscreen,
+  # Esc stop (ES-DE gets the screen back), F8 screenshot, H restart, F9
+  # mute, Tab the Home menu (RPCS3's PS-button overlay: save state, exit).
+  # No in-game load shortcut exists; the launcher boots the last state.
+  # Stored in GuiConfigs/CurrentSettings.ini [Shortcuts] (Qt key names),
+  # replaced as a whole section by the same script as the PCSX2 pad.
+  rpcs3ShortcutsBlock = pkgs.writeText "rpcs3-shortcuts.ini" ''
+    [Shortcuts]
+    game_window_savestate=F2
+    game_window_pause_play=P
+    game_window_frame_limit=Space
+    game_window_toggle_fullscreen=F
+    game_window_exit_fullscreen=
+    game_window_stop=Esc
+    game_window_screenshot=F8
+    game_window_restart=H
+    gw_mute_unmute=F9
+    gw_home_menu=Tab
+  '';
 
   # N64 cores: RetroPad B/Y/L2 are N64 A/B/Z (see the Input note).
   n64Override = ''
@@ -303,7 +323,7 @@ let
         Right Stick Up: I
         Start: Return
         Select: Backspace
-        PS Button: Tab
+        PS Button: ""
         Square: C
         Cross: Z
         Circle: X
@@ -881,6 +901,14 @@ in
     if ! ${pkgs.procps}/bin/pgrep -x pcsx2-qt >/dev/null 2>&1; then
       run mkdir -p "$(dirname "$pcsx2_ini")"
       run ${pcsx2Pad}/bin/pcsx2-pad "$pcsx2_ini" ${pcsx2PadBlock}
+    fi
+
+    # RPCS3 shortcuts (see rpcs3ShortcutsBlock); only while it is not running.
+    rpcs3_gui="${config.xdg.configHome}/rpcs3/GuiConfigs/CurrentSettings.ini"
+    if ! ${pkgs.procps}/bin/pgrep -x rpcs3 >/dev/null 2>&1; then
+      run mkdir -p "$(dirname "$rpcs3_gui")"
+      [ -e "$rpcs3_gui" ] || run write_file "$rpcs3_gui" ""
+      run ${pcsx2Pad}/bin/pcsx2-pad "$rpcs3_gui" ${rpcs3ShortcutsBlock}
     fi
 
     # RPCS3: install the PS3 firmware once (headless, ~30 s), and make it quit
