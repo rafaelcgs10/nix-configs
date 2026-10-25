@@ -212,6 +212,36 @@ let
   '' + lib.concatStringsSep "\n" (lib.concatLists (lib.mapAttrsToList
     (k: vs: map (v: "${k} = ${v}") vs) pcsx2Binds)) + "\n");
   pcsx2Pad = pkgs.writers.writePython3Bin "pcsx2-pad" { } (builtins.readFile ./pcsx2-pad.py);
+  # RPCS3 global settings (config.yml, RPCS3's own file: it rewrites it on
+  # exit but keeps these values; asserted on activation while RPCS3 is not
+  # running). Key names are unique at their indentation. Tekken 6 on the
+  # thinkpad's Vega 7 is GPU-bound (resolution scale 50 % fixed its 45 fps
+  # stages, 2026-10-25), so: lighter GPU work (no MSAA, low shader
+  # precision, relaxed ZCULL, 75 % scale of the 720p framebuffer; the game
+  # renders 1024x576 anyway), the RSX work split over two threads, and a
+  # fixed 2:1 frame skip (RPCS3 has no automatic one: draws 2 frames, drops
+  # the draws of the 3rd; the game itself stays at full speed). The
+  # performance overlay shows CPU/GPU/RSX load and frametime.
+  rpcs3Settings = {
+    "Exit RPCS3 when process finishes" = "true";   # ES-DE gets the screen back
+    "Thread Scheduler Mode" = "RPCS3 Alternative Scheduler";
+    "SPU Block Size" = "Mega";
+    "MSAA" = "Disabled";
+    "Shader Precision" = "Low";
+    "Relaxed ZCULL Sync" = "true";
+    "Accurate ZCULL stats" = "false";
+    "Resolution Scale" = "75";
+    "Multithreaded RSX" = "true";
+    "Enable Frame Skip" = "true";
+    "Consecutive Frames To Draw" = "2";
+    "Consecutive Frames To Skip" = "1";
+  };
+  rpcs3OverlaySettings = { "Enabled" = "true"; };   # under "Performance Overlay:"
+  rpcs3SettingsSed = pkgs.writeText "rpcs3-settings.sed" (lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (k: v: "s|^  ${k}: .*$|  ${k}: ${v}|") rpcs3Settings
+    ++ lib.mapAttrsToList (k: v:
+      "/^  Performance Overlay:$/,/^  [^ ]/ s|^    ${k}: .*$|    ${k}: ${v}|")
+      rpcs3OverlaySettings) + "\n");
   # RPCS3 game-window shortcuts, aligned with RetroArch's keys: F2 save
   # state, P pause, Space frame-limit toggle (fast-forward), F fullscreen,
   # Esc stop (ES-DE gets the screen back), F8 screenshot, H restart, F9
@@ -911,19 +941,15 @@ in
       run ${pcsx2Pad}/bin/pcsx2-pad "$rpcs3_gui" ${rpcs3ShortcutsBlock}
     fi
 
-    # RPCS3: install the PS3 firmware once (headless, ~30 s), and make it quit
-    # when the game does so ES-DE gets the screen back (RPCS3 rewrites
-    # config.yml on exit but keeps values; only touched while it is not
-    # running). config.yml appears with the firmware install.
+    # RPCS3: install the PS3 firmware once (headless, ~30 s), then assert
+    # rpcs3Settings in config.yml, which appears with the firmware install.
     rpcs3_cfg="${config.xdg.configHome}/rpcs3"
     if [ ! -e "$rpcs3_cfg/dev_flash/vsh/module/vsh.self" ]; then
       run ${rpcs3}/bin/rpcs3 --headless --installfw ${ps3Firmware} >/dev/null 2>&1 \
         || echo "emulation: PS3 firmware install failed; run: rpcs3 --installfw ${ps3Firmware}"
     fi
     if [ -e "$rpcs3_cfg/config.yml" ] && ! ${pkgs.procps}/bin/pgrep -x rpcs3 >/dev/null 2>&1; then
-      run ${pkgs.gnused}/bin/sed -i \
-        's|^  Exit RPCS3 when process finishes: false$|  Exit RPCS3 when process finishes: true|' \
-        "$rpcs3_cfg/config.yml"
+      run ${pkgs.gnused}/bin/sed -i -f ${rpcs3SettingsSed} "$rpcs3_cfg/config.yml"
       # Input profiles only exist once a pad handler was picked in the GUI;
       # whatever they contain, vibration stays off.
       for f in "$rpcs3_cfg"/input_configs/*/*.yml; do
