@@ -576,6 +576,10 @@ in
       audio_sync = "true";    # paces the game (vsync is off); Space fast-forwards
       fps_show = "true";
       video_font_enable = "true"; # the OSD: fps counter, notifications
+      # Resume where you left off: a state is written on exit (<game>.state.auto)
+      # and loaded on the next launch. Manual slots are untouched.
+      savestate_auto_save = "true";
+      savestate_auto_load = "true";
       menu_driver = "ozone";
       system_directory = "${games}/bios";
       savefile_directory = "${games}/saves/retroarch";

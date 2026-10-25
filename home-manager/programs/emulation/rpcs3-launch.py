@@ -6,6 +6,13 @@ player 1. The profile is written to input_configs/global/auto.yml and passed
 with --input-config, which RPCS3 only honours together with --no-gui (ES-DE
 launches). Explicit --input-config, or GUI starts, are left untouched.
 
+Resume: when the launched game has savestates, RPCS3 is started with
+--last-savestate <serial> instead of the game path, which boots the most
+recent one (RPCS3 has no save-on-exit; states are made from its Home menu
+or Ctrl+S). The serial comes from RPCS3's own games.yml (serial -> game
+directory). RPCS3 aborts instead of booting when the newest state is not
+compatible (made by another RPCS3 version); delete the state then.
+
 Environment: RPCS3_BIN (the real binary), RPCS3_SDL (libSDL3.so to
 enumerate with, the one RPCS3 ships), RPCS3_KEYBOARD_YML (keyboard profile
 file to embed as player 1 when no pad is present).
@@ -18,6 +25,37 @@ argv = sys.argv[1:]
 rpcs3 = os.environ["RPCS3_BIN"]
 if "--no-gui" not in argv or any(a.startswith("--input-config") for a in argv):
     os.execv(rpcs3, [rpcs3] + argv)
+
+CONFIG = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
+    "rpcs3")
+
+
+def resume_serial(paths):
+    """Serial of the launched game if it has at least one savestate."""
+    try:
+        with open(os.path.join(CONFIG, "games.yml")) as f:
+            games = [line.split(": ", 1) for line in f.read().splitlines()
+                     if ": " in line]
+    except OSError:
+        return None
+    for serial, game_dir in games:
+        game_dir = game_dir.strip().rstrip("/")
+        if not any(p == game_dir or p.startswith(game_dir + "/")
+                   for p in paths):
+            continue
+        state_dir = os.path.join(CONFIG, "savestates", serial)
+        if os.path.isdir(state_dir) and any(
+                ".SAVESTAT" in n for n in os.listdir(state_dir)):
+            return serial
+    return None
+
+
+game_paths = [os.path.abspath(a) for a in argv if not a.startswith("-")]
+serial = resume_serial(game_paths)
+if serial:
+    argv = ([a for a in argv if a.startswith("-")]
+            + ["--last-savestate", serial])
 
 
 def pads():
