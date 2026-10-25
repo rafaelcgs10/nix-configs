@@ -84,8 +84,10 @@
 # pads with RPCS3's own SDL, any model (DualShock, Xbox, ...), writes
 # input_configs/global/auto.yml with pad 1..n as players 1..n on the SDL
 # handler, or the keyboard profile as player 1 when none is connected, and
-# passes --input-config auto. The GUI uses its own active profile; the
-# managed keyboard.yml (PS2 layout incl. both sticks) is available there.
+# makes "auto" the active global input configuration (RPCS3's own
+# --input-config option is ignored on --last-savestate boots). The GUI
+# shows that same active profile; the managed keyboard.yml (PS2 layout
+# incl. both sticks) is available there too.
 #
 # Only binary-cached packages (checked against cache.nixos.org 2026-10-21):
 # nothing here compiles locally. That is why Snes9x, Genesis Plus GX and

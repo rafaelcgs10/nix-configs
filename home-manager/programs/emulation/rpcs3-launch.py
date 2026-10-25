@@ -2,9 +2,12 @@
 
 The first connected game controller (as SDL sees it, any model) becomes
 player 1 through RPCS3's SDL handler; with none connected the keyboard is
-player 1. The profile is written to input_configs/global/auto.yml and passed
-with --input-config, which RPCS3 only honours together with --no-gui (ES-DE
-launches). Explicit --input-config, or GUI starts, are left untouched.
+player 1. The profile is written to input_configs/global/auto.yml and made
+the active global configuration (input_configs/active_input_configurations
+.yml), which every boot path reads. RPCS3's --input-config option is not
+used: it is honoured only when a game path is booted and silently ignored
+on --last-savestate boots. Explicit --input-config, or GUI starts, are
+left untouched.
 
 Resume: when the launched game has savestates, RPCS3 is started with
 --last-savestate <serial> instead of the game path, which boots the most
@@ -116,10 +119,13 @@ else:
     with open(os.environ["RPCS3_KEYBOARD_YML"]) as f:
         profile = f.read()
 
-cfg_dir = os.path.join(
-    os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
-    "rpcs3", "input_configs", "global")
+cfg_dir = os.path.join(CONFIG, "input_configs", "global")
 os.makedirs(cfg_dir, exist_ok=True)
 with open(os.path.join(cfg_dir, "auto.yml"), "w") as f:
     f.write(profile)
-os.execv(rpcs3, [rpcs3, "--input-config", "auto"] + argv)
+# Per-title entries would take precedence over "global"; this file only ever
+# holds the launcher's choice (the GUI's pad dialog writes it too).
+with open(os.path.join(CONFIG, "input_configs",
+                       "active_input_configurations.yml"), "w") as f:
+    f.write("Active Configurations:\n  global: auto\n")
+os.execv(rpcs3, [rpcs3] + argv)
