@@ -303,7 +303,7 @@ let
         Right Stick Up: I
         Start: Return
         Select: Backspace
-        PS Button: ""
+        PS Button: Tab
         Square: C
         Cross: Z
         Circle: X
