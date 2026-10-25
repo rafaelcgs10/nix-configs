@@ -218,10 +218,10 @@ let
   # thinkpad's Vega 7 is GPU-bound (resolution scale 50 % fixed its 45 fps
   # stages, 2026-10-25), so: lighter GPU work (no MSAA, low shader
   # precision, relaxed ZCULL, 75 % scale of the 720p framebuffer; the game
-  # renders 1024x576 anyway), the RSX work split over two threads, and a
-  # fixed 2:1 frame skip (RPCS3 has no automatic one: draws 2 frames, drops
-  # the draws of the 3rd; the game itself stays at full speed). The
-  # performance overlay shows CPU/GPU/RSX load and frametime.
+  # renders 1024x576 anyway) and the RSX work split over two threads. Frame
+  # skip stays off: RPCS3 only has a fixed cadence (draw N, skip M), no
+  # automatic one, and it judders on stages that already run full speed.
+  # The performance overlay shows CPU/GPU/RSX load and frametime.
   rpcs3Settings = {
     "Exit RPCS3 when process finishes" = "true";   # ES-DE gets the screen back
     "Thread Scheduler Mode" = "RPCS3 Alternative Scheduler";
@@ -232,9 +232,7 @@ let
     "Accurate ZCULL stats" = "false";
     "Resolution Scale" = "75";
     "Multithreaded RSX" = "true";
-    "Enable Frame Skip" = "true";
-    "Consecutive Frames To Draw" = "2";
-    "Consecutive Frames To Skip" = "1";
+    "Enable Frame Skip" = "false";
   };
   rpcs3OverlaySettings = { "Enabled" = "true"; };   # under "Performance Overlay:"
   rpcs3SettingsSed = pkgs.writeText "rpcs3-settings.sed" (lib.concatStringsSep "\n" (
