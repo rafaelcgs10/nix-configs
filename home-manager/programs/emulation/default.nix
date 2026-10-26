@@ -250,6 +250,11 @@ let
   # Esc stop (ES-DE gets the screen back), F8 screenshot, H restart, F9
   # mute, Tab the Home menu (RPCS3's PS-button overlay: save state, exit).
   # No in-game load shortcut exists; the launcher boots the last state.
+  # Restart (H elsewhere) stays unbound: in --no-gui mode RPCS3's restart
+  # and the Home menu's "reload savestate" ask the game to exit, treat that
+  # exit as "process finished" and quit RPCS3 while booting the state; the
+  # process aborts minutes later (vm::block_t destructor, 2026-10-25/26).
+  # Load a state by quitting (Esc) and relaunching instead.
   # Stored in GuiConfigs/CurrentSettings.ini [Shortcuts] (Qt key names),
   # replaced as a whole section by the same script as the PCSX2 pad.
   rpcs3ShortcutsBlock = pkgs.writeText "rpcs3-shortcuts.ini" ''
@@ -261,7 +266,7 @@ let
     game_window_exit_fullscreen=
     game_window_stop=Esc
     game_window_screenshot=F8
-    game_window_restart=H
+    game_window_restart=
     gw_mute_unmute=F9
     gw_home_menu=Tab
   '';
@@ -822,7 +827,10 @@ in
   #   BLUS30443 Demon's Souls (US): the game draws the world into off-screen
   #   colour buffers that the CPU reads back; without Write Color Buffers
   #   only the HUD renders over black (RPCS3 names this game in the option's
-  #   own tooltip).
+  #   own tooltip). Compatible Savestate Mode: without it about every other
+  #   state save failed with "failed to lock SPU threads execution" and one
+  #   state deadlocked the game on load (2026-10-23/26); costs some SPU
+  #   performance, so per game.
   home.file.".config/rpcs3/input_configs/global/keyboard.yml" = { text = rpcs3KeyboardProfile; force = true; };
   # Official patch list + which patches are on (managed: the GUI's patch
   # downloader and toggles cannot write over them; change them here).
@@ -834,6 +842,8 @@ in
     text = ''
       Video:
         Write Color Buffers: true
+      Savestate:
+        Compatible Savestate Mode: true
     '';
   };
 
