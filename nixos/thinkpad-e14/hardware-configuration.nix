@@ -371,6 +371,13 @@ in
   services = {
     udev.extraRules = ''
       SUBSYSTEM=="block", ENV{ID_FS_TYPE}=="ntfs", ENV{ID_FS_TYPE}="ntfs3"
+      # Keep the Vega 7 at its top clock. amdgpu's "auto" level idles the GPU
+      # at 400 MHz between desktop frames, so each compositor render takes
+      # longer and cosmic-comp (which starts rendering "measured render time
+      # + 3 ms" before vblank) has to start earlier: pinning the clock is the
+      # one compositor-side latency lever on this host (2026-10-27). Costs
+      # battery; the touchpad itself is PS/2-bound at ~100 Hz regardless.
+      ACTION=="add", SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ATTR{device/vendor}=="0x1002", ATTR{device/power_dpm_force_performance_level}="high"
     '';
   };
 
