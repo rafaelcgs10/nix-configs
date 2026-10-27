@@ -731,6 +731,7 @@ in
       video_shader_dir = "${shaders}";
       video_shader_enable = "true";
       cheevos_enable = "true"; # credentials entered once in the menu
+      cheevos_auto_screenshot = "true"; # a shot into screenshot_directory per unlocked achievement
       quit_press_twice = "false";
       # Keyboard: the shared layout (see the Input note at the top). RetroArch
       # binds nothing to these by default, which left the Dolphin core's GC
