@@ -249,7 +249,9 @@ in
   home.packages = [
     pkgs.cliphist clipboard-picker clipboard-forget cosmic-theme-toggle cos-cli
     container-manager-applet
-    pkgs.cosmic-ext-applet-minimon
+    # unstable like sysinfo: the COSMIC overlay swaps cosmic-icons/-settings,
+    # so the stable build never matched the binary cache and compiled locally.
+    pkgsUnstable.cosmic-ext-applet-minimon
     pkgsUnstable.cosmic-ext-applet-sysinfo
   ] ++ map (chat: chat.toggle) chats;
 
