@@ -77,6 +77,8 @@ in {
             > /run/nixos-upgrade.prev-system || true
           ${notify} "NixOS upgrade started" "Rebuilding from /home/rafael/nix-configs"
         '')
+        # Pause right away if rafael is at the keyboard (see nixos-upgrade-pause).
+        "-${pkgs.systemd}/bin/systemctl start --no-block nixos-upgrade-pause.service"
       ];
       ExecStopPost = [
         ("-" + pkgs.writeShellScript "nixos-upgrade-notify-done" ''
@@ -130,6 +132,45 @@ in {
         '')
       ];
     };
+
+  # Keep the daily upgrade out of the way (2026-10-30: a noon rebuild compiled
+  # Rust for hours on battery and made the laptop crawl).
+  #  - Mains power only. Desktops without a battery count as on AC. A skipped
+  #    run is not a failure, so the revert hook never fires for it.
+  #  - Paused while rafael uses the machine. Builds run inside
+  #    nixos-upgrade.service itself (root uses the store directly, not the
+  #    daemon), and systemd refuses to freeze a oneshot whose start job is
+  #    still running, so the pause writes the unit's cgroup.freeze directly.
+  #    rafael's swayidle (home-manager/programs/nix-configs-autoupdate.nix)
+  #    keeps /run/nixos-upgrade-idle/idle present after 2 idle minutes and
+  #    removes it on activity; the path unit re-evaluates on every change.
+  #    Without a running swayidle (logged out, other desktop) it never pauses.
+  #    The activation phase (switch-to-configuration) is never frozen: half-
+  #    restarted services would be worse than a busy CPU.
+  systemd.services.nixos-upgrade.unitConfig.ConditionACPower = true;
+  systemd.paths.nixos-upgrade-pause = {
+    wantedBy = [ "multi-user.target" ];
+    pathConfig.PathChanged = "/run/nixos-upgrade-idle";
+  };
+  systemd.services.nixos-upgrade-pause = {
+    serviceConfig.Type = "oneshot";
+    path = [ pkgs.systemd pkgs.gnugrep ];
+    script = ''
+      cg=/sys/fs/cgroup/system.slice/nixos-upgrade.service
+      [ -w "$cg/cgroup.freeze" ] || exit 0   # no upgrade running
+      for pid in $(cat "$cg/cgroup.procs" 2>/dev/null); do
+        if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q switch-to-configuration; then
+          echo 0 > "$cg/cgroup.freeze"; exit 0
+        fi
+      done
+      if [ ! -e /run/nixos-upgrade-idle/idle ] \
+          && systemctl --machine=rafael@.host --user --quiet is-active swayidle.service; then
+        echo "rafael is active: pausing nixos-upgrade"; echo 1 > "$cg/cgroup.freeze"
+      else
+        echo "rafael idle or away: running nixos-upgrade"; echo 0 > "$cg/cgroup.freeze"
+      fi
+    '';
+  };
 
   # nixos-upgrade.service runs as root, but the flake above is rafael's
   # checkout, so git's ownership check (CVE-2022-24765) rejects even reading
@@ -440,6 +481,7 @@ in {
   # so Syncthing (running as rafael) can write into it. Deliberately outside
   # the ecryptfs home. Never auto-cleaned.
   systemd.tmpfiles.rules = [
+    "d /run/nixos-upgrade-idle 0755 rafael users -"   # nixos-upgrade-pause flag dir
     "d /winapps 0755 rafael users - -"
   ];
 

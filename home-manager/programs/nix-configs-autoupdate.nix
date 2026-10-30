@@ -195,6 +195,25 @@ in
     driver = "${flakeLockMerge}/bin/flake-lock-merge %O %A %B";
   };
 
+  # Activity signal for the root nixos-upgrade-pause unit (nixos/configuration.nix):
+  # after 2 idle minutes the flag exists and the upgrade runs, any input removes
+  # it and the upgrade's cgroup is frozen until the next idle period. swayidle
+  # uses ext-idle-notify, which cosmic-comp implements; idle inhibitors (video)
+  # count as activity. A fresh session starts as "active", and logging out
+  # leaves "idle" behind so a paused upgrade never stays frozen.
+  services.swayidle = {
+    enable = true;
+    timeouts = [{
+      timeout = 120;
+      command = "${pkgs.coreutils}/bin/touch /run/nixos-upgrade-idle/idle";
+      resumeCommand = "${pkgs.coreutils}/bin/rm -f /run/nixos-upgrade-idle/idle";
+    }];
+  };
+  systemd.user.services.swayidle.Service = {
+    ExecStartPre = "-${pkgs.coreutils}/bin/rm -f /run/nixos-upgrade-idle/idle";
+    ExecStopPost = "-${pkgs.coreutils}/bin/touch /run/nixos-upgrade-idle/idle";
+  };
+
   systemd.user.services.nix-configs-update = {
     Unit.Description = "Update, commit and push flake.lock in ~/nix-configs (cheap inputs only)";
     Service = {
