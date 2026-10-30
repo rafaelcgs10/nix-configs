@@ -320,7 +320,7 @@ let
   rpcs3PatchFeed = pkgs.fetchurl {
     url = "https://rpcs3.net/compatibility?patch&api=v1&v=1.2";
     name = "rpcs3-patches-api.json";
-    hash = "sha256-l1sqL92fX6xisH5y0cSxUyT6G7rVclTTo+oAC65huow=";
+    hash = "sha256-aNXKwZFTd+MFw+HqsU6MYuSr86MlE6c+4luQDzeOclU=";
   };
   rpcs3Patches = pkgs.runCommand "rpcs3-patch.yml" { nativeBuildInputs = [ pkgs.jq ]; } ''
     jq -r .patch ${rpcs3PatchFeed} > $out
