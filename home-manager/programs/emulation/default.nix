@@ -310,22 +310,13 @@ let
         --set RPCS3_KEYBOARD_YML ${pkgs.writeText "rpcs3-keyboard.yml" rpcs3KeyboardProfile}
     '';
   };
-  # RPCS3's official game patch list, the same file its "Download latest
-  # patches" button fetches (served as JSON by rpcs3.net; the yml is the
-  # "patch" field). Pinned by hash, so it is a snapshot: when the team
-  # publishes new patches the hash changes and the build fails until updated:
-  #   nix store prefetch-file --name rpcs3-patches-api.json \
-  #     'https://rpcs3.net/compatibility?patch&api=v1&v=1.2'
-  # (v=1.2 is RPCS3's patch engine version; bump if a newer RPCS3 rejects it.)
-  rpcs3PatchFeed = pkgs.fetchurl {
-    url = "https://rpcs3.net/compatibility?patch&api=v1&v=1.2";
-    name = "rpcs3-patches-api.json";
-    hash = "sha256-aNXKwZFTd+MFw+HqsU6MYuSr86MlE6c+4luQDzeOclU=";
-  };
-  rpcs3Patches = pkgs.runCommand "rpcs3-patch.yml" { nativeBuildInputs = [ pkgs.jq ]; } ''
-    jq -r .patch ${rpcs3PatchFeed} > $out
-    grep -q '^Version: 1.2' $out
-  '';
+  # RPCS3 game patches: a vendored subset of the official list (only the
+  # patches rpcs3PatchConfig enables, copied verbatim with their anchors).
+  # The live list (https://rpcs3.net/compatibility?patch&api=v1&v=1.2, the
+  # file behind RPCS3's "Download latest patches") changes whenever upstream
+  # adds a patch, so a hash-pinned fetch failed the whole system build each
+  # time (2026-10-27, 2026-10-30) and set off the auto-upgrade's lock revert.
+  rpcs3Patches = ./rpcs3-patch.yml;
   # Patches switched on, per EBOOT hash / title / serial / app version, in
   # RPCS3's own patch_config.yml layout. Demon's Souls US 01.00: the official
   # "Unlock FPS" patch (60 FPS cap; needs default clock scale and vblank

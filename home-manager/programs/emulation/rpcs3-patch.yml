@@ -1,0 +1,69 @@
+Version: 1.2
+
+# Vendored subset of RPCS3's official game patch list (rpcs3.net patch
+# database, fetched 2026-10-30): only the patches enabled in
+# rpcs3PatchConfig (default.nix), entries and anchors copied verbatim.
+# Vendored because the live list changes whenever upstream adds patches,
+# which broke every pinned-hash build. To add a patch: copy its entry and
+# the anchors it references from RPCS3's 'Download latest patches' file.
+
+Anchors:
+  BLUS30443_FpsUnlock: &BLUS30443_FpsUnlock
+  # Set 60 FPS with no frameskip
+  # by Gibbed
+    - [ be16, 0x00025ed8, 0x981f ]
+  # delta time
+  # by Whatcookie
+    - [ be32, 0x0001b964, 0x496ac2cd ] # jump to code cave
+  # get mftb
+    - [ be32, 0x016c7c30, 0x7eac42e6 ] # mftb r21              // move from timebase register (clock)
+  # get mftb delta
+    - [ be32, 0x016c7c34, 0x3ec00185 ] # lis r22,0x0185        // load high bits of address
+    - [ be32, 0x016c7c38, 0x3ad62608 ] # addi r22,r22,0x2608   // load low bits of address
+    - [ be32, 0x016c7c3c, 0x7e96a02a ] # ldx r20,r22,r20       // load previous frames mftb reading
+    - [ be32, 0x016c7c40, 0xfab60000 ] # std r21,0x0(r22)      // store this frames mftb reading
+    - [ be32, 0x016c7c44, 0x7e74a850 ] # subf r19,r21,r20      // subtract previous mftb reading from this mftb frames reading
+  # mftb delta to float
+    - [ be32, 0x016c7c48, 0xfa760018 ] # std r19,0x18(r22)     // store mftb delta (to be loaded into FPR)
+    - [ be32, 0x016c7c4c, 0xcbd60018 ] # lfd f30,0x18(r22)     // load mftb delta into FPR
+    - [ be32, 0x016c7c50, 0xffc0f69c ] # fcfid f30,f30         // convert integer to double
+    - [ be32, 0x016c7c54, 0xffc0f018 ] # frsp f30,f30          // round to single precision
+  # mftb delta to seconds
+    - [ be32, 0x016c7c58, 0x3e40016c ] # r18,0x16c             // load high bits constants pointer
+    - [ be32, 0x016c7c5c, 0x3a527c30 ] # addi r18,r18,0x7c30   // load low bits of constants pointer
+    - [ be32, 0x016c7c60, 0xc3b20054 ] # lfs f29,0x54(r18)     // load timebase frequency constant
+    - [ be32, 0x016c7c64, 0xc3920058 ] # lfs f28,0x58(r18)     // load maximum timestep size
+    - [ be32, 0x016c7c68, 0xeffee824 ] # fdivs f31,f30,f29     // divide timebase delta by timebase frequency
+  # check timestep size
+    - [ be32, 0x016c7c6c, 0xff9fe000 ] # fcmpu cr7,f31,f28     // compare current delta time to maximum timestep
+    - [ be32, 0x016c7c70, 0x419c0008 ] # blt +0x08             // don't return the maximum timestep size
+  # set maximum timestep
+    - [ be32, 0x016c7c74, 0xffe0e090 ] # fmr f31,f28           // move maximum timestep to be returned
+  # cleanup
+    - [ be32, 0x016c7c78, 0x7e94a278 ] # xor r20,r20,r20       // zero r20
+    - [ be32, 0x016c7c7c, 0x7e94a278 ] # xor r19,r19,r19       // zero r19
+    - [ be32, 0x016c7c80, 0x4e800020 ] # blr                   // return
+  # constants
+    - [ be32, 0x016c7c84, 0x4c989680 ] # timebase frequency as hexfloat (80mhz)
+    - [ bef32, 0x016c7c88, 0.05 ]      # maximum timestep size (50ms or 20 FPS)
+  DeS_FPS_Notes: &DeS_FPS_Notes
+    "Patch version 2.0 and above is not compatible with the settings used for the previous patch. Clocks scale and Vblank rate must be set to the defaults. Vblank rate can be modified to increase the framelimit beyond 60 FPS. However, it's not recommended as users may encounter physics issues."
+  des_US100title: &des_US100title
+    "Demon's Souls":
+      BLUS30443: [ 01.00 ]
+
+PPU-83681f6110d33442329073b72b8dc88a2f677172:
+  "Unlock FPS":
+    Games: *des_US100title
+    Author: "Whatcookie, Gibbed"
+    Notes: *DeS_FPS_Notes
+    Patch Version: 2.1
+    Patch:
+      - [ load, *BLUS30443_FpsUnlock ]
+  "Disable Motion Blur":
+    Games: *des_US100title
+    Author: "illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ byte, 0x00217e7c, 0x41 ]
