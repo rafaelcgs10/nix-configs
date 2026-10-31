@@ -139,7 +139,7 @@ in
     # over the RIDE protocol. Unfree; the package refuses to
     # build until its licence is accepted (free Basic Licence, non-commercial
     # use only: https://www.dyalog.com/uploads/documents/Developer_Software_Licence.pdf).
-    (pkgs.dyalog.override { acceptLicense = true; })
+    # (pkgs.dyalog.override { acceptLicense = true; })
 
 
     pkgs.haskellPackages.haskell-language-server

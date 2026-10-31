@@ -270,7 +270,7 @@ in {
     pkgs.languagetool
     pkgs.ltex-ls
     pkgs.ffmpeg
-    pkgs.whisper-ctranslate2
+    # pkgs.whisper-ctranslate2
     pkgs.gcalcli
     pkgs.conky
     pkgs.dmidecode
