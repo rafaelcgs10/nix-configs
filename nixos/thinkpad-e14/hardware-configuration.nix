@@ -499,12 +499,8 @@ in
   # Firmware updates (BIOS, SSD, etc.) from LVFS: fwupdmgr get-updates / update
   services.fwupd.enable = true;
 
-  services.cron = {
-    enable = true;
-    systemCronJobs = [
-      "0 * * * * ludusavi backup --force"
-    ];
-  };
+  # Ludusavi save backups run from a home-manager timer
+  # (home-manager/programs/graphical-apps/game-saves.nix).
   # services.incron = {
   #   enable = true;
   #   systab =
