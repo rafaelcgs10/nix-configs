@@ -188,7 +188,9 @@ in
     # affinity-nix overlay. v2 apps also exist as affinity-photo/-designer/
     # -publisher if ever needed.
     # pkgs.affinity-v3
-    pkgs.lutris
+    # Faugus (umu-based launcher) replaces Lutris. From unstable because 26.05
+    # ships the stale 1.x series while upstream is on 2.x.
+    pkgsUnstable.faugus-launcher
     pkgs.gamescope
     pkgs.mangohud
     pkgs.hydralauncher
