@@ -53,6 +53,11 @@
             actions.update-props = {
               "priority.session" = 3000;
               "priority.driver" = 3000;
+              # Never suspend the A2DP link while connected. Waking it takes
+              # 1-2 s, which swallowed the 0.4 s wake/done chimes entirely
+              # and the first syllable of spoken replies. Trade-off: the
+              # speaker's own idle auto-off may not kick in while connected.
+              "session.suspend-timeout-seconds" = 0;
             };
           }
         ];
@@ -92,12 +97,31 @@
   systemd.services.bluetooth-speaker-reconnect = {
     description = "Reconnect the MEGABOOM 3 Bluetooth speaker";
     after = [ "bluetooth.service" ];
-    path = [ pkgs.bluez pkgs.gnugrep ];
-    script = ''
-      mac=10:94:97:03:B3:BE  # MEGABOOM 3
-      bluetoothctl info "$mac" | grep -q "Connected: yes" && exit 0
-      bluetoothctl --timeout 10 connect "$mac" >/dev/null 2>&1 || true
-    '';
+    path = [ pkgs.bluez pkgs.gnugrep pkgs.util-linux ];
+    script =
+      let
+        # 1 s of silence: wakes the A2DP link right after (re)connecting, so
+        # the first real sound (a chime, a reply) is not swallowed. With
+        # suspend disabled (above) it then stays awake while connected.
+        silence = pkgs.runCommand "silence-1s.wav" { nativeBuildInputs = [ pkgs.sox ]; } ''
+          sox -n -r 48000 -c 2 -b 16 $out trim 0 1
+        '';
+      in
+      ''
+        mac=10:94:97:03:B3:BE  # MEGABOOM 3
+        woken=/run/bluetooth-speaker-woken
+        if ! bluetoothctl info "$mac" | grep -q "Connected: yes"; then
+          rm -f "$woken"
+          bluetoothctl --timeout 10 connect "$mac" >/dev/null 2>&1 || true
+          sleep 3
+          bluetoothctl info "$mac" | grep -q "Connected: yes" || exit 0
+        fi
+        # Connected (by us or by the speaker itself): wake the link once.
+        if [ ! -e "$woken" ]; then
+          runuser -u rafael -- env XDG_RUNTIME_DIR=/run/user/1000 \
+            ${pkgs.pipewire}/bin/pw-play ${silence} && touch "$woken"
+        fi
+      '';
     serviceConfig.Type = "oneshot";
   };
   systemd.timers.bluetooth-speaker-reconnect = {
