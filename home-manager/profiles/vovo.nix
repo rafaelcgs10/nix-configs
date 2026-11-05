@@ -62,7 +62,7 @@ in
   };
 
   # Fixed audio levels, applied whenever WirePlumber (re)starts:
-  # - outputs (3.5 mm jack, Bluetooth speaker) at 100%, so the Music Assistant
+  # - outputs (3.5 mm jack, Bluetooth speaker) fixed at 70%, so the Music Assistant
   #   / Home Assistant player volume is the only volume that matters;
   # - Blue Yeti capture at 72%: at 100% speech clipped at 0 dBFS, which made
   #   the wake word unreliable; 72% peaks around -11 dBFS at normal speaking
@@ -71,7 +71,7 @@ in
   # suspended; see nixos/vovo/audio.nix).
   systemd.user.services.audio-levels = {
     Unit = {
-      Description = "Fixed vovo audio levels (outputs 100%, Yeti 72%)";
+      Description = "Fixed vovo audio levels (outputs 70%, Yeti 72%)";
       After = [ "wireplumber.service" ];
       PartOf = [ "wireplumber.service" ];
     };
@@ -85,7 +85,7 @@ in
         # speaker is connected: keep going for up to a minute.
         for _ in $(${pkgs.coreutils}/bin/seq 12); do
           for sink in $($pactl list short sinks | ${pkgs.coreutils}/bin/cut -f2); do
-            $pactl set-sink-volume "$sink" 100%
+            $pactl set-sink-volume "$sink" 70%
           done
           if $pactl list short sinks | ${pkgs.gnugrep}/bin/grep -q bluez_output; then
             ${pkgs.pipewire}/bin/pw-play ${silence} || true
