@@ -84,6 +84,10 @@ in
           mode = "queued";
           triggers = [
             { trigger = "conversation"; command = [ "volume up" "(turn|make) (it|the volume|the music) up" "louder" "(turn|make) it louder" "(increase|raise) [the] volume" "(increase|raise) the music" "a bit louder" ]; id = "up"; }
+            { trigger = "conversation"; command = [ "much louder" "(a lot|way) louder" "turn it up a lot" ]; id = "up_lot"; }
+            { trigger = "conversation"; command = [ "much (quieter|softer)" "(a lot|way) (quieter|softer)" "turn it down a lot" ]; id = "down_lot"; }
+            { trigger = "conversation"; command = [ "(max|maximum|full) volume" "[set] [the] volume to (max|maximum|full)" ]; id = "max"; }
+            { trigger = "conversation"; command = [ "(min|minimum|lowest) volume" "[set] [the] volume to (min|minimum|the lowest)" ]; id = "min"; }
             { trigger = "conversation"; command = [ "volume down" "(turn|make) (it|the volume|the music) down" "quieter" "softer" "(turn|make) it (quieter|softer)" "(decrease|lower|reduce) [the] volume" "(decrease|lower) the music" "a bit (quieter|softer)" ]; id = "down"; }
             # needs "to" or "percent", so "volume up" can't also match here
             { trigger = "conversation"; command = [ "[set] [the] volume (to|at) {level}" "volume {level} (percent|%)" "(change|put) [the] volume (to|at) {level}" ]; id = "set"; }
@@ -91,14 +95,24 @@ in
             { trigger = "conversation"; command = [ "unmute" "unmute (it|the music|the sound)" ]; id = "unmute"; }
             { trigger = "conversation"; command = [ "shuffle" "shuffle on" "turn (on shuffle|shuffle on)" "shuffle the music" ]; id = "shuffle_on"; }
             { trigger = "conversation"; command = [ "shuffle off" "turn (off shuffle|shuffle off)" "stop shuffling" ]; id = "shuffle_off"; }
-            { trigger = "conversation"; command = [ "repeat (this|the) song" "repeat one" "play this song on repeat" ]; id = "repeat_one"; }
+            { trigger = "conversation"; command = [ "repeat (this|the) song" "repeat one" "put this song on repeat" ]; id = "repeat_one"; }
             { trigger = "conversation"; command = [ "repeat" "repeat all" "repeat on" "turn (on repeat|repeat on)" ]; id = "repeat_all"; }
             { trigger = "conversation"; command = [ "repeat off" "turn (off repeat|repeat off)" "stop repeating" ]; id = "repeat_off"; }
-            { trigger = "conversation"; command = [ "restart [the] song" "start (over|again)" "play (it|this song) again" "from the (beginning|start)" ]; id = "restart"; }
-            { trigger = "conversation"; command = [ "pause" "stop" "pause the music" "stop the music" ]; id = "pause"; }
-            { trigger = "conversation"; command = [ "resume" "continue" "unpause" "resume the music" ]; id = "resume"; }
-            { trigger = "conversation"; command = [ "next" "next song" "skip" "skip this song" ]; id = "next"; }
-            { trigger = "conversation"; command = [ "previous" "previous song" "go back" ]; id = "previous"; }
+            { trigger = "conversation"; command = [ "restart [the] song" "start (over|again)" "from the (beginning|start)" "replay" "replay (it|this|the song|this song)" "one more time" ]; id = "restart"; }
+            { trigger = "conversation"; command = [ "skip ahead" "fast forward" "jump ahead" "forward [30] [seconds]" ]; id = "seek_fwd"; }
+            { trigger = "conversation"; command = [ "rewind" "go back a bit" "back [15] seconds" ]; id = "seek_back"; }
+            { trigger = "conversation"; command = [ "clear the (queue|playlist)" "empty the queue" ]; id = "clear"; }
+            { trigger = "conversation"; command = [ "what's next" "what is next" "what's the next song" "what song is next" "what comes next" ]; id = "whats_next"; }
+            { trigger = "conversation"; command = [
+                "pause" "pause [the] (music|song)" "pause it"
+                "stop" "stop [the] (music|song)" "stop (it|this|that)" "stop playing" "stop the music please" "please stop [the music]"
+                "turn (it|the music) off" "turn off [the] music" "switch (it|the music) off" "switch off [the] music" "music off"
+                "(that's|that is) enough" "enough [music]" "no more music" "(cut|kill|end) the music"
+                "be quiet" "quiet" "silence" "shut up"
+              ]; id = "pause"; }
+            { trigger = "conversation"; command = [ "resume" "continue" "unpause" "resume the music" "play" "keep playing" "continue playing" "resume playing" "start the music" "turn (on the music|the music on)" "music on" "go on" ]; id = "resume"; }
+            { trigger = "conversation"; command = [ "next" "next song" "next (one|track)" "skip" "skip (it|this|this one|this song|this track)" "(go|skip) to the next (song|track)" "change the song" "another song" "I don't like this song" ]; id = "next"; }
+            { trigger = "conversation"; command = [ "previous" "previous song" "previous (one|track)" "go back" "go back a song" "[go] [back] to the previous (song|track)" "last song" ]; id = "previous"; }
           ];
           actions = [
             {
@@ -182,6 +196,40 @@ in
                   sequence = [
                     { action = "media_player.repeat_set"; target.entity_id = player; data.repeat = "{{ trigger.id[7:] }}"; }
                     { set_conversation_response = "{{ {'one': 'Repeating this song.', 'all': 'Repeat on.', 'off': 'Repeat off.'}[trigger.id[7:]] }}"; }
+                  ];
+                }
+                {
+                  conditions = "{{ trigger.id in ['up_lot', 'down_lot', 'max', 'min'] }}";
+                  sequence = [
+                    { variables.target = "{{ {'up_lot': [current + 0.2, 1.0] | min, 'down_lot': [current - 0.2, 0.05] | max, 'max': 1.0, 'min': 0.1}[trigger.id] | round(2) }}"; }
+                    { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ target }}"; }
+                    { set_conversation_response = "Volume {{ (target * 100) | round(0) | int }} percent."; }
+                  ];
+                }
+                {
+                  conditions = "{{ trigger.id in ['seek_fwd', 'seek_back'] }}";
+                  sequence = [
+                    {
+                      variables.pos = "{% set p = state_attr(player, 'media_position') | float(0) %}{% set u = state_attr(player, 'media_position_updated_at') %}{{ p + ((now() - u).total_seconds() if u and is_state(player, 'playing') else 0) }}";
+                    }
+                    { action = "media_player.media_seek"; target.entity_id = player; data.seek_position = "{{ [pos + (30 if trigger.id == 'seek_fwd' else -15), 0] | max | int }}"; }
+                    { set_conversation_response = "{{ 'Skipping ahead.' if trigger.id == 'seek_fwd' else 'Going back a bit.' }}"; }
+                  ];
+                }
+                {
+                  conditions = "{{ trigger.id == 'clear' }}";
+                  sequence = [
+                    { action = "media_player.clear_playlist"; target.entity_id = player; }
+                    { set_conversation_response = "Queue cleared."; }
+                  ];
+                }
+                {
+                  conditions = "{{ trigger.id == 'whats_next' }}";
+                  sequence = [
+                    { action = "music_assistant.get_queue"; target.entity_id = player; response_variable = "q"; }
+                    {
+                      set_conversation_response = "{% set n = q[player].next_item if q and player in q else none %}{% if n and n.media_item %}Next up: {{ n.media_item.name }}{% if n.media_item.artists %} by {{ n.media_item.artists | map(attribute='name') | join(' and ') }}{% endif %}.{% elif n %}Next up: {{ n.name }}.{% else %}Nothing is queued after this song.{% endif %}";
+                    }
                   ];
                 }
                 {

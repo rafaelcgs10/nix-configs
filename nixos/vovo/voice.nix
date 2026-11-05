@@ -65,12 +65,15 @@ in
       image = "docker.io/rhasspy/wyoming-openwakeword:2.1.0";
       ports = [ "127.0.0.1:10400:10400" ];
       volumes = [ "${wakeWordDir}:/custom:ro" ];
-      cmd = [ "--custom-model-dir" "/custom" ];
+      # 0.7: suggested by the training run (≈0.44 false activations/hour on
+      # speech-heavy audio, ~72% recall on unseen synthetic voices).
+      cmd = [ "--custom-model-dir" "/custom" "--threshold" "0.7" ];
       extraOptions = [ "--memory=200m" ];
     };
   };
   systemd.tmpfiles.rules = [ "d ${wakeWordDir} 0755 root root -" ]
-    ++ map (m: "L+ ${wakeWordDir}/${baseNameOf (toString m)} - - - - ${m}") customWakeWords;
+    # Copied, not symlinked: a link into /nix/store dangles inside the container.
+    ++ map (m: "C+ ${wakeWordDir}/${baseNameOf (toString m)} 0644 root root - ${m}") customWakeWords;
 
   # --- satellite (microphone + speaker) ------------------------------------------
   # Runs as rafael so it reaches his PipeWire session; arecord/aplay go through

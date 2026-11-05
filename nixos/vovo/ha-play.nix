@@ -18,6 +18,9 @@ let
   parser = ''
     {%- set q = song | lower | regex_replace('[.!?,]+$', ''') | trim -%}
     {%- set rules = [
+      ['next_song', '^(?:the )?(?:next|next song|next one|next track|another song|another one|something else|a different song|a different one)$'],
+      ['previous_song', '^(?:the )?(?:previous|previous song|previous one|previous track|last song|last one)$'],
+      ['again', '^(?:(?:it|this|that|this song|that song|the song) )?again$'],
       ['random', '^(?:something|anything|whatever|anything good|some music|music|a song|some songs|songs|random|random music|random songs|my music|my songs)$'],
       ['artist', '^(?:songs|music|something|anything|stuff|tracks|more|more songs|more music) (?:by|from) (.+)$'],
       ['artist', '^(?:the )?(?:best|top|greatest|most popular) (?:songs |hits |tracks |music )?(?:by|of|from) (.+)$'],
@@ -188,6 +191,19 @@ in
     }
     {
       choose = [
+        # --- "play next", "play another song", "play it again": controls -----
+        {
+          conditions = "{{ mode == 'next_song' }}";
+          sequence = [ { action = "media_player.media_next_track"; target.entity_id = player; } (say "Next song.") ];
+        }
+        {
+          conditions = "{{ mode == 'previous_song' }}";
+          sequence = [ { action = "media_player.media_previous_track"; target.entity_id = player; } (say "Previous song.") ];
+        }
+        {
+          conditions = "{{ mode == 'again' }}";
+          sequence = [ { action = "media_player.media_seek"; target.entity_id = player; data.seek_position = 0; } (say "From the top.") ];
+        }
         # --- random ----------------------------------------------------------
         {
           conditions = "{{ mode == 'random' }}";
