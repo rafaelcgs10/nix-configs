@@ -194,7 +194,7 @@ in
         # --- "play next", "play another song", "play it again": controls -----
         {
           conditions = "{{ mode == 'next_song' }}";
-          sequence = [ { action = "media_player.media_next_track"; target.entity_id = player; } (say "Next song.") ];
+          sequence = import ./ha-next.nix { inherit player; };
         }
         {
           conditions = "{{ mode == 'previous_song' }}";

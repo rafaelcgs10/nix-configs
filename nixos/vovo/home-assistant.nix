@@ -161,10 +161,7 @@ in
                 }
                 {
                   conditions = "{{ trigger.id == 'next' }}";
-                  sequence = [
-                    { action = "media_player.media_next_track"; target.entity_id = player; }
-                    { set_conversation_response = "Next song."; }
-                  ];
+                  sequence = import ./ha-next.nix { inherit player; };
                 }
                 {
                   conditions = "{{ trigger.id in ['mute', 'unmute'] }}";

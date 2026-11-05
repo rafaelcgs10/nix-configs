@@ -2,7 +2,8 @@
 
 Runs as rafael, one instance per request (socket-activated, see youtube.nix).
 Reads one line from stdin: "<kind> <option> <base64 query>", kind being one
-of song | artist | album | playlist, option one of replace | add | next.
+of song | artist | album | playlist | related, option one of replace | add |
+next. "related" plays songs similar to the query (YouTube Music radio).
 Downloads into ~/Music/Youtube, makes Music
 Assistant pick the files up and plays them on the vovo player: the first song
 as soon as it is there, the rest queued behind it. On failure, vovo says so.
@@ -24,8 +25,11 @@ HA_API = "http://127.0.0.1:8123/api"
 PLAYER_NAME = "vovo"
 SATELLITE = "assist_satellite.vovo"
 MAX_SONG_SECONDS = 15 * 60   # singles only, no hour-long mixes
-MAX_ITEMS = {"song": 1, "artist": 10, "album": 20, "playlist": 20}
-SEARCH_FILTER = {"song": "songs", "artist": "songs", "album": "albums", "playlist": "community playlists"}
+MAX_ITEMS = {"song": 1, "artist": 10, "album": 20, "playlist": 20, "related": 20}
+SEARCH_FILTER = {"song": "songs", "artist": "songs", "album": "albums", "playlist": "community playlists", "related": "songs"}
+# After a single song, queue this many songs from its YouTube Music radio, so
+# the music goes on and "next" has somewhere to go.
+RELATED_AFTER_SONG = 19
 
 
 def log(*a):
@@ -67,12 +71,24 @@ def ytdlp(args):
     return [line for line in p.stdout.splitlines() if line.strip()]
 
 
+def ytdlp_stream(args):
+    """Like ytdlp(), but yields printed lines as they appear (one per finished
+    download), so each song can be queued while the next one downloads."""
+    cmd = ["yt-dlp", "--no-warnings", "--ignore-errors", "--no-overwrites"] + args
+    log("+", " ".join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+    for line in p.stdout:
+        if line.strip():
+            yield line.strip()
+    p.wait()
+
+
 def search_url(kind, query):
     q = urllib.parse.quote_plus(query)
     return "https://music.youtube.com/search?q=%s#%s" % (q, urllib.parse.quote(SEARCH_FILTER[kind]))
 
 
-def download(url, items, numbered, single):
+def download_args(url, items, numbered, single):
     template = "%(artist,uploader|Unknown artist)s/%(album,playlist_title,title)s/"
     template += "%(playlist_index)02d - %(track,title)s.%(ext)s" if numbered else "%(track,title)s.%(ext)s"
     args = [
@@ -84,7 +100,35 @@ def download(url, items, numbered, single):
     ]
     if single:
         args += ["--match-filter", "duration <= %d" % MAX_SONG_SECONDS]
-    return [p for p in ytdlp(args + [url]) if os.path.exists(p)]
+    return args + [url]
+
+
+def download(url, items, numbered, single):
+    return [p for p in ytdlp(download_args(url, items, numbered, single)) if os.path.exists(p)]
+
+
+def download_and_queue(url, items, numbered, single):
+    """Download the rest, adding each song to the queue as soon as it is done."""
+    n = 0
+    for path in ytdlp_stream(download_args(url, items, numbered, single)):
+        if os.path.exists(path):
+            try:
+                play([path], "add")
+                n += 1
+            except Exception as e:
+                log("queueing failed:", path, e)
+    return n
+
+
+def song_id(query):
+    """YouTube video id of the top YouTube Music song result."""
+    ids = ytdlp(["--flat-playlist", "--playlist-items", "1", "--print", "id", search_url("song", query)])
+    return ids[0] if ids else None
+
+
+def radio_url(video_id):
+    """YouTube Music radio for a song: the song itself first, then related ones."""
+    return "https://music.youtube.com/watch?v=%s&list=RDAMVM%s" % (video_id, video_id)
 
 
 def ma_uri(path):
@@ -127,8 +171,24 @@ def main():
     log("request:", kind, repr(query))
     os.makedirs(YT_DIR, exist_ok=True)
 
-    if kind == "song":
-        url = search_url(kind, query)
+    if kind in ("song", "related"):
+        vid = song_id(query)
+        if not vid:
+            say("Sorry, I couldn't find %s on YouTube." % query)
+            raise SystemExit("no search result for %r" % query)
+        radio = radio_url(vid)
+        if kind == "song":
+            first = download("https://www.youtube.com/watch?v=" + vid, "1", False, single=True)
+            more = "2-%d" % (1 + RELATED_AFTER_SONG)
+        else:  # related: skip the seed itself (that is what is playing now)
+            first = download(radio, "2", False, single=True)
+            more = "3-%d" % (1 + MAX_ITEMS["related"])
+        if not first:
+            say("Sorry, I couldn't get %s from YouTube." % query)
+            raise SystemExit("nothing downloaded for %r" % query)
+        play(first, option)
+        log("playing", first)
+        log("queued", download_and_queue(radio, more, False, single=True), "related")
     else:
         # The search result is itself an album/playlist (or, for an artist,
         # the list of songs): resolve the top hit first, so the item cap
@@ -136,19 +196,14 @@ def main():
         hits = ytdlp(["--flat-playlist", "--playlist-items", "1", "--print", "url", search_url(kind, query)])
         url = hits[0] if hits and kind != "artist" else search_url(kind, query)
 
-    numbered = kind in ("album", "playlist")
-    first = download(url, "1", numbered, single=True)
-    if not first:
-        say("Sorry, I couldn't get %s from YouTube." % query)
-        raise SystemExit("nothing downloaded for %r" % query)
-    play(first, option)
-    log("playing", first)
-
-    total = MAX_ITEMS[kind]
-    if total > 1:
-        rest = download(url, "2-%d" % total, numbered, single=True)
-        play(rest, "add")
-        log("queued", len(rest), "more")
+        numbered = kind in ("album", "playlist")
+        first = download(url, "1", numbered, single=True)
+        if not first:
+            say("Sorry, I couldn't get %s from YouTube." % query)
+            raise SystemExit("nothing downloaded for %r" % query)
+        play(first, option)
+        log("playing", first)
+        log("queued", download_and_queue(url, "2-%d" % MAX_ITEMS[kind], numbered, single=True), "more")
 
     try:  # index everything properly (artist/album pages, search next time)
         instance = next(p["instance_id"] for p in ma("config/providers") if p["domain"] == "filesystem_local")
