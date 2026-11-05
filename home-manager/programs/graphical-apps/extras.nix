@@ -215,6 +215,7 @@ in
     # network.
     (pkgsUnstable.callPackage ./withoutbg.nix { })
     pkgsLmstudio.lmstudio
+    pkgs.nicotine-plus
 
     # darktable built from upstream master (native C spektrafilm module),
     # patched to add the headless `--sync-xmp` mode driven by the systemd
