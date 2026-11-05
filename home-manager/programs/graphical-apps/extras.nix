@@ -243,24 +243,25 @@ in
     pkgs.parabolic
     pkgs.yt-dlp
 
-    # Elisa — clean, modern KDE/Kirigami music player for the beets-managed
-    # ~/Music (library browser, reads embedded tags/art/synced lyrics). Set as
-    # the default audio handler on these (COSMIC) hosts via xdg.mimeApps below.
-    pkgs.kdePackages.elisa
+    # Lollypop — GNOME/GTK music player for ~/Music. Indexes embedded tags into
+    # its own database and leaves the files alone by default (so the Nicotine+
+    # download layout stays intact). Set as the default audio handler on these
+    # (COSMIC) hosts via xdg.mimeApps below.
+    pkgs.lollypop
   ];
 
   # Parabolic's binary/desktop id is `org.nickvision.tubeconverter`; alias the
   # short name so `parabolic` works in a terminal (the launcher shows "Parabolic").
   home.shellAliases.parabolic = "org.nickvision.tubeconverter";
 
-  # Make Elisa the default music player. This lives in extras.nix (the default
+  # Make Lollypop the default music player. This lives in extras.nix (the default
   # profile = the COSMIC desktop hosts) rather than the shared home.nix, so the
-  # tablet — which doesn't get Elisa — isn't pointed at a missing handler. The
+  # tablet — which doesn't get Lollypop — isn't pointed at a missing handler. The
   # attrset merges with the (empty) defaultApplications in home.nix. COSMIC reads
   # the standard XDG mimeapps.list, so this is what its "Default Applications"
   # resolves to as well.
   xdg.mimeApps.defaultApplications =
-    let elisa = "org.kde.elisa.desktop";
+    let lollypop = "org.gnome.Lollypop.desktop";
     in lib.genAttrs [
       "audio/mpeg"
       "audio/mp4"
@@ -277,7 +278,7 @@ in
       "audio/webm"
       "audio/x-ms-wma"
       "application/ogg"
-    ] (_: elisa);
+    ] (_: lollypop);
 
   # Film & print data pack for the darktable spektrafilm module. Newer builds
   # can download this pack from within the UI into
