@@ -135,6 +135,9 @@ in
     };
     extraArgs = [
       "--wake-uri" "tcp://127.0.0.1:10400"
+      # Home Assistant is configured with the satellite explicitly; zeroconf
+      # discovery added a second, competing entry for the same satellite.
+      "--no-zeroconf"
     ] ++ lib.concatMap (n: [ "--wake-word-name" n ]) wakeWordNames;
   };
   # The satellite needs rafael's PipeWire and the wake word service to be up.

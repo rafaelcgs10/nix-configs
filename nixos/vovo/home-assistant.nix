@@ -54,6 +54,13 @@ in
       conversation = { };
       system_health = { };
 
+      # Set while the music is paused for a voice command; cleared by a
+      # pause/stop command so the music then stays paused.
+      input_boolean.vovo_resume_after_voice = {
+        name = "vovo resume after voice command";
+        initial = false;
+      };
+
       input_number.vovo_volume_before_mute = {
         name = "vovo volume before mute";
         min = 0;
@@ -148,6 +155,7 @@ in
                 {
                   conditions = "{{ trigger.id == 'pause' }}";
                   sequence = [
+                    { action = "input_boolean.turn_off"; target.entity_id = "input_boolean.vovo_resume_after_voice"; }
                     { action = "media_player.media_pause"; target.entity_id = player; }
                     { set_conversation_response = "Paused."; }
                   ];
@@ -245,6 +253,43 @@ in
                 }
               ];
               default = [ { set_conversation_response = "Say a number, like: volume 40."; } ];
+            }
+          ];
+        }
+
+        # Pause the music while vovo listens ("hey/oki vovo"), resume it when
+        # the command is done (after the spoken reply), unless the command was
+        # pause/stop (that clears the flag).
+        {
+          id = "vovo_pause_for_voice";
+          alias = "vovo - pause music while listening";
+          mode = "queued";
+          triggers = [
+            { trigger = "state"; entity_id = "assist_satellite.vovo"; to = "listening"; id = "listening"; }
+            { trigger = "state"; entity_id = "assist_satellite.vovo"; to = "idle"; id = "idle"; }
+          ];
+          actions = [
+            {
+              choose = [
+                {
+                  conditions = "{{ trigger.id == 'listening' and is_state('${player}', 'playing') }}";
+                  sequence = [
+                    { action = "input_boolean.turn_on"; target.entity_id = "input_boolean.vovo_resume_after_voice"; }
+                    { action = "media_player.media_pause"; target.entity_id = player; }
+                  ];
+                }
+                {
+                  conditions = "{{ trigger.id == 'idle' and is_state('input_boolean.vovo_resume_after_voice', 'on') }}";
+                  sequence = [
+                    { action = "input_boolean.turn_off"; target.entity_id = "input_boolean.vovo_resume_after_voice"; }
+                    # Only resume what we paused; "play X" is already playing.
+                    {
+                      "if" = [ { condition = "state"; entity_id = player; state = "paused"; } ];
+                      "then" = [ { action = "media_player.media_play"; target.entity_id = player; } ];
+                    }
+                  ];
+                }
+              ];
             }
           ];
         }
