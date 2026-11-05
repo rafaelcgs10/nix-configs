@@ -61,25 +61,39 @@ in
     Install.WantedBy = [ "default.target" ];
   };
 
-  # Blue Yeti capture level. At 100% (WirePlumber's default) speech clipped
-  # at 0 dBFS, which made the wake word unreliable; 72% peaks around -11 dBFS
-  # at normal speaking distance (measured 2026-11-05). The Yeti is the default
-  # source (see nixos/vovo/audio.nix), so it can be addressed as such.
-  systemd.user.services.yeti-mic-level = {
+  # Fixed audio levels, applied whenever WirePlumber (re)starts:
+  # - outputs (3.5 mm jack, Bluetooth speaker) at 100%, so the Music Assistant
+  #   / Home Assistant player volume is the only volume that matters;
+  # - Blue Yeti capture at 72%: at 100% speech clipped at 0 dBFS, which made
+  #   the wake word unreliable; 72% peaks around -11 dBFS at normal speaking
+  #   distance (measured 2026-11-05). The Yeti is the default source.
+  # Then wake the Bluetooth output (a restarted WirePlumber re-creates it
+  # suspended; see nixos/vovo/audio.nix).
+  systemd.user.services.audio-levels = {
     Unit = {
-      Description = "Set the Blue Yeti capture level, wake the Bluetooth output";
+      Description = "Fixed vovo audio levels (outputs 100%, Yeti 72%)";
       After = [ "wireplumber.service" ];
       PartOf = [ "wireplumber.service" ];
     };
     Service = {
       Type = "oneshot";
       ExecStartPre = "${pkgs.coreutils}/bin/sleep 5";
-      ExecStart = [
-        "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.72"
-        # A restarted WirePlumber re-creates the Bluetooth output suspended;
-        # wake it so the next chime is not swallowed (see nixos/vovo/audio.nix).
-        "-${pkgs.pipewire}/bin/pw-play ${silence}"
-      ];
+      ExecStart = "${pkgs.writeShellScript "vovo-audio-levels" ''
+        pactl=${pkgs.pulseaudio}/bin/pactl
+        ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.72
+        # The Bluetooth output reappears some seconds after WirePlumber, if a
+        # speaker is connected: keep going for up to a minute.
+        for _ in $(${pkgs.coreutils}/bin/seq 12); do
+          for sink in $($pactl list short sinks | ${pkgs.coreutils}/bin/cut -f2); do
+            $pactl set-sink-volume "$sink" 100%
+          done
+          if $pactl list short sinks | ${pkgs.gnugrep}/bin/grep -q bluez_output; then
+            ${pkgs.pipewire}/bin/pw-play ${silence} || true
+            break
+          fi
+          ${pkgs.coreutils}/bin/sleep 5
+        done
+      ''}";
     };
     Install.WantedBy = [ "wireplumber.service" ];
   };
