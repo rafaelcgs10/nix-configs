@@ -85,6 +85,8 @@ in
       extraOptions = [ "--memory=200m" ];
     };
   };
+  # Reload the models when one is added or changed.
+  systemd.services.podman-openwakeword.restartTriggers = customWakeWords;
   systemd.tmpfiles.rules = [ "d ${wakeWordDir} 0755 root root -" ]
     # Copied, not symlinked: a link into /nix/store dangles inside the container.
     ++ map (m: "C+ ${wakeWordDir}/${baseNameOf (toString m)} 0644 root root - ${m}") customWakeWords;
