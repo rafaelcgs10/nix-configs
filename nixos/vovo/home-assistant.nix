@@ -89,6 +89,14 @@ in
                 song = "{{ trigger.slots.song | trim }}";
               };
             }
+            # "play <title> by <artist>": split off the artist (second block,
+            # because it needs `song` from the first one).
+            {
+              variables = {
+                title = "{{ (song.split(' by ') | first) | trim }}";
+                artist = "{{ (song.split(' by ')[1] if ' by ' in song else '') | trim }}";
+              };
+            }
             # "play something" / "play some music" -> random song from the library
             {
               "if" = [
@@ -125,7 +133,8 @@ in
               action = "music_assistant.search";
               data = {
                 config_entry_id = "{{ ma_entry }}";
-                name = "{{ song }}";
+                name = "{{ title }}";
+                artist = "{{ artist }}";
                 media_type = "track";
                 library_only = true;
                 limit = 1;
@@ -158,7 +167,8 @@ in
                   action = "music_assistant.search";
                   data = {
                     config_entry_id = "{{ ma_entry }}";
-                    name = "{{ song }}";
+                    name = "{{ title }}";
+                    artist = "{{ artist }}";
                     media_type = "track";
                     library_only = false;
                     limit = 1;
