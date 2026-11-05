@@ -25,11 +25,12 @@
         "wireplumber.settings"."bluetooth.autoswitch-to-headset-profile" = false;
       };
 
-      # Output preference: Bluetooth speaker > 3.5 mm jack; HDMI never.
-      # WirePlumber picks the available sink with the highest priority as the
-      # default, so when the MEGABOOM is switched off or goes out of range its
-      # sink disappears and playback falls back to the jack, and when it
-      # reconnects it takes over again (playing streams follow the default).
+      # Output preference: MEGABOOM 3 > musiCozy > any other Bluetooth speaker
+      # > 3.5 mm jack; HDMI never. WirePlumber picks the available sink with the
+      # highest priority as the default, so when a speaker is switched off or
+      # goes out of range its sink disappears and playback falls back to the
+      # next one, and when it reconnects it takes over again (playing streams
+      # follow the default).
       # Do not pin a default with `wpctl set-default`: a user-chosen default
       # overrides these priorities.
       "30-output-priority" = {
@@ -47,17 +48,36 @@
             };
           }
         ];
+        # Every matching rule is applied in order, so the per-speaker rules
+        # below override the generic priority.
         "monitor.bluez.rules" = [
           {
+            # Any other Bluetooth speaker: below the known ones, above the jack.
             matches = [ { "node.name" = "~bluez_output\\..*"; } ];
             actions.update-props = {
-              "priority.session" = 3000;
-              "priority.driver" = 3000;
+              "priority.session" = 2000;
+              "priority.driver" = 2000;
               # Never suspend the A2DP link while connected. Waking it takes
               # 1-2 s, which swallowed the 0.4 s wake/done chimes entirely
               # and the first syllable of spoken replies. Trade-off: the
               # speaker's own idle auto-off may not kick in while connected.
               "session.suspend-timeout-seconds" = 0;
+            };
+          }
+          {
+            # MEGABOOM 3: first choice.
+            matches = [ { "node.name" = "~bluez_output\\.10_94_97_03_B3_BE\\..*"; } ];
+            actions.update-props = {
+              "priority.session" = 3000;
+              "priority.driver" = 3000;
+            };
+          }
+          {
+            # musiCozy: second choice.
+            matches = [ { "node.name" = "~bluez_output\\.41_42_FE_D5_9B_EF\\..*"; } ];
+            actions.update-props = {
+              "priority.session" = 2500;
+              "priority.driver" = 2500;
             };
           }
         ];
@@ -90,12 +110,13 @@
   # devices are ready before anything asks for them.
   systemd.user.services.pipewire.wantedBy = [ "default.target" ];
 
-  # Reconnect the paired speaker whenever it is on but not connected: after
-  # a reboot, a PipeWire restart or when it comes back into range. The speaker
-  # only reconnects by itself when it is switched on, not when the Pi drops
-  # the link. Without it, playback stays on the 3.5 mm jack (see priorities).
+  # Reconnect the paired speakers whenever they are on but not connected:
+  # after a reboot, a PipeWire restart or when they come back into range. A
+  # speaker only reconnects by itself when it is switched on, not when the Pi
+  # drops the link. Without it, playback stays on the 3.5 mm jack (see
+  # priorities).
   systemd.services.bluetooth-speaker-reconnect = {
-    description = "Reconnect the MEGABOOM 3 Bluetooth speaker";
+    description = "Reconnect the paired Bluetooth speakers";
     after = [ "bluetooth.service" ];
     path = [ pkgs.bluez pkgs.gnugrep pkgs.util-linux ];
     script =
@@ -108,25 +129,32 @@
         '';
       in
       ''
-        mac=10:94:97:03:B3:BE  # MEGABOOM 3
-        woken=/run/bluetooth-speaker-woken
-        if ! bluetoothctl info "$mac" | grep -q "Connected: yes"; then
-          rm -f "$woken"
-          bluetoothctl --timeout 10 connect "$mac" >/dev/null 2>&1 || true
-          sleep 3
-          bluetoothctl info "$mac" | grep -q "Connected: yes" || exit 0
-        fi
-        # Connected (by us or by the speaker itself): once per connection,
-        # put its output at 50% (the player volume in Music Assistant is the
-        # one that is controlled; this also sets the speaker's own volume via
-        # Bluetooth absolute volume) and wake the link.
-        if [ ! -e "$woken" ]; then
-          sleep 2
-          runuser -u rafael -- env XDG_RUNTIME_DIR=/run/user/1000 \
-            ${pkgs.pulseaudio}/bin/pactl set-sink-volume bluez_output.''${mac//:/_}.1 50% || true
-          runuser -u rafael -- env XDG_RUNTIME_DIR=/run/user/1000 \
-            ${pkgs.pipewire}/bin/pw-play ${silence} && touch "$woken"
-        fi
+        # MEGABOOM 3, musiCozy
+        for mac in 10:94:97:03:B3:BE 41:42:FE:D5:9B:EF; do
+          woken=/run/bluetooth-speaker-woken-''${mac//:/_}
+          # Fixed output level per speaker (musiCozy is quieter, so 100%).
+          case "$mac" in
+            41:42:FE:D5:9B:EF) vol=100% ;;
+            *) vol=50% ;;
+          esac
+          if ! bluetoothctl info "$mac" | grep -q "Connected: yes"; then
+            rm -f "$woken"
+            bluetoothctl --timeout 10 connect "$mac" >/dev/null 2>&1 || true
+            sleep 3
+            bluetoothctl info "$mac" | grep -q "Connected: yes" || continue
+          fi
+          # Connected (by us or by the speaker itself): once per connection,
+          # put its output at its fixed level (the player volume in Music Assistant is the
+          # one that is controlled; this also sets the speaker's own volume via
+          # Bluetooth absolute volume) and wake the link.
+          if [ ! -e "$woken" ]; then
+            sleep 2
+            runuser -u rafael -- env XDG_RUNTIME_DIR=/run/user/1000 \
+              ${pkgs.pulseaudio}/bin/pactl set-sink-volume bluez_output.''${mac//:/_}.1 "$vol" || true
+            runuser -u rafael -- env XDG_RUNTIME_DIR=/run/user/1000 \
+              ${pkgs.pipewire}/bin/pw-play --target bluez_output.''${mac//:/_}.1 ${silence} && touch "$woken"
+          fi
+        done
       '';
     serviceConfig.Type = "oneshot";
   };

@@ -52,11 +52,23 @@ in
     extraArgs = [ "--compute-type" "int8" ];
   };
 
+  # TEMPORARY benchmark: Parakeet (sherpa-onnx) next to Whisper, to compare
+  # speed / RAM / accuracy on the Pi. Remove after deciding.
+  services.wyoming.faster-whisper.servers.parakeet-test = {
+    enable = true;
+    uri = "tcp://127.0.0.1:10310";
+    language = "en";
+    sttLibrary = "sherpa";
+    model = "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8";
+    device = "cpu";
+  };
+
   # --- text to speech -------------------------------------------------------------
   services.wyoming.piper.servers.vovo = {
     enable = true;
     uri = "tcp://127.0.0.1:10200";
-    voice = "en_US-lessac-medium";
+    # Voice 6 of the samples: amy, played pitched up (see satellite below).
+    voice = "en_US-amy-medium";
   };
 
   # --- wake word -------------------------------------------------------------------
@@ -94,7 +106,14 @@ in
       autoGain = 5;
       noiseSuppression = 2;
     };
-    sound.command = "aplay -D pipewire -r 22050 -c 1 -f S16_LE -t raw";
+    # Cute voice: everything vovo says (and its chimes) is pitched up 7
+    # semitones and sped up 10% on the way to the speaker. Raw 22.05 kHz
+    # mono 16-bit in (the satellite's sound format), same out.
+    sound.command = toString (pkgs.writeShellScript "vovo-speaker" ''
+      ${pkgs.sox}/bin/sox -q -t raw -r 22050 -e signed -b 16 -c 1 - \
+        -t raw -r 22050 -e signed -b 16 -c 1 - pitch 700 tempo 1.1 \
+        | ${pkgs.alsa-utils}/bin/aplay -q -D pipewire -r 22050 -c 1 -f S16_LE -t raw
+    '');
     sounds = {
       awake = "${satelliteSounds.awake}";
       done = "${satelliteSounds.done}";
