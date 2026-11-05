@@ -77,7 +77,7 @@ in
         min = 0;
         max = 1;
         step = 0.01;
-        initial = 0.3;
+        initial = 0.6;
       };
 
       # Small history, written rarely: spares the SD card and RAM.
@@ -249,10 +249,10 @@ in
           alias = "vovo - playback and volume";
           mode = "queued";
           triggers = [
-            { trigger = "conversation"; command = [ "volume up" "(turn|make) (it|the volume|the music) up" "louder" "(turn|make) it louder" ]; id = "up"; }
-            { trigger = "conversation"; command = [ "volume down" "(turn|make) (it|the volume|the music) down" "quieter" "softer" "(turn|make) it (quieter|softer)" ]; id = "down"; }
+            { trigger = "conversation"; command = [ "volume up" "(turn|make) (it|the volume|the music) up" "louder" "(turn|make) it louder" "(increase|raise) [the] volume" "(increase|raise) the music" "a bit louder" ]; id = "up"; }
+            { trigger = "conversation"; command = [ "volume down" "(turn|make) (it|the volume|the music) down" "quieter" "softer" "(turn|make) it (quieter|softer)" "(decrease|lower|reduce) [the] volume" "(decrease|lower) the music" "a bit (quieter|softer)" ]; id = "down"; }
             # needs "to" or "percent", so "volume up" can't also match here
-            { trigger = "conversation"; command = [ "[set] [the] volume to {level}" "volume {level} (percent|%)" ]; id = "set"; }
+            { trigger = "conversation"; command = [ "[set] [the] volume (to|at) {level}" "volume {level} (percent|%)" "(change|put) [the] volume (to|at) {level}" ]; id = "set"; }
             { trigger = "conversation"; command = [ "mute" "mute (it|the music|the sound)" ]; id = "mute"; }
             { trigger = "conversation"; command = [ "unmute" "unmute (it|the music|the sound)" ]; id = "unmute"; }
             { trigger = "conversation"; command = [ "shuffle" "shuffle on" "turn (on shuffle|shuffle on)" "shuffle the music" ]; id = "shuffle_on"; }
@@ -330,7 +330,7 @@ in
                         { set_conversation_response = "Muted."; }
                       ];
                       "else" = [
-                        { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ states('input_number.vovo_volume_before_mute') | float(0.3) }}"; }
+                        { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ states('input_number.vovo_volume_before_mute') | float(0.6) }}"; }
                         { set_conversation_response = "Unmuted."; }
                       ];
                     }
@@ -367,6 +367,21 @@ in
               ];
               default = [ { set_conversation_response = "Say a number, like: volume 40."; } ];
             }
+          ];
+        }
+
+        # Default music volume: 60% whenever HA starts or the player (re)appears.
+        {
+          id = "vovo_default_volume";
+          alias = "vovo - default volume";
+          mode = "restart";
+          triggers = [
+            { trigger = "homeassistant"; event = "start"; }
+            { trigger = "state"; entity_id = player; from = "unavailable"; }
+          ];
+          actions = [
+            { delay.seconds = 10; }
+            { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = 0.6; }
           ];
         }
 
