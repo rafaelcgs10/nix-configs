@@ -23,7 +23,14 @@
   # card, so they are available on the very first boot (Wi-Fi needs one).
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
   age.secrets = {
-    wifi.file = ../../secrets/wifi-vovo.age;
+    # wpa_supplicant runs as its own unprivileged user, not root.
+    wifi = {
+      file = ../../secrets/wifi-vovo.age;
+      owner = "wpa_supplicant";
+      group = "wpa_supplicant";
+    };
+    # yescrypt hash for console login (plain copy: ~/.secrets/vovo on bbstation).
+    rafael-password.file = ../../secrets/rafael-password-vovo.age;
     # Copied into ~/.config/syncthing by syncthing's own (root) ExecStartPre.
     syncthing-key.file = ../../secrets/syncthing-vovo-key.age;
     # Hashed by syncthing-init, which runs as rafael.
@@ -34,10 +41,12 @@
   };
 
   # --- users ------------------------------------------------------------------
-  # No passwords anywhere: SSH keys only, passwordless sudo for wheel.
+  # SSH is key-only. The password exists only for logging in on a local
+  # screen + keyboard when the network is down. sudo needs no password.
   users.mutableUsers = false;
   users.users.rafael = {
     isNormalUser = true;
+    hashedPasswordFile = config.age.secrets.rafael-password.path;
     extraGroups = [ "wheel" "audio" ];
     shell = pkgs.zsh;
     # Start rafael's systemd user manager (PipeWire, squeezelite, ...) at boot,

@@ -38,4 +38,5 @@ in
   "wifi-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ];        # psk_home=<wpa passphrase>
   "syncthing-vovo-key.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Syncthing identity (key.pem)
   "syncthing-vovo-gui.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Syncthing web UI password
+  "rafael-password-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ]; # yescrypt hash; console login
 }
