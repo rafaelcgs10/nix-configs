@@ -64,10 +64,14 @@ partition grows to fill the card on first boot.
 
 ```sh
 nixos-rebuild switch --flake ~/nix-configs#vovo \
-  --target-host rafael@vovo.local --sudo
+  --target-host rafael@vovo.local --sudo --no-reexec --use-substitutes
 ```
 
-bbstation evaluates and builds; only the result is copied to the Pi.
+bbstation evaluates and builds. `--use-substitutes` lets the Pi download
+everything that is in cache.nixos.org itself (compressed), so only the few
+locally built paths are sent from bbstation. `--no-reexec` keeps
+nixos-rebuild from re-executing itself as the Pi's aarch64 build (which would
+run the whole copy under qemu emulation and be very slow).
 
 ## One-time manual steps
 

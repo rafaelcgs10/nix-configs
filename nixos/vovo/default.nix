@@ -12,6 +12,9 @@
     ./network.nix
     ./audio.nix
     ./syncthing.nix
+    ./home-assistant.nix
+    ./music.nix
+    ./voice.nix
   ];
 
   networking.hostName = "vovo";
