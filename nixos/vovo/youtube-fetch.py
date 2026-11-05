@@ -1,8 +1,9 @@
 """YouTube fallback for vovo: download from YouTube Music, then play it.
 
 Runs as rafael, one instance per request (socket-activated, see youtube.nix).
-Reads one line from stdin: "<kind> <base64 query>", kind being one of
-song | artist | album | playlist. Downloads into ~/Music/Youtube, makes Music
+Reads one line from stdin: "<kind> <option> <base64 query>", kind being one
+of song | artist | album | playlist, option one of replace | add | next.
+Downloads into ~/Music/Youtube, makes Music
 Assistant pick the files up and plays them on the vovo player: the first song
 as soon as it is there, the rest queued behind it. On failure, vovo says so.
 """
@@ -119,9 +120,9 @@ def play(paths, option):
 
 def main():
     line = sys.stdin.readline().strip()
-    kind, b64 = line.split(" ", 1)
+    kind, option, b64 = line.split(" ", 2)
     query = base64.b64decode(b64).decode().strip()
-    if kind not in MAX_ITEMS or not query:
+    if kind not in MAX_ITEMS or option not in ("replace", "add", "next") or not query:
         raise SystemExit("bad request: %r" % line)
     log("request:", kind, repr(query))
     os.makedirs(YT_DIR, exist_ok=True)
@@ -140,7 +141,7 @@ def main():
     if not first:
         say("Sorry, I couldn't get %s from YouTube." % query)
         raise SystemExit("nothing downloaded for %r" % query)
-    play(first, "replace")
+    play(first, option)
     log("playing", first)
 
     total = MAX_ITEMS[kind]

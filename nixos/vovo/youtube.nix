@@ -60,14 +60,15 @@ in
     };
   };
 
-  # What Home Assistant runs: send "<kind> <base64 query>" and return at once.
+  # What Home Assistant runs: send "<kind> <option> <base64 query>" and return
+  # at once. option: replace | add | next (Music Assistant queue option).
   # (shell_command splits arguments without a shell; base64 keeps the query
   # a single safe word.)
   services.home-assistant.config.shell_command.youtube_fetch =
     let
       request = pkgs.writeShellScript "youtube-fetch-request" ''
-        printf '%s %s\n' "$1" "$2" | ${pkgs.socat}/bin/socat -u - UNIX-CONNECT:${socket}
+        printf '%s %s %s\n' "$1" "$2" "$3" | ${pkgs.socat}/bin/socat -u - UNIX-CONNECT:${socket}
       '';
     in
-    "${request} {{ kind }} {{ query | base64_encode }}";
+    "${request} {{ kind }} {{ option | default('replace') }} {{ query | base64_encode }}";
 }
