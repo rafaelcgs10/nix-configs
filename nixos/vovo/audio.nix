@@ -46,6 +46,11 @@
     };
   };
 
+  # PipeWire is normally socket-activated on first use. Start it (and with it
+  # WirePlumber) at boot instead, so a paired Bluetooth speaker reconnects and
+  # devices are ready before anything asks for them.
+  systemd.user.services.pipewire.wantedBy = [ "default.target" ];
+
   # Onboard Bluetooth (BCM43455 on the UART). Pairing is a one-time
   # `bluetoothctl` step (see README); the trust persists in /var/lib/bluetooth.
   hardware.bluetooth = {
