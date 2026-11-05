@@ -52,6 +52,13 @@ in
     # (mostly pushed to swap), which starved everything else.
     extraArgs = [ "--compute-type" "int8" ];
   };
+  # Speech-to-text is the slow step of every voice command (~1x realtime on a
+  # Pi 4). Give it first call on the CPU and keep it in RAM: with a YouTube
+  # download running, a 6 s clip went from 13 s to under 4 s (measured).
+  systemd.services.wyoming-faster-whisper-vovo.serviceConfig = {
+    CPUWeight = 1000;
+    MemoryLow = "300M";
+  };
 
   # --- text to speech -------------------------------------------------------------
   services.wyoming.piper.servers.vovo = {
@@ -88,6 +95,24 @@ in
   # output (jack or Bluetooth speaker) are used.
   services.wyoming.satellite = {
     enable = true;
+    # Play the "done" chime as soon as the end of speech is detected, instead
+    # of after speech-to-text has finished (which on the Pi takes seconds).
+    package = pkgs.wyoming-satellite.overridePythonAttrs (old: {
+      doCheck = false;
+      postPatch = (old.postPatch or "") + ''
+        ${pkgs.python3.interpreter} - <<'EOF'
+        p = "wyoming_satellite/satellite.py"
+        s = open(p).read()
+        a = "        await run_event_command(self.settings.event.transcript, transcript.text)\n        await self._play_wav(self.settings.snd.done_wav)\n"
+        assert a in s, "satellite.py changed upstream: update this patch"
+        s = s.replace(a, "        await run_event_command(self.settings.event.transcript, transcript.text)\n")
+        i = s.index("    async def trigger_stt_stop(self) -> None:")
+        j = s.index("\n\n", i)
+        s = s[:j] + "\n        await self._play_wav(self.settings.snd.done_wav)" + s[j:]
+        open(p, "w").write(s)
+        EOF
+      '';
+    });
     user = "rafael";
     name = "vovo";
     uri = "tcp://0.0.0.0:10700"; # Home Assistant connects locally; port stays firewalled
@@ -119,6 +144,7 @@ in
     serviceConfig = {
       Restart = "always";
       RestartSec = 5;
+      CPUWeight = 500;
     };
   };
 }

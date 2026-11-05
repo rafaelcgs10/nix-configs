@@ -315,5 +315,11 @@ in
     "f ${config.services.home-assistant.configDir}/scripts.yaml 0644 hass hass"
   ];
 
-  systemd.services.home-assistant.serviceConfig.MemoryHigh = "450M";
+  systemd.services.home-assistant.serviceConfig = {
+    MemoryHigh = "450M";
+    # Voice commands wait on HA (intent + automations): keep it responsive
+    # and mostly in RAM rather than swap.
+    CPUWeight = 500;
+    MemoryLow = "350M";
+  };
 }

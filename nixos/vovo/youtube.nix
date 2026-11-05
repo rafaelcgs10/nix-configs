@@ -54,7 +54,11 @@ in
       StandardInput = "socket";
       StandardOutput = "journal";
       StandardError = "journal";
-      Nice = 5;
+      # Background work: never slow down the voice pipeline (STT, HA).
+      Nice = 19;
+      CPUWeight = 10;
+      IOWeight = 10;
+      CPUQuota = "150%";
       RuntimeMaxSec = "30min";
       MemoryHigh = "500M"; # deno (YouTube JS challenge) alone needs ~200 MB
     };
