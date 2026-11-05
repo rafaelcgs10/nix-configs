@@ -162,8 +162,10 @@ in
       variables = {
         inherit player;
         ma_entry = "{{ config_entry_id('${player}') }}";
-        song = "{{ trigger.slots.song | trim }}";
-        enqueue = "{{ trigger.id }}";
+        # "play X next" also matches "play {song}" (which trigger wins is not
+        # reliable), so a trailing "next" / "after this" is handled here too.
+        song = "{{ trigger.slots.song | regex_replace('(?i) (next|after this( song)?)$', '') | trim }}";
+        enqueue = "{{ 'next' if (trigger.slots.song | lower | trim) is match('.* (next|after this( song)?)$') else trigger.id }}";
       };
     }
     {
