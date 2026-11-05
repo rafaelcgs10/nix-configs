@@ -1,5 +1,11 @@
 { config, pkgs, lib, ... }:
 
+let
+  silence = pkgs.runCommand "silence-1s.wav" { nativeBuildInputs = [ pkgs.sox ]; } ''
+    sox -n -r 48000 -c 2 -b 16 $out trim 0 1
+  '';
+in
+
 # Home profile for vovo (Raspberry Pi 4, 2 GB music box). Used on its own, NOT
 # on top of home-manager/home.nix: that one brings Stylix, GTK/Qt, fonts,
 # claude-code and dictionaries, none of which belong on a headless 2 GB Pi.
@@ -53,6 +59,29 @@
       RestartSec = 5;
     };
     Install.WantedBy = [ "default.target" ];
+  };
+
+  # Blue Yeti capture level. At 100% (WirePlumber's default) speech clipped
+  # at 0 dBFS, which made the wake word unreliable; 72% peaks around -11 dBFS
+  # at normal speaking distance (measured 2026-11-05). The Yeti is the default
+  # source (see nixos/vovo/audio.nix), so it can be addressed as such.
+  systemd.user.services.yeti-mic-level = {
+    Unit = {
+      Description = "Set the Blue Yeti capture level, wake the Bluetooth output";
+      After = [ "wireplumber.service" ];
+      PartOf = [ "wireplumber.service" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStartPre = "${pkgs.coreutils}/bin/sleep 5";
+      ExecStart = [
+        "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.72"
+        # A restarted WirePlumber re-creates the Bluetooth output suspended;
+        # wake it so the next chime is not swallowed (see nixos/vovo/audio.nix).
+        "-${pkgs.pipewire}/bin/pw-play ${silence}"
+      ];
+    };
+    Install.WantedBy = [ "wireplumber.service" ];
   };
 
   manual.manpages.enable = false;
