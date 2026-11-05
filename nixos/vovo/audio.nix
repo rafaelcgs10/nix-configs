@@ -117,13 +117,13 @@
           bluetoothctl info "$mac" | grep -q "Connected: yes" || exit 0
         fi
         # Connected (by us or by the speaker itself): once per connection,
-        # put its output at 70% (the player volume in Music Assistant is the
+        # put its output at 50% (the player volume in Music Assistant is the
         # one that is controlled; this also sets the speaker's own volume via
         # Bluetooth absolute volume) and wake the link.
         if [ ! -e "$woken" ]; then
           sleep 2
           runuser -u rafael -- env XDG_RUNTIME_DIR=/run/user/1000 \
-            ${pkgs.pulseaudio}/bin/pactl set-sink-volume bluez_output.''${mac//:/_}.1 70% || true
+            ${pkgs.pulseaudio}/bin/pactl set-sink-volume bluez_output.''${mac//:/_}.1 50% || true
           runuser -u rafael -- env XDG_RUNTIME_DIR=/run/user/1000 \
             ${pkgs.pipewire}/bin/pw-play ${silence} && touch "$woken"
         fi
