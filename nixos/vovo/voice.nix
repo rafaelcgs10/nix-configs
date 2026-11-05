@@ -42,25 +42,15 @@ in
     enable = true;
     uri = "tcp://127.0.0.1:10300";
     language = "en";
-    # `auto` would pick Parakeet (sherpa) for English: far more accurate but
-    # ~1 GB of RAM, too much next to Home Assistant on a 2 GB Pi.
+    # `auto` would pick Parakeet (sherpa) for English. Benchmarked on this Pi
+    # (2026-11-05): far more accurate, but 10-20 s per command and ~1.4 GB
+    # RAM+swap, so it does not fit; Whisper tiny.en int8 takes ~1x realtime.
     sttLibrary = "faster-whisper";
     model = "tiny.en";
     device = "cpu";
     # Quantize on load: without this tiny.en ran at float32 and took ~430 MB
     # (mostly pushed to swap), which starved everything else.
     extraArgs = [ "--compute-type" "int8" ];
-  };
-
-  # TEMPORARY benchmark: Parakeet (sherpa-onnx) next to Whisper, to compare
-  # speed / RAM / accuracy on the Pi. Remove after deciding.
-  services.wyoming.faster-whisper.servers.parakeet-test = {
-    enable = true;
-    uri = "tcp://127.0.0.1:10310";
-    language = "en";
-    sttLibrary = "sherpa";
-    model = "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8";
-    device = "cpu";
   };
 
   # --- text to speech -------------------------------------------------------------

@@ -132,9 +132,9 @@
         # MEGABOOM 3, musiCozy
         for mac in 10:94:97:03:B3:BE 41:42:FE:D5:9B:EF; do
           woken=/run/bluetooth-speaker-woken-''${mac//:/_}
-          # Fixed output level per speaker (musiCozy is quieter, so 100%).
+          # Fixed output level per speaker (musiCozy is much quieter: 250%, a software boost).
           case "$mac" in
-            41:42:FE:D5:9B:EF) vol=100% ;;
+            41:42:FE:D5:9B:EF) vol=250% ;; # >100% = software boost (chosen by ear)
             *) vol=50% ;;
           esac
           if ! bluetoothctl info "$mac" | grep -q "Connected: yes"; then

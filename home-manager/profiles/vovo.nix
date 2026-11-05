@@ -62,7 +62,7 @@ in
   };
 
   # Fixed audio levels, applied whenever WirePlumber (re)starts:
-  # - outputs fixed at 50% (musiCozy 100%, it is quieter), so the Music Assistant
+  # - outputs fixed at 50% (musiCozy 250%, it is much quieter), so the Music Assistant
   #   / Home Assistant player volume is the only volume that matters;
   # - Blue Yeti capture at 72%: at 100% speech clipped at 0 dBFS, which made
   #   the wake word unreliable; 72% peaks around -11 dBFS at normal speaking
@@ -86,7 +86,7 @@ in
         for _ in $(${pkgs.coreutils}/bin/seq 12); do
           for sink in $($pactl list short sinks | ${pkgs.coreutils}/bin/cut -f2); do
             case "$sink" in
-              *41_42_FE_D5_9B_EF*) $pactl set-sink-volume "$sink" 100% ;; # musiCozy (quieter)
+              *41_42_FE_D5_9B_EF*) $pactl set-sink-volume "$sink" 250% ;; # musiCozy (much quieter); >100% = software boost
               *) $pactl set-sink-volume "$sink" 50% ;;
             esac
           done
