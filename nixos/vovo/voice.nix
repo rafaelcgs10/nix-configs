@@ -28,8 +28,13 @@ let
 
   # Custom wake words trained on bbstation (see README). Copied into the
   # container's model dir; built-in ones (ok_nabu, hey_jarvis, ...) always work.
-  customWakeWords = lib.filter lib.pathExists [ ./wakewords/hey_vovo.tflite ];
-  wakeWordName = if customWakeWords != [ ] then "hey_vovo" else "ok_nabu";
+  # Every *.tflite in ./wakewords is loaded, and the satellite listens for
+  # all of them ("hey vovo", "oki vovo", ...). The model name is the file name.
+  customWakeWords = map (f: ./wakewords + "/${f}") (lib.filter (lib.hasSuffix ".tflite")
+    (builtins.attrNames (builtins.readDir ./wakewords)));
+  wakeWordNames =
+    if customWakeWords != [ ] then map (m: lib.removeSuffix ".tflite" (baseNameOf (toString m))) customWakeWords
+    else [ "okay_nabu" ]; # built into openWakeWord
 in
 {
   # --- speech to text -----------------------------------------------------------
@@ -96,8 +101,7 @@ in
     };
     extraArgs = [
       "--wake-uri" "tcp://127.0.0.1:10400"
-      "--wake-word-name" wakeWordName
-    ];
+    ] ++ lib.concatMap (n: [ "--wake-word-name" n ]) wakeWordNames;
   };
   # The satellite needs rafael's PipeWire and the wake word service to be up.
   systemd.services.wyoming-satellite = {
