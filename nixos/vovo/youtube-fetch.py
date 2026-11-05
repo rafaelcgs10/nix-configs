@@ -10,8 +10,10 @@ as soon as it is there, the rest queued behind it. On failure, vovo says so.
 """
 
 import base64
+import difflib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -131,6 +133,50 @@ def radio_url(video_id):
     return "https://music.youtube.com/watch?v=%s&list=RDAMVM%s" % (video_id, video_id)
 
 
+# --- before YouTube: is it in the library after all? --------------------------
+# Most "not in the library" requests are speech-to-text mishearings of songs
+# that ARE in the library ("bohemian rapsody", "the off-string"); YouTube would
+# happily return something for them. Fuzzy-match against the whole library
+# first; only clear misses go to YouTube. 0.82 separated real mishearings
+# (0.89-1.0) from true misses (<= 0.75) on this library.
+FUZZY_MIN = 0.82
+
+
+def norm(text):
+    return re.sub(r"[^a-z0-9 ]", "", text.lower().replace("-", " ")).strip()
+
+
+def similarity(a, b):
+    return difflib.SequenceMatcher(None, a, b).ratio()
+
+
+def library_match(kind, query):
+    """Best fuzzy library match as (score, media, label), or None."""
+    q = norm(query)
+    title, _, by = q.partition(" by ")
+    best = None
+    if kind in ("song", "artist"):
+        for t in ma("music/tracks/library_items", limit=5000):
+            artists = ", ".join(a["name"] for a in t.get("artists", []))
+            if kind == "song":
+                score = similarity(title, norm(t["name"]))
+                if by:
+                    score = 0.6 * score + 0.4 * similarity(by, norm(artists))
+                if not best or score > best[0]:
+                    best = (score, t["uri"], "%s by %s" % (t["name"], artists))
+        for a in ma("music/artists/library_items", limit=5000):
+            score = similarity(q, norm(a["name"]))
+            if not best or score > best[0]:
+                best = (score, a["uri"], "music by %s" % a["name"])
+    elif kind == "album":
+        for a in ma("music/albums/library_items", limit=5000):
+            score = similarity(title, norm(a["name"]))
+            if not best or score > best[0]:
+                best = (score, a["uri"], "the album %s" % a["name"])
+    log("library match:", best)
+    return best if best and best[0] >= FUZZY_MIN else None
+
+
 def ma_uri(path):
     instance = next(p["instance_id"] for p in ma("config/providers") if p["domain"] == "filesystem_local")
     return "%s://track/%s" % (instance, os.path.relpath(path, MUSIC_ROOT))
@@ -170,6 +216,14 @@ def main():
         raise SystemExit("bad request: %r" % line)
     log("request:", kind, repr(query))
     os.makedirs(YT_DIR, exist_ok=True)
+
+    match = library_match(kind, query)
+    if match:
+        _, uri, label = match
+        ma("player_queues/play_media", queue_id=queue_id(), media=[uri], option=option)
+        say("Playing %s, from your library." % label)
+        log("played from library instead:", label)
+        return
 
     if kind in ("song", "related"):
         vid = song_id(query)

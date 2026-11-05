@@ -227,7 +227,7 @@ in
               "then" = playArtist "found";
               "else" = [
                 (youtube "artist" "{{ name }}")
-                (say "I don't have music by {{ name }}, so I'm getting their top songs from YouTube. One moment.")
+                (say "Let me look for music by {{ name }}. One moment.")
               ];
             }
           ];
@@ -242,7 +242,7 @@ in
               "then" = playAlbum "found";
               "else" = [
                 (youtube "album" "{{ name }}")
-                (say "I don't have the album {{ title }}, so I'm getting it from YouTube. One moment.")
+                (say "Let me look for the album {{ title }}. One moment.")
               ];
             }
           ];
@@ -282,7 +282,7 @@ in
                   "then" = playAlbum "as_album";
                   "else" = [
                     (youtube "song" "{{ name }}")
-                    (say "{{ title }} isn't in your library, so I'm getting it from YouTube. One moment.")
+                    (say "Let me look for {{ title }}. One moment.")
                   ];
                 }
               ];
