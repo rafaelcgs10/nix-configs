@@ -115,6 +115,7 @@ def download_and_queue(url, items, numbered, single):
     for path in ytdlp_stream(download_args(url, items, numbered, single)):
         if os.path.exists(path):
             try:
+                ma_sync()
                 play([path], "add")
                 n += 1
             except Exception as e:
@@ -175,6 +176,72 @@ def library_match(kind, query):
                 best = (score, a["uri"], "the album %s" % a["name"])
     log("library match:", best)
     return best if best and best[0] >= FUZZY_MIN else None
+
+
+def ma_sync():
+    """Index new files right away (incremental, fast), so a request for the
+    same song later is found in the library instead of downloaded again."""
+    try:
+        instance = next(p["instance_id"] for p in ma("config/providers") if p["domain"] == "filesystem_local")
+        ma("music/sync", media_types=["track"], providers=[instance])
+    except Exception as e:
+        log("library sync failed:", e)
+
+
+_library_tracks = None
+
+
+def clean_title(title, artist=""):
+    """Song title without YouTube decorations: "(2012 Remaster)", "[Official
+    Video]", "(Audio)", "feat. ..." and a leading "Artist - "."""
+    t = re.sub(r"[\(\[][^\)\]]*[\)\]]", " ", title)
+    t = re.sub(r"(?i)\b(feat\.?|ft\.?|featuring)\b.*$", " ", t)
+    if " - " in t:
+        head, tail = t.split(" - ", 1)
+        if not artist or similarity(norm(head), norm(artist)) >= 0.6 or norm(head) in norm(artist):
+            t = tail
+    return norm(t)
+
+
+def library_copy(title, artist):
+    """URI of the library's own copy of a song (strict match), if any."""
+    global _library_tracks
+    if _library_tracks is None:
+        _library_tracks = [
+            (clean_title(t["name"]), norm(", ".join(a["name"] for a in t.get("artists", []))), t["uri"])
+            for t in ma("music/tracks/library_items", limit=5000)
+        ]
+    nt, na = clean_title(title, artist), norm(artist)
+    for lt, la, uri in _library_tracks:
+        # YouTube channels are often "<artist> Official", "<artist> - Topic"
+        if similarity(nt, lt) >= 0.9 and la and (la in na or na in la or similarity(na, la) >= 0.8):
+            return uri
+    return None
+
+
+def radio_queue(url, items):
+    """Queue the songs of a radio/related list one by one: the library copy
+    when there is one, otherwise download it. Returns how many were queued."""
+    entries = ytdlp(["--flat-playlist", "--playlist-items", items, "--print",
+                     "%(id)s\t%(title)s\t%(artist,channel,uploader|)s", url])
+    n = 0
+    for line in entries:
+        vid, title, artist = (line.split("\t") + ["", ""])[:3]
+        uri = library_copy(title, artist)
+        try:
+            if uri:
+                log("in library, not downloading:", title, "-", artist)
+                ma("player_queues/play_media", queue_id=queue_id(), media=[uri], option="add")
+            else:
+                got = download("https://www.youtube.com/watch?v=" + vid, "1", False, single=True)
+                if not got:
+                    continue
+                ma_sync()
+                play(got, "add")
+            n += 1
+        except Exception as e:
+            log("queueing failed:", title, e)
+    return n
 
 
 def ma_uri(path):
@@ -240,9 +307,10 @@ def main():
         if not first:
             say("Sorry, I couldn't get %s from YouTube." % query)
             raise SystemExit("nothing downloaded for %r" % query)
+        ma_sync()
         play(first, option)
         log("playing", first)
-        log("queued", download_and_queue(radio, more, False, single=True), "related")
+        log("queued", radio_queue(radio, more), "related")
     else:
         # The search result is itself an album/playlist (or, for an artist,
         # the list of songs): resolve the top hit first, so the item cap
@@ -255,15 +323,12 @@ def main():
         if not first:
             say("Sorry, I couldn't get %s from YouTube." % query)
             raise SystemExit("nothing downloaded for %r" % query)
+        ma_sync()
         play(first, option)
         log("playing", first)
         log("queued", download_and_queue(url, "2-%d" % MAX_ITEMS[kind], numbered, single=True), "more")
 
-    try:  # index everything properly (artist/album pages, search next time)
-        instance = next(p["instance_id"] for p in ma("config/providers") if p["domain"] == "filesystem_local")
-        ma("music/sync", media_types=["track"], providers=[instance])
-    except Exception as e:
-        log("library sync failed:", e)
+    ma_sync()
 
 
 if __name__ == "__main__":
