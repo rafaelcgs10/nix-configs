@@ -50,13 +50,20 @@ in
   systemd.user.services.squeezelite = {
     Unit = {
       Description = "Squeezelite player for Music Assistant";
+      StartLimitIntervalSec = 0; # keep retrying until Music Assistant is up
       After = [ "pipewire.service" "pipewire-pulse.socket" ];
       Wants = [ "pipewire-pulse.socket" ];
     };
     Service = {
+      # Wait (briefly) for Music Assistant's player port; started earlier,
+      # squeezelite does not find the server and the "vovo" player never
+      # appears. Give up after ~60 s and let Restart retry, so a deploy that
+      # restarts this unit never blocks on it.
+      ExecStartPre = "${pkgs.bash}/bin/bash -c 'for i in $(seq 12); do (exec 3<>/dev/tcp/127.0.0.1/3483) 2>/dev/null && exit 0; sleep 5; done; exit 1'";
+      TimeoutStartSec = "90s";
       ExecStart = "${pkgs.squeezelite-pulse}/bin/squeezelite-pulse -n vovo -s 127.0.0.1 -C 5";
       Restart = "always";
-      RestartSec = 5;
+      RestartSec = 10;
     };
     Install.WantedBy = [ "default.target" ];
   };

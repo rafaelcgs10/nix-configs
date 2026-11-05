@@ -16,6 +16,7 @@
     ./music.nix
     ./voice.nix
     ./youtube.nix
+    ./reconcile.nix
   ];
 
   networking.hostName = "vovo";
