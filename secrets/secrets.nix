@@ -18,9 +18,12 @@ let
 
   # --- host keys (from /etc/ssh/ssh_host_ed25519_key.pub) ---------------------
   thinkpad = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFP8Rwy2r09UXCRmmLOvbZxkJ0VlQSMS93LY0nXr9LRM root@thinkpad";
-  # TODO: add when the machines are reachable (`ssh-keyscan -t ed25519 <host>`),
-  # then `agenix --rekey` and switch their CIFS mounts over as well.
-  # bbstation = "ssh-ed25519 ...";
+  # vovo's key was pre-generated on bbstation and copied onto the SD card at
+  # flash time (nixos/vovo/prepare-sd.sh), so its secrets work on first boot.
+  vovo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEQfaYe5GT5lzY5bfmLsZICJiZzrmNiGxZTDAAi0REl9 root@vovo";
+  bbstation = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILWD13u07BkEULTHWqOYvEIifsuRJvyXEeK11tm/wUmd root@nixos";
+  # TODO: add when the machine is reachable (`ssh-keyscan -t ed25519 <host>`),
+  # then `agenix --rekey` and switch its CIFS mounts over as well.
   # bbtablet  = "ssh-ed25519 ...";
 
   allUsers = [ rafael ];
@@ -29,4 +32,10 @@ in
 {
   # CIFS credentials for the //192.168.0.104 shares (username=/password= file).
   "smb-secrets.age".publicKeys = allUsers ++ allHosts;
+
+  # vovo (Raspberry Pi music box). bbstation is a recipient only so these can
+  # be edited there: sudo agenix -e X.age -i /etc/ssh/ssh_host_ed25519_key
+  "wifi-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ];        # psk_home=<wpa passphrase>
+  "syncthing-vovo-key.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Syncthing identity (key.pem)
+  "syncthing-vovo-gui.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Syncthing web UI password
 }

@@ -149,13 +149,13 @@
           modules = mkHomeModules profile;
         };
 
-      mkHomeManagerNixosModule = system: profile: {
+      mkHomeManagerNixosModule = system: homeModules: {
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
         home-manager.backupFileExtension = "backup";
         home-manager.extraSpecialArgs = mkHomeArgs system;
         home-manager.users.rafael = {
-          imports = mkHomeModules profile;
+          imports = homeModules;
         };
       };
 
@@ -209,6 +209,9 @@
         { system ? "x86_64-linux"
         , common ? true
         , homeProfile ? null
+          # Explicit home-manager module list, bypassing home.nix and the
+          # profile mechanism (for hosts that need a much slimmer home).
+        , homeModules ? if homeProfile == null then null else mkHomeModules homeProfile
         , modules
         }:
         lib.nixosSystem {
@@ -220,9 +223,9 @@
             # skip it still need allowUnfree etc. for the home-manager profile.
             ++ lib.optionals (!common) [ { nixpkgs.config = nixpkgsConfig; } ]
             ++ modules
-            ++ lib.optionals (homeProfile != null) [
+            ++ lib.optionals (homeModules != null) [
               home-manager.nixosModules.home-manager
-              (mkHomeManagerNixosModule system homeProfile)
+              (mkHomeManagerNixosModule system homeModules)
             ];
         };
 
@@ -273,6 +276,16 @@
             inputs.nixos-wsl.nixosModules.default
             ./nixos/wsl/configuration.nix
           ];
+        };
+
+        # Raspberry Pi 4 (2 GB) headless music box. Built on bbstation (binfmt
+        # emulation), never on the Pi. See nixos/vovo/README.md.
+        #   SD image: nix build .#nixosConfigurations.vovo.config.system.build.sdImage
+        vovo = mkHost {
+          system = "aarch64-linux";
+          common = false;
+          homeModules = [ ./home-manager/profiles/vovo.nix ];
+          modules = [ ./nixos/vovo ];
         };
       };
     in

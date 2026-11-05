@@ -20,6 +20,18 @@
   boot.kernelModules = [ "kvm-amd" ];
   boot.supportedFilesystems = [ "nfs" ];
 
+  # Build aarch64 closures (the `vovo` Raspberry Pi: SD image and remote
+  # deploys) through qemu-user. Nearly everything comes from cache.nixos.org;
+  # only the few uncached derivations are actually built under emulation.
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
+  # vovo's host key is pre-generated (see nixos/vovo/README.md), so pin it:
+  # `ssh vovo.local` never asks to confirm a fingerprint.
+  programs.ssh.knownHosts.vovo = {
+    hostNames = [ "vovo" "vovo.local" ];
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEQfaYe5GT5lzY5bfmLsZICJiZzrmNiGxZTDAAi0REl9";
+  };
+
   # boot.blacklistedKernelModules = [ "rtl8821cu" "rtw88_8821cu" ];
   # boot.extraModulePackages = with config.boot.kernelPackages; [ rtl88xxau-aircrack ];
   # boot.extraModulePackages = with config.boot.kernelPackages; [ rtl8821au ];

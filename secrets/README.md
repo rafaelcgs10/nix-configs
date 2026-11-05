@@ -41,6 +41,9 @@ not a recipient cannot decrypt, and its activation will fail.
 | Secret | Used by | Hosts wired up |
 |---|---|---|
 | `smb-secrets.age` | CIFS mounts of `//192.168.0.104` | thinkpad-e14 only |
+| `wifi-vovo.age` | vovo Wi-Fi (`psk_home=…`) | vovo |
+| `syncthing-vovo-key.age` | vovo Syncthing identity | vovo |
+| `syncthing-vovo-gui.age` | vovo Syncthing web UI password | vovo |
 
 `bbstation` and `bbtablet` still read `/home/rafael/.smb-secrets` directly; they
 were unreachable when this was set up. To migrate them: add their host keys as
@@ -49,13 +52,10 @@ above, `agenix --rekey`, import `./nixos/agenix.nix`, and change their
 
 ## Still to migrate
 
-- `/home/rafael/cf-api-token` (Cloudflare DDNS on the Raspberry Pi)
 - `users.users.rafael.password` in `nixos/configuration.nix` — currently
   **plaintext in a public repo**; should become `hashedPasswordFile` backed by a
   secret here. Rotate the password itself regardless: it is already in the
   public git history and cannot be un-published.
-- `config.adminpassFile` in the Raspberry Pi Nextcloud config (`writeText` puts
-  it world-readable in the nix store).
 
 ## Reverting
 
