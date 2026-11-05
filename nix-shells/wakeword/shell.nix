@@ -15,8 +15,6 @@ let
       curl
       gnutar
       zstd
-      ffmpeg
-      sox
       libsndfile
       portaudio
       espeak-ng
