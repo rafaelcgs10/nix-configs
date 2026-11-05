@@ -39,4 +39,6 @@ in
   "syncthing-vovo-key.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Syncthing identity (key.pem)
   "syncthing-vovo-gui.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Syncthing web UI password
   "rafael-password-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ]; # yescrypt hash; console login
+  "ha-token-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Home Assistant long-lived token (YouTube fetcher)
+  "ma-token-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Music Assistant token (YouTube fetcher)
 }

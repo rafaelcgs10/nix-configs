@@ -121,9 +121,10 @@ in
                 #   random  "play something", "play some music"
                 #   artist  "play songs by X", "play music by X", "play some X"
                 #   album   "play the album X"
+                #   playlist "play the playlist X" (YouTube only)
                 #   track   "play X", "play X by Y"
-                mode = "{% set q = song | lower %}{% if q in ${randomPhrases} %}random{% elif q.startswith(('songs by ', 'music by ', 'something by ', 'anything by ', 'the artist ', 'artist ', 'some ')) %}artist{% elif q.startswith(('the album ', 'album ')) %}album{% else %}track{% endif %}";
-                name = "{{ song | regex_replace('(?i)^(songs by|music by|something by|anything by|the artist|artist|some|the album|album)\\s+', '') | trim }}";
+                mode = "{% set q = song | lower %}{% if q in ${randomPhrases} %}random{% elif q.startswith(('songs by ', 'music by ', 'something by ', 'anything by ', 'the artist ', 'artist ', 'some ')) %}artist{% elif q.startswith(('the album ', 'album ')) %}album{% elif q.startswith(('the playlist ', 'playlist ', 'a playlist ')) %}playlist{% else %}track{% endif %}";
+                name = "{{ song | regex_replace('(?i)^(songs by|music by|something by|anything by|the artist|artist|some|the album|album|the playlist|a playlist|playlist)\\s+', '') | trim }}";
                 title = "{{ (song.split(' by ') | first) | trim }}";
                 artist = "{{ (song.split(' by ')[1] if ' by ' in song else '') | trim }}";
               };
@@ -167,7 +168,10 @@ in
                         }
                         { set_conversation_response = "Playing music by {{ found.artists[0].name }}."; }
                       ];
-                      "else" = [ { set_conversation_response = "Sorry, I don't have any music by {{ name }}."; } ];
+                      "else" = [
+                        { action = "shell_command.youtube_fetch"; data = { kind = "artist"; query = "{{ name }}"; }; }
+                        { set_conversation_response = "I don't have music by {{ name }}, so I'm getting their top songs from YouTube. One moment."; }
+                      ];
                     }
                   ];
                 }
@@ -191,8 +195,19 @@ in
                         }
                         { set_conversation_response = "Playing the album {{ found.albums[0].name }} by {{ found.albums[0].artists | map(attribute='name') | join(' and ') }}."; }
                       ];
-                      "else" = [ { set_conversation_response = "Sorry, I couldn't find the album {{ name }}."; } ];
+                      "else" = [
+                        { action = "shell_command.youtube_fetch"; data = { kind = "album"; query = "{{ name }}"; }; }
+                        { set_conversation_response = "I don't have the album {{ name }}, so I'm getting it from YouTube. One moment."; }
+                      ];
                     }
+                  ];
+                }
+                # --- playlist: always from YouTube (max 20 songs) -----------
+                {
+                  conditions = "{{ mode == 'playlist' }}";
+                  sequence = [
+                    { action = "shell_command.youtube_fetch"; data = { kind = "playlist"; query = "{{ name }}"; }; }
+                    { set_conversation_response = "Getting the playlist {{ name }} from YouTube. One moment."; }
                   ];
                 }
               ];
@@ -215,26 +230,8 @@ in
                   ]
                   ++ fillQueue;
                   "else" = [
-                    {
-                      action = "music_assistant.search";
-                      data = { config_entry_id = "{{ ma_entry }}"; name = "{{ title }}"; artist = "{{ artist }}"; media_type = "track"; library_only = false; limit = 1; };
-                      response_variable = "online";
-                    }
-                    {
-                      "if" = [ { condition = "template"; value_template = "{{ online.tracks | length > 0 }}"; } ];
-                      "then" = [
-                        {
-                          action = "music_assistant.play_media";
-                          target.entity_id = "{{ player }}";
-                          data = { media_id = "{{ online.tracks[0].uri }}"; media_type = "track"; enqueue = "replace"; };
-                        }
-                        { set_conversation_response = "I didn't have {{ online.tracks[0].name }} in your library, so I'm playing it from YouTube."; }
-                      ]
-                      ++ fillQueue;
-                      "else" = [
-                        { set_conversation_response = "Sorry, I couldn't find {{ song }} in your library. Try saying the artist too, like: play Numb by Linkin Park."; }
-                      ];
-                    }
+                    { action = "shell_command.youtube_fetch"; data = { kind = "song"; query = "{{ song }}"; }; }
+                    { set_conversation_response = "{{ title }} isn't in your library, so I'm getting it from YouTube. One moment."; }
                   ];
                 }
               ];

@@ -42,6 +42,9 @@ in
     sttLibrary = "faster-whisper";
     model = "tiny.en";
     device = "cpu";
+    # Quantize on load: without this tiny.en ran at float32 and took ~430 MB
+    # (mostly pushed to swap), which starved everything else.
+    extraArgs = [ "--compute-type" "int8" ];
   };
 
   # --- text to speech -------------------------------------------------------------

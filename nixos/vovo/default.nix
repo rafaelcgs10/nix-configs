@@ -15,6 +15,7 @@
     ./home-assistant.nix
     ./music.nix
     ./voice.nix
+    ./youtube.nix
   ];
 
   networking.hostName = "vovo";
@@ -108,6 +109,17 @@
     algorithm = "zstd";
     memoryPercent = 50;
   };
+  # Backstop behind zram (zram has the higher priority, so it is used first):
+  # lets a short spike, e.g. yt-dlp's deno during a YouTube download, spill to
+  # the SD card instead of thrashing the page cache.
+  swapDevices = [
+    {
+      device = "/var/lib/swapfile";
+      size = 2048; # MiB
+      priority = 1;
+    }
+  ];
+
   # Kill the biggest offender instead of thrashing if RAM runs out.
   services.earlyoom = {
     enable = true;
