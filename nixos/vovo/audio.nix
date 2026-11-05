@@ -27,15 +27,16 @@
 
       # Blue Yeti: a USB microphone that also exposes a headphone output. Hide
       # that output so music never lands on it, and make the Yeti the
-      # preferred microphone.
+      # preferred microphone. Newer (Logitech-made) units report as
+      # "usb-Generic_Blue_Microphones_LT_...". `~` makes these regexes.
       "20-blue-yeti" = {
         "monitor.alsa.rules" = [
           {
-            matches = [ { "node.name" = "~alsa_output.usb-Blue_Microphones_Yeti*"; } ];
+            matches = [ { "node.name" = "~alsa_output\\.usb-.*Blue_Microphones.*"; } ];
             actions.update-props."node.disabled" = true;
           }
           {
-            matches = [ { "node.name" = "~alsa_input.usb-Blue_Microphones_Yeti*"; } ];
+            matches = [ { "node.name" = "~alsa_input\\.usb-.*Blue_Microphones.*"; } ];
             actions.update-props = {
               "priority.session" = 2100;
               "priority.driver" = 2100;
