@@ -6,3 +6,7 @@
 !**/secrets/*.age
 !**/secrets/secrets.nix
 !**/secrets/README.md
+
+# nix build output links
+result
+result-*
