@@ -81,9 +81,11 @@ in
           ];
           actions = [
             {
+              # Nix emits attributes alphabetically, so a variable here
+              # cannot refer to another one from the same block.
               variables = {
                 inherit player;
-                ma_entry = "{{ config_entry_id(player) }}";
+                ma_entry = "{{ config_entry_id('${player}') }}";
                 song = "{{ trigger.slots.song | trim }}";
               };
             }
