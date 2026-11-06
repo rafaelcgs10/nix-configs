@@ -11,8 +11,8 @@
 {
   # --- once per boot, when vovo is ready ------------------------------------
   greeting = [
-    "You have awakened vovo! I am ready to ruin your day. Ask me to play some music, and I am sure to find the right song."
-    "vovo is awake! Tell me what to play, and I will do my best. Or my worst."
+    "You have awakened vovo! Ask me to play some music, and I am sure to find the right song."
+    "vovo is awake! Tell me what to play, and I will do my best."
     "Hello, I am vovo, and I am ready to play some music."
   ];
 
@@ -59,6 +59,7 @@
   playing_mood = [ "Playing some {{ name }}. One moment." ]; # {{ name }}: the mood
   getting_playlist = [ "Getting the playlist {{ name }} from YouTube. One moment." ]; # {{ name }}
   getting_genre = [ "Getting a {{ name }} playlist from YouTube. One moment." ]; # {{ name }}
+  playing_yt_playlist = [ "Playing a {{ name }} playlist. One moment." ]; # {{ name }}: what you asked for
   unknown_name = [ "I heard {{ name }}, but I don't know that one. Say: play {{ name }} from YouTube, to search for it anyway." ]; # {{ name }}
 
   # --- YouTube fetcher (Python placeholders) -------------------------------------

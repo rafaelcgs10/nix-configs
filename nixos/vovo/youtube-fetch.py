@@ -6,7 +6,9 @@ of song | artist | album | playlist | related | mood | continue, option one of
 replace | add | next. "related" plays songs similar to the query (YouTube
 Music radio); "mood" plays random songs from the mood's playlists in
 MOODS_FILE (moods.nix); "continue" (query: the last request, "mode|name")
-keeps the music going in the same style when the queue has run out.
+keeps the music going in the same style when the queue has run out;
+"ytplaylist" plays a cached local copy of the most-viewed YouTube playlist
+for the query (see play_ytplaylist).
 Downloads into ~/Music/Youtube, makes Music
 Assistant pick the files up and plays them on the vovo player: the first song
 as soon as it is there, the rest queued behind it. On failure, vovo says so.
@@ -14,6 +16,7 @@ as soon as it is there, the rest queued behind it. On failure, vovo says so.
 
 import base64
 import collections
+import concurrent.futures
 import difflib
 import hashlib
 import json
@@ -35,7 +38,7 @@ SATELLITE = "assist_satellite.vovo"
 PLAYER_ENTITY = "media_player.vovo"
 RESUME_FLAG = "input_boolean.vovo_resume_after_voice"
 MAX_SONG_SECONDS = 15 * 60   # singles only, no hour-long mixes
-MAX_ITEMS = {"song": 1, "artist": 10, "album": 20, "playlist": 20, "related": 20, "mood": 20, "continue": 20}
+MAX_ITEMS = {"song": 1, "artist": 10, "album": 20, "playlist": 20, "related": 20, "mood": 20, "continue": 20, "ytplaylist": 30}
 SEARCH_FILTER = {"song": "songs", "artist": "songs", "album": "albums", "playlist": "community playlists", "related": "songs"}
 # After a single song, queue this many songs from its YouTube Music radio, so
 # the music goes on and "next" has somewhere to go.
@@ -477,6 +480,146 @@ def pick_playlist(query):
     return hits[0] if hits else None
 
 
+# --- "play X playlist": cached local copies of YouTube playlists -------------
+PLAYLISTS_DIR = MUSIC_ROOT + "/Playlists"
+PLAYLISTS_MAX_BYTES = 2 * 1024 ** 3
+YTPLAYLIST_CANDIDATES = 4  # from each of YouTube and YouTube Music
+
+
+def slug(text):
+    return norm(text).replace(" ", "-") or "playlist"
+
+
+def best_summed_playlist(query):
+    """The YouTube playlist for the exact search term whose first 30 videos
+    have the most views in total (single songs only, no hour-long mixes)."""
+    q = urllib.parse.quote_plus(query)
+    hits = ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % YTPLAYLIST_CANDIDATES, "--print", "url",
+                  "https://www.youtube.com/results?search_query=%s&sp=EgIQAw%%253D%%253D" % q])
+    hits += ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % YTPLAYLIST_CANDIDATES,
+                   "--print", "url", search_url("playlist", query)])
+    ids = {}
+    for url in hits:
+        m = re.search(r"(?:list=|browse/VL)([A-Za-z0-9_-]+)", url)
+        if m:
+            ids.setdefault(m.group(1), "https://www.youtube.com/playlist?list=" + m.group(1))
+    best = None
+    # Read the candidates 4 at a time (each is a few seconds of yt-dlp on the Pi).
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        infos = list(pool.map(lambda u: (u, ytdlp(["-J", "--flat-playlist", "--playlist-items",
+                                                   "1-%d" % MAX_ITEMS["ytplaylist"], u])), ids.values()))
+    for url, info in infos:
+        try:
+            d = json.loads(info[0]) if info else None
+        except ValueError:
+            d = None
+        entries = [e for e in ((d or {}).get("entries") or []) if e and e.get("id")]
+        if not entries:
+            continue
+        durations = sorted(e.get("duration") or 0 for e in entries)
+        median = durations[len(durations) // 2]
+        views = sum(e.get("view_count") or 0 for e in entries)
+        ok = 0 < median <= 480
+        log("playlist candidate:", d.get("title"), "%d songs" % len(entries), "views %d" % views,
+            "median %ds" % median, "ok" if ok else "skip")
+        if ok and (best is None or views > best[0]):
+            best = (views, d.get("title") or query, url, entries)
+    return best
+
+
+def write_m3u(name, folder, files):
+    """A .m3u next to the folder, so Music Assistant lists it as a playlist."""
+    path = os.path.join(PLAYLISTS_DIR, name + ".m3u")
+    with open(path, "w") as f:
+        f.write("#EXTM3U\n")
+        for p in files:
+            f.write(os.path.relpath(p, PLAYLISTS_DIR) + "\n")
+
+
+def playlists_cap(keep):
+    """Drop the least recently played playlists until under the size cap."""
+    sizes = {}
+    for name in os.listdir(PLAYLISTS_DIR):
+        d = os.path.join(PLAYLISTS_DIR, name)
+        if os.path.isdir(d):
+            total = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(d) for f in fs)
+            index = os.path.join(d, "playlist.json")
+            used = os.path.getmtime(index) if os.path.exists(index) else 0
+            sizes[name] = (used, total)
+    total = sum(t for _, t in sizes.values())
+    for name, (used, size) in sorted(sizes.items(), key=lambda kv: kv[1][0]):
+        if total <= PLAYLISTS_MAX_BYTES:
+            break
+        if name == keep:
+            continue
+        log("playlist cap: removing", name)
+        for r, ds, fs in os.walk(os.path.join(PLAYLISTS_DIR, name), topdown=False):
+            for f in fs:
+                os.remove(os.path.join(r, f))
+            os.rmdir(r)
+        m3u = os.path.join(PLAYLISTS_DIR, name + ".m3u")
+        if os.path.exists(m3u):
+            os.remove(m3u)
+        total -= size
+
+
+def download_into(folder, index, vid, title):
+    out = os.path.join(folder, "%02d - %%(title)s.%%(ext)s" % index)
+    got = ytdlp(["-f", "bestaudio[ext=m4a]/bestaudio", "--embed-metadata", "--embed-thumbnail",
+                 "--convert-thumbnails", "jpg", "--match-filter", "duration <= %d" % MAX_SONG_SECONDS,
+                 "-o", out, "--print", "after_move:filepath", "https://www.youtube.com/watch?v=" + vid])
+    return next((p for p in got if os.path.exists(p)), None)
+
+
+def play_ytplaylist(query, option):
+    name = slug(query)
+    folder = os.path.join(PLAYLISTS_DIR, name)
+    index = os.path.join(folder, "playlist.json")
+    os.makedirs(folder, exist_ok=True)
+    data = None
+    if os.path.exists(index):
+        with open(index) as f:
+            data = json.load(f)
+        log("cached playlist:", data.get("title"), len(data.get("entries", [])), "songs")
+    else:
+        best = best_summed_playlist(query)
+        if not best:
+            say(phrase("youtube_not_found", query=query + " playlist"))
+            raise SystemExit("no playlist for %r" % query)
+        views, title, url, entries = best
+        data = {"query": query, "title": title, "url": url, "views": views,
+                "entries": [{"id": e["id"], "title": e.get("title") or ""} for e in entries], "files": {}}
+        log("chose playlist:", title, "with %d views over %d songs" % (views, len(entries)))
+    files = data.setdefault("files", {})
+    started = False
+    paths = []
+    for i, e in enumerate(data["entries"], 1):
+        p = files.get(e["id"])
+        if not (p and os.path.exists(p)):
+            p = download_into(folder, i, e["id"], e["title"])
+            if not p:
+                continue
+            files[e["id"]] = p
+            ma_sync()
+        paths.append(p)
+        if not started:
+            play([p], option)
+            log("playing", p)
+            started = True
+            wait_playing()
+        elif not stopped_by_user():
+            play([p], "add")
+        with open(index + ".tmp", "w") as f:  # save progress (also marks "recently played")
+            json.dump(data, f)
+        os.replace(index + ".tmp", index)
+    if not started:
+        say(phrase("youtube_failed", query=query + " playlist"))
+        raise SystemExit("nothing downloaded for playlist %r" % query)
+    write_m3u(name, folder, paths)
+    playlists_cap(keep=name)
+    log("playlist ready:", data.get("title"), len(paths), "songs")
+
+
 # --- recently played: never repeat within the last few hundred songs ---------
 RECENT_FILE = "/home/rafael/.cache/vovo-moods/recent.json"
 RECENT_MAX = 400
@@ -660,6 +803,10 @@ def main():
         return
     if kind == "continue":
         continue_music(query, option)
+        ma_sync()
+        return
+    if kind == "ytplaylist":
+        play_ytplaylist(query, option)
         ma_sync()
         return
 

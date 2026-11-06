@@ -63,6 +63,28 @@ in
     };
   };
 
+  # Keep ~/Music/Youtube small (see youtube-cleanup.py): hourly, delete songs
+  # older than 2 days, then the oldest until it is under 1 GB.
+  systemd.services.youtube-cleanup = {
+    description = "Delete old YouTube downloads (2 days, 1 GB cap)";
+    environment.MA_TOKEN_FILE = "/var/lib/vovo/ma-token";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "rafael";
+      ExecStart = "${pkgs.writers.writePython3Bin "youtube-cleanup" { flakeIgnore = [ "E501" ]; } (builtins.readFile ./youtube-cleanup.py)}/bin/youtube-cleanup";
+      Nice = 19;
+      IOSchedulingClass = "idle";
+    };
+  };
+  systemd.timers.youtube-cleanup = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "hourly";
+      RandomizedDelaySec = "5min";
+      Persistent = true;
+    };
+  };
+
   # What Home Assistant runs: send "<kind> <option> <base64 query>" and return
   # at once. option: replace | add | next (Music Assistant queue option).
   # (shell_command splits arguments without a shell; base64 keeps the query

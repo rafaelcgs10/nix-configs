@@ -1,7 +1,8 @@
 # The "play ..." voice command for vovo (a Home Assistant automation).
 #
 # 1. Work out what was asked (parser below): random / artist / album /
-#    playlist / genre, or plain "play X" where X could be anything.
+#    playlist / "X playlist" / genre, or plain "play X" where X could be
+#    anything.
 #    Then correct misheard names against a big artist/song list (names.nix).
 # 2. Look in the library; plain "play X" tries, in order: an artist named
 #    exactly X, a song whose title contains X, an album named exactly X.
@@ -31,6 +32,7 @@ let
       ['album', '^(?:the )?album (.+)$'],
       ['album', '^(?:the )?(.+) album$'],
       ['playlist', '^(?:the |a )?playlist (?:called |named )?(.+)$'],
+      ['ytplaylist', '^(?:some |a |an |the )?(.+?) playlist$'],
       ['genre', '^(?:some )?(.+) music$'],
       ['plain', '^some (.+)$'],
     ] -%}
@@ -298,6 +300,15 @@ in
           sequence = [
             (youtube "mood" "{{ name }}")
             (say (p "playing_mood"))
+          ];
+        }
+        # --- "X playlist": cached local copy of the most-viewed YouTube
+        # playlist for X (youtube-fetch play_ytplaylist) -------------------
+        {
+          conditions = "{{ mode == 'ytplaylist' }}";
+          sequence = [
+            (youtube "ytplaylist" "{{ name }}")
+            (say (p "playing_yt_playlist"))
           ];
         }
         # --- playlist: YouTube only (max 20 songs) --------------------------
