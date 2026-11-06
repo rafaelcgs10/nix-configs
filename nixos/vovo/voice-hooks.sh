@@ -8,6 +8,11 @@
 #   tts-start   vovo starts speaking: duck the music to 30 % of its volume
 #   tts-played  vovo finished speaking: volume back (unless someone changed
 #               it meanwhile); resume if a pause is somehow still pending
+#   disconnected  the satellite lost Home Assistant mid-command: resume
+#
+# Safety net: 30 s after a wake word, a pause nobody resumed is resumed (a
+# lost connection or crash left the music muted for good once, 2026-11-06;
+# WirePlumber no longer restores stream mute, see audio.nix).
 #
 # Music Assistant's pause takes ~1 s and could overtake a quick resume, so
 # the instant part is the mute, and a resume always waits for the pause.
@@ -35,6 +40,14 @@ volume() { # current volume of a stream, in percent
   pactl -f json list sink-inputs | jq -r ".[] | select(.index == $1) | .volume | to_entries[0].value.value_percent" | tr -d '%'
 }
 mute() { local i; i=$(input); [ -n "$i" ] && pactl set-sink-input-mute "$i" "$1"; }
+unmute_when_open() { # squeezelite may have closed its output while paused:
+  local n=0 i=""   # wait (up to 6 s) for the stream it opens on resume
+  while [ $n -lt 30 ]; do
+    i=$(input)
+    if [ -n "$i" ]; then pactl set-sink-input-mute "$i" 0; return; fi
+    sleep 0.2; n=$((n + 1))
+  done
+}
 wait_pause() { # until the background pause from "detect" has finished
   local n=0
   while [ -e "$state/pausing" ] && [ $n -lt 50 ]; do sleep 0.1; n=$((n + 1)); done
@@ -45,7 +58,8 @@ resume() {
     rm -f "$state/paused"
     ma players/cmd/play "{\"player_id\":\"$(player)\"}" >/dev/null
   fi
-  mute 0
+  rm -f "$state/detected"
+  unmute_when_open
 }
 
 # What counts as "stop the music" (keep in step with the pause command in
@@ -56,6 +70,12 @@ case "${1:-}" in
   detect)
     rm -f "$state/paused" "$state/ducked"
     mute 1
+    stamp=$(date +%s%N)
+    echo "$stamp" > "$state/detected"
+    # safety net: nobody resumed within 30 s (and no newer wake word)
+    ( sleep 30
+      [ "$(cat "$state/detected" 2>/dev/null)" = "$stamp" ] && "$0" error
+    ) </dev/null >/dev/null 2>&1 &
     touch "$state/pausing"
     ( if [ "$(ma players/get "{\"player_id\":\"$(player)\"}" | jq -r .playback_state)" = playing ]; then
         touch "$state/paused"
@@ -67,13 +87,13 @@ case "${1:-}" in
     text=$(tr '[:upper:]' '[:lower:]' | sed 's/[.!?,]//g; s/^ *//')
     if printf '%s' "$text" | grep -qE "$STOP"; then
       wait_pause
-      rm -f "$state/paused" # stays paused; HA's pause command does the rest
+      rm -f "$state/paused" "$state/detected" # stays paused; HA's pause command does the rest
       ( sleep 3; mute 0 ) </dev/null >/dev/null 2>&1 &
     else
       resume
     fi
     ;;
-  error) resume ;;
+  error | disconnected) resume ;;
   tts-start)
     i=$(input)
     if [ -n "$i" ]; then

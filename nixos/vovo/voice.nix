@@ -164,6 +164,7 @@ in
       "--detection-command" "${hooks}/bin/vovo-voice-hooks detect"
       "--transcript-command" "${hooks}/bin/vovo-voice-hooks transcript"
       "--error-command" "${hooks}/bin/vovo-voice-hooks error"
+      "--disconnected-command" "${hooks}/bin/vovo-voice-hooks disconnected"
       "--tts-start-command" "${hooks}/bin/vovo-voice-hooks tts-start"
       "--tts-played-command" "${hooks}/bin/vovo-voice-hooks tts-played"
       "--wake-uri" "tcp://127.0.0.1:10400"

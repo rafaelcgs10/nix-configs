@@ -23,6 +23,11 @@
         # headset profile just because something opens a microphone (the
         # microphone is the Yeti).
         "wireplumber.settings"."bluetooth.autoswitch-to-headset-profile" = false;
+        # Do not restore stream volume/mute from earlier runs: a mute left by
+        # the voice hooks (voice-hooks.sh) was restored onto every new
+        # squeezelite stream, so music played silently (2026-11-06). Levels
+        # are fixed elsewhere (sink volumes; the player volume via squeezelite).
+        "wireplumber.settings"."node.stream.restore-props" = false;
       };
 
       # Output preference: MEGABOOM 3 > musiCozy > any other Bluetooth speaker
