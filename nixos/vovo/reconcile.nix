@@ -24,11 +24,11 @@ in
 
   systemd.services.vovo-reconcile = {
     description = "Restore vovo's Home Assistant / Music Assistant settings";
-    after = [ "home-assistant.service" "music-assistant.service" "network-online.target" ];
-    wants = [ "network-online.target" ];
+    after = [ "home-assistant.service" "music-assistant.service" "network-online.target" "vovo-bootstrap.service" ];
+    wants = [ "network-online.target" "vovo-bootstrap.service" ];
     environment = {
-      HA_TOKEN_FILE = config.age.secrets.ha-token.path;
-      MA_TOKEN_FILE = config.age.secrets.ma-token.path;
+      HA_TOKEN_FILE = "/var/lib/vovo/ha-token"; # bootstrap.nix
+      MA_TOKEN_FILE = "/var/lib/vovo/ma-token";
     };
     serviceConfig = {
       Type = "oneshot";
@@ -43,9 +43,10 @@ in
   systemd.services.vovo-greeting = {
     description = "vovo greeting once it is ready";
     wantedBy = [ "multi-user.target" ];
-    after = [ "home-assistant.service" "music-assistant.service" "wyoming-satellite.service" ];
+    after = [ "home-assistant.service" "music-assistant.service" "wyoming-satellite.service" "vovo-bootstrap.service" ];
+    wants = [ "vovo-bootstrap.service" ];
     path = [ pkgs.curl pkgs.jq pkgs.coreutils ];
-    environment.HA_TOKEN_FILE = config.age.secrets.ha-token.path;
+    environment.HA_TOKEN_FILE = "/var/lib/vovo/ha-token"; # bootstrap.nix
     script = ''
       tok=$(cat "$HA_TOKEN_FILE")
       state() {

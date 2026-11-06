@@ -41,4 +41,8 @@ in
   "rafael-password-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ]; # yescrypt hash; console login
   "ha-token-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Home Assistant long-lived token (YouTube fetcher)
   "ma-token-vovo.age".publicKeys = allUsers ++ [ vovo bbstation ]; # Music Assistant token (YouTube fetcher)
+  # Password of the "rafaelcgs" admin in Home Assistant and Music Assistant
+  # (plain text). vovo-bootstrap creates the accounts with it on a fresh
+  # install and logs in with it to mint the tokens its scripts use.
+  "vovo-admin-password.age".publicKeys = allUsers ++ [ vovo bbstation ];
 }

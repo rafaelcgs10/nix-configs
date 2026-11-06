@@ -44,7 +44,7 @@ in
   systemd.services.vovo-names = {
     description = "Artist/song name correction for vovo's voice commands";
     environment = {
-      MA_TOKEN_FILE = config.age.secrets.ma-token.path;
+      MA_TOKEN_FILE = "/var/lib/vovo/ma-token"; # bootstrap.nix
       MOODS_FILE = pkgs.writeText "vovo-moods.json" (builtins.toJSON (import ./moods.nix));
     };
     serviceConfig = {

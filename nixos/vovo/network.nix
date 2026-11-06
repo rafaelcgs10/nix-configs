@@ -20,12 +20,20 @@
 
   # Ethernet (if plugged) and Wi-Fi both via DHCP.
   networking.useDHCP = true;
+  # Not the container interfaces: dhcpcd gave podman's veth a 169.254.x.x
+  # link-local address (which avahi then announced).
+  networking.dhcpcd.denyInterfaces = [ "veth*" "podman*" ];
 
   # Reachable as vovo.local from the other machines.
   services.avahi = {
     enable = true;
     nssmdns4 = true;
     openFirewall = true;
+    # Only the LAN interfaces: avahi also announced vovo.local on the podman
+    # bridge (openWakeWord container), so it sometimes resolved to an
+    # unreachable 10.88.x / 169.254.x address (seen on the Pi itself:
+    # 169.254.40.226). Wi-Fi, and Ethernet if plugged in.
+    allowInterfaces = [ "wlan0" "end0" ];
     publish = {
       enable = true;
       addresses = true;

@@ -22,10 +22,6 @@ let
   } (builtins.readFile ./youtube-fetch.py);
 in
 {
-  age.secrets = {
-    ha-token = { file = ../../secrets/ha-token-vovo.age; owner = "rafael"; };
-    ma-token = { file = ../../secrets/ma-token-vovo.age; owner = "rafael"; };
-  };
 
   systemd.sockets.youtube-fetch = {
     description = "YouTube fallback requests from Home Assistant";
@@ -44,8 +40,9 @@ in
     description = "Fetch a song/album from YouTube for vovo";
     path = [ pkgs.yt-dlp pkgs.ffmpeg-headless ];
     environment = {
-      HA_TOKEN_FILE = config.age.secrets.ha-token.path;
-      MA_TOKEN_FILE = config.age.secrets.ma-token.path;
+      # API tokens minted by vovo-bootstrap (bootstrap.nix)
+      HA_TOKEN_FILE = "/var/lib/vovo/ha-token";
+      MA_TOKEN_FILE = "/var/lib/vovo/ma-token";
       MOODS_FILE = pkgs.writeText "vovo-moods.json" (builtins.toJSON (import ./moods.nix));
     };
     serviceConfig = {

@@ -17,6 +17,8 @@
     ./voice.nix
     ./youtube.nix
     ./names.nix
+    ./bootstrap.nix
+    ./dashboards.nix
     ./reconcile.nix
   ];
 

@@ -170,11 +170,38 @@ def ensure_ma_player():
     log("MA player", MA_PLAYER_NAME, "not registered (yet)")
 
 
+HA_URL_FOR_MA = "http://vovo.local:8123"  # also where "log in with Home Assistant" sends the browser
+
+
+def ensure_ma_hass():
+    """Music Assistant's Home Assistant plugin: lets you log in to Music
+    Assistant with your Home Assistant account. Music Assistant offers that
+    login only while the plugin works, so a missing login provider means:
+    add the plugin, or re-save it with the current token (fresh install)."""
+    login = [p["provider_id"] for p in ma_noauth("auth/providers")]
+    if "homeassistant" in login:
+        return
+    current = next((p for p in ma("config/providers") if p.get("domain") == "hass"), None)
+    values = {"url": HA_URL_FOR_MA, "token": token("HA_TOKEN_FILE"), "verify_ssl": False}
+    ma("config/providers/save", provider_domain="hass", values=values,
+       instance_id=current["instance_id"] if current else None)
+    log("MA Home Assistant plugin", "updated" if current else "added")
+
+
+def ma_noauth(command, **args):
+    req = urllib.request.Request(MA + "/api", method="POST",
+                                 data=json.dumps({"message_id": "1", "command": command, "args": args}).encode(),
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read())
+
+
 def main():
     if not wait_ready():
         sys.exit("HA/MA not reachable")
     for name, step in [("entries", ensure_entries), ("ha", lambda: asyncio.run(ensure_ha_ws())),
-                       ("states", ensure_ha_states), ("ma player", ensure_ma_player)]:
+                       ("states", ensure_ha_states), ("ma player", ensure_ma_player),
+                       ("ma hass", ensure_ma_hass)]:
         try:
             step()
         except Exception as e:  # keep going; the next run retries
