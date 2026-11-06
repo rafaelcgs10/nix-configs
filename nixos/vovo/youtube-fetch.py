@@ -23,6 +23,7 @@ import json
 import os
 import random
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -144,7 +145,6 @@ def download_and_queue(url, items, numbered, single):
             break
         if os.path.exists(path):
             try:
-                ma_sync()
                 play([path], "add")
                 n += 1
             except Exception as e:
@@ -270,8 +270,9 @@ def library_match(kind, query):
 
 
 def ma_sync():
-    """Index new files right away (incremental, fast), so a request for the
-    same song later is found in the library instead of downloaded again."""
+    """Index new files into the library, once at the end of a job (a full
+    rescan: 450+ files plus loudness analysis, so not after every song;
+    Music Assistant plays a new file directly by its path anyway)."""
     try:
         instance = next(p["instance_id"] for p in ma("config/providers") if p["domain"] == "filesystem_local")
         ma("music/sync", media_types=["track"], providers=[instance])
@@ -333,7 +334,6 @@ def queue_entries(entries):
                 got = download("https://www.youtube.com/watch?v=" + vid, "1", False, single=True)
                 if not got:
                     continue
-                ma_sync()
                 play(got, "add")
             n += 1
         except Exception as e:
@@ -427,7 +427,6 @@ def play_mood(mood, option, exclude=frozenset()):
         vid = picks.pop(0).split("\t")[0]
         first = download("https://www.youtube.com/watch?v=" + vid, "1", False, single=True)
         if first:
-            ma_sync()
             play(first, option)
             log("playing", first)
             wait_playing()
@@ -579,6 +578,10 @@ def playlists_cap(keep):
 
 
 def download_into(folder, index, vid, title):
+    prefix = "%02d - " % index
+    have = [f for f in os.listdir(folder) if f.startswith(prefix) and not f.endswith((".part", ".jpg", ".webp"))]
+    if have:  # already downloaded by an interrupted run
+        return os.path.join(folder, have[0])
     out = os.path.join(folder, "%02d - %%(title)s.%%(ext)s" % index)
     got = ytdlp(["-f", "bestaudio[ext=m4a]/bestaudio", "--embed-metadata", "--embed-thumbnail",
                  "--convert-thumbnails", "jpg", "--match-filter", "duration <= %d" % MAX_SONG_SECONDS,
@@ -621,18 +624,20 @@ def play_ytplaylist(query, option):
             if not p:
                 continue
             files[e["id"]] = p
-            ma_sync()
         paths.append(p)
+        with open(index + ".tmp", "w") as f:  # save progress (also marks "recently played")
+            json.dump(data, f)
+        os.replace(index + ".tmp", index)
         if not started:
             play([p], option)
             log("playing", p)
             started = True
             wait_playing()
-        elif not stopped_by_user():
+        elif stopped_by_user():
+            log("music stopped: playlist download stops here (the rest comes next time)")
+            break
+        else:
             play([p], "add")
-        with open(index + ".tmp", "w") as f:  # save progress (also marks "recently played")
-            json.dump(data, f)
-        os.replace(index + ".tmp", index)
     if not started:
         say(phrase("youtube_failed", query=query + " playlist"))
         raise SystemExit("nothing downloaded for playlist %r" % query)
@@ -771,7 +776,6 @@ def continue_music(last, option):
         vid = fresh.pop(0).split("\t")[0]
         first = download("https://www.youtube.com/watch?v=" + vid, "1", False, single=True)
         if first:
-            ma_sync()
             play(first, option)
             wait_playing()
             log("queued", queue_entries(fresh), "more from YouTube")
@@ -809,6 +813,26 @@ def play(paths, option):
         ma("player_queues/play_media", queue_id=queue_id(), media=[ma_track(p) for p in paths], option=option)
 
 
+def stop_other_jobs():
+    """A new request supersedes older ones still downloading: stop them, so
+    downloads never pile up on the Pi. Their unit then stops their yt-dlp."""
+    me = os.getpid()
+    for pid in filter(str.isdigit, os.listdir("/proc")):
+        if int(pid) in (me, os.getppid()):
+            continue
+        try:
+            with open("/proc/%s/cmdline" % pid, "rb") as f:
+                cmd = f.read().split(b"\0")
+        except OSError:
+            continue
+        if any(c.endswith(b"/bin/youtube-fetch") for c in cmd):
+            try:
+                os.kill(int(pid), signal.SIGTERM)
+                log("stopped older request, pid", pid)
+            except OSError:
+                pass
+
+
 def main():
     line = sys.stdin.readline().strip()
     kind, option, b64 = line.split(" ", 2)
@@ -816,6 +840,7 @@ def main():
     if kind not in MAX_ITEMS or option not in ("replace", "add", "next") or not query:
         raise SystemExit("bad request: %r" % line)
     log("request:", kind, repr(query))
+    stop_other_jobs()
     os.makedirs(YT_DIR, exist_ok=True)
 
     if kind == "mood":
@@ -854,7 +879,6 @@ def main():
         if not first:
             say(phrase("youtube_failed", query=query))
             raise SystemExit("nothing downloaded for %r" % query)
-        ma_sync()
         play(first, option)
         log("playing", first)
         log("queued", radio_queue(radio, more), "related")
@@ -874,7 +898,6 @@ def main():
         if not first:
             say(phrase("youtube_failed", query=query))
             raise SystemExit("nothing downloaded for %r" % query)
-        ma_sync()
         play(first, option)
         log("playing", first)
         log("queued", download_and_queue(url, "2-%d" % MAX_ITEMS[kind], numbered, single=True), "more")
