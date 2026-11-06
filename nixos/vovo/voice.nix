@@ -13,6 +13,14 @@
 let
   wakeWordDir = "/var/lib/openwakeword/custom";
 
+  # Music pause/duck around voice commands, run by the satellite on its
+  # events (see voice-hooks.sh).
+  hooks = pkgs.writeShellApplication {
+    name = "vovo-voice-hooks";
+    runtimeInputs = with pkgs; [ curl jq pulseaudio gnugrep gnused coreutils ];
+    text = builtins.readFile ./voice-hooks.sh;
+  };
+
   # Chimes on wake word / end of command (not shipped in the nixpkgs package).
   satelliteSounds = rec {
     version = "1.4.1"; # keep in step with pkgs.wyoming-satellite
@@ -150,6 +158,14 @@ in
       done = "${satelliteSounds.done}";
     };
     extraArgs = [
+      # Music during a voice command (voice-hooks.sh): muted the instant the
+      # wake word is heard, back right after the command (second beep),
+      # ducked while vovo answers; stays paused after "stop"/"pause".
+      "--detection-command" "${hooks}/bin/vovo-voice-hooks detect"
+      "--transcript-command" "${hooks}/bin/vovo-voice-hooks transcript"
+      "--error-command" "${hooks}/bin/vovo-voice-hooks error"
+      "--tts-start-command" "${hooks}/bin/vovo-voice-hooks tts-start"
+      "--tts-played-command" "${hooks}/bin/vovo-voice-hooks tts-played"
       "--wake-uri" "tcp://127.0.0.1:10400"
       # Home Assistant is configured with the satellite explicitly; zeroconf
       # discovery added a second, competing entry for the same satellite.

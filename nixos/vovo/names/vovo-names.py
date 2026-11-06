@@ -47,6 +47,7 @@ ACCEPT_ARTIST = 75
 ACCEPT_TITLE_OF_ARTIST = 70
 ACCEPT_TITLE_WITH_BY = 85
 ACCEPT_MOOD = 85
+ACCEPT_TERM = 80
 LIBRARY_BONUS = 4
 
 
@@ -211,10 +212,26 @@ class Moods:
         return best
 
 
+class Terms:
+    """Playlist search terms (playlist-terms.nix): snap near misses back."""
+
+    def __init__(self, path):
+        self.index = Index()
+        if path:
+            with open(path) as f:
+                for term in json.load(f):
+                    k = norm(term)
+                    self.index.add(k, phon(k), {"name": term, "pop": 0, "library": False})
+
+    def match(self, q):
+        return self.index.best(q, ACCEPT_TERM)
+
+
 class Catalog:
     def __init__(self, path):
         t = time.time()
         self.moods = Moods(os.environ.get("MOODS_FILE"))
+        self.terms = Terms(os.environ.get("PLAYLIST_TERMS_FILE"))
         with open(path) as f:
             cat = json.load(f)
         self.static_artists = cat["artists"]
@@ -264,6 +281,11 @@ class Catalog:
         self.fresh()
         q = norm(name)
         same = {"mode": mode, "name": name, "changed": False, "score": 0, "source": ""}
+        if q and mode == "ytplaylist":  # "play X playlist": X as heard, unless a near miss
+            t = self.terms.match(q)
+            if t and norm(t[1]["name"]) != q:
+                return {"mode": mode, "name": t[1]["name"], "changed": True, "score": round(t[0]), "source": "terms"}
+            return same
         if not q or mode not in ("plain", "artist", "album", "genre"):
             return same  # random, next song, playlist: not a name
         if mode in ("plain", "genre"):

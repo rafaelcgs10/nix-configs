@@ -46,6 +46,7 @@ in
     environment = {
       MA_TOKEN_FILE = "/var/lib/vovo/ma-token"; # bootstrap.nix
       MOODS_FILE = pkgs.writeText "vovo-moods.json" (builtins.toJSON (import ./moods.nix));
+      PLAYLIST_TERMS_FILE = pkgs.writeText "vovo-playlist-terms.json" (builtins.toJSON (import ./playlist-terms.nix));
     };
     serviceConfig = {
       ExecStart = "${python}/bin/python3 -I ${script} serve ${catalog}";

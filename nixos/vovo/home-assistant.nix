@@ -287,42 +287,8 @@ in
           ];
         }
 
-        # Pause the music while vovo listens ("hey/oki vovo"), resume it when
-        # the command is done (after the spoken reply), unless the command was
-        # pause/stop (that clears the flag).
-        {
-          id = "vovo_pause_for_voice";
-          alias = "vovo - pause music while listening";
-          mode = "queued";
-          triggers = [
-            { trigger = "state"; entity_id = "assist_satellite.vovo"; to = "listening"; id = "listening"; }
-            { trigger = "state"; entity_id = "assist_satellite.vovo"; to = "idle"; id = "idle"; }
-          ];
-          actions = [
-            {
-              choose = [
-                {
-                  conditions = "{{ trigger.id == 'listening' and is_state('${player}', 'playing') }}";
-                  sequence = [
-                    { action = "input_boolean.turn_on"; target.entity_id = "input_boolean.vovo_resume_after_voice"; }
-                    { action = "media_player.media_pause"; target.entity_id = player; }
-                  ];
-                }
-                {
-                  conditions = "{{ trigger.id == 'idle' and is_state('input_boolean.vovo_resume_after_voice', 'on') }}";
-                  sequence = [
-                    { action = "input_boolean.turn_off"; target.entity_id = "input_boolean.vovo_resume_after_voice"; }
-                    # Only resume what we paused; "play X" is already playing.
-                    {
-                      "if" = [ { condition = "state"; entity_id = player; state = "paused"; } ];
-                      "then" = [ { action = "media_player.media_play"; target.entity_id = player; } ];
-                    }
-                  ];
-                }
-              ];
-            }
-          ];
-        }
+        # (The music pause during voice commands is done by the satellite
+        # itself, instantly: see voice-hooks.sh in voice.nix.)
 
         # Default music volume: 60% whenever HA starts or the player (re)appears.
         {
