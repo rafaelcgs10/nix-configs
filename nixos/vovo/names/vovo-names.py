@@ -217,13 +217,18 @@ class Terms:
 
     def __init__(self, path):
         self.index = Index()
+        self.heard = {}
         if path:
             with open(path) as f:
-                for term in json.load(f):
-                    k = norm(term)
-                    self.index.add(k, phon(k), {"name": term, "pop": 0, "library": False})
+                data = json.load(f)
+            for term in data.get("terms", []):
+                k = norm(term)
+                self.index.add(k, phon(k), {"name": term, "pop": 0, "library": False})
+            self.heard = {norm(k): v for k, v in data.get("heard", {}).items()}
 
     def match(self, q):
+        if q in self.heard:  # a known mishearing
+            return (100, {"name": self.heard[q], "pop": 0, "library": False})
         return self.index.best(q, ACCEPT_TERM)
 
 
