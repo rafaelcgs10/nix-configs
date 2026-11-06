@@ -7,6 +7,9 @@
 # - nothing playing at all: shuffle the library.
 { player }:
 
+let
+  p = (import ./say.nix).pick; # texts: phrases.nix
+in
 [
   {
     action = "music_assistant.get_queue";
@@ -26,7 +29,7 @@
         conditions = "{{ has_next }}";
         sequence = [
           { action = "media_player.media_next_track"; target.entity_id = player; }
-          { set_conversation_response = "Next song."; }
+          { set_conversation_response = p "next_song"; }
         ];
       }
       {
@@ -36,7 +39,7 @@
             action = "shell_command.youtube_fetch";
             data = { kind = "related"; option = "replace"; query = "{{ now_title }} {{ now_artist }}"; };
           }
-          { set_conversation_response = "That was the last song, so I'm finding something similar on YouTube. One moment."; }
+          { set_conversation_response = p "last_song_finding_similar"; }
         ];
       }
     ];
@@ -51,7 +54,7 @@
         target.entity_id = player;
         data = { media_id = "{{ lib['items'] | map(attribute='uri') | list }}"; media_type = "track"; enqueue = "replace"; };
       }
-      { set_conversation_response = "Here's something from your library: {{ lib['items'][0].name }}."; }
+      { set_conversation_response = "{% set title = lib['items'][0].name %}${p "library_pick"}"; }
     ];
   }
 ]

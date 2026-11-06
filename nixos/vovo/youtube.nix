@@ -44,6 +44,7 @@ in
       HA_TOKEN_FILE = "/var/lib/vovo/ha-token";
       MA_TOKEN_FILE = "/var/lib/vovo/ma-token";
       MOODS_FILE = pkgs.writeText "vovo-moods.json" (builtins.toJSON (import ./moods.nix));
+      PHRASES_FILE = pkgs.writeText "vovo-phrases.json" (builtins.toJSON (import ./phrases.nix));
     };
     serviceConfig = {
       ExecStart = "${fetcher}/bin/youtube-fetch";

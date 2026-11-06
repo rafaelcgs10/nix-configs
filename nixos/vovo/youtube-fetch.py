@@ -64,7 +64,19 @@ def ma(command, **args):
     return post(MA_API, {"message_id": "1", "command": command, "args": args}, token("MA_TOKEN_FILE"))
 
 
+def phrase(key, **values):
+    """A random variant of a phrases.nix message, placeholders filled in."""
+    try:
+        with open(os.environ["PHRASES_FILE"]) as f:
+            variants = json.load(f)[key]
+    except (KeyError, OSError, ValueError):
+        return ""
+    return random.choice(variants).format(**values)
+
+
 def say(message):
+    if not message:
+        return
     try:
         post(HA_API + "/services/assist_satellite/announce",
              {"entity_id": SATELLITE, "message": message}, token("HA_TOKEN_FILE"))
@@ -398,7 +410,7 @@ def play_mood(mood, option, exclude=frozenset()):
     if not pool:
         if lib:
             return
-        say("Sorry, I couldn't get the %s playlist from YouTube." % mood)
+        say(phrase("youtube_mood_playlist_failed", mood=mood))
         raise SystemExit("empty mood pool for %r" % mood)
     picks = random.sample(pool, min(MAX_ITEMS["mood"] - len(lib), len(pool)))
     recent_add(entry_key(*(e.split("\t") + ["", ""])[1:3]) for e in picks)
@@ -418,7 +430,7 @@ def play_mood(mood, option, exclude=frozenset()):
             wait_playing()
             break
     else:
-        say("Sorry, I couldn't get %s songs from YouTube." % mood)
+        say(phrase("youtube_mood_failed", mood=mood))
         raise SystemExit("nothing downloaded for mood %r" % mood)
     log("queued", queue_entries(picks), "more", mood)
 
@@ -584,7 +596,7 @@ def continue_music(last, option):
     if artists and artists.most_common(1)[0][1] < 2 and seeds and seeds[-1].get("artists"):
         top = seeds[-1]["artists"][0]["name"]  # no clear favourite: the last one
     top = top or (title if ask else "that")
-    say("Here is more music like %s." % top)
+    say(phrase("more_like_this", artist=top))
     recent_add([k for _, k in lib] + list(keys))
     if lib:
         ma("player_queues/play_media", queue_id=queue_id(), media=[u for u, _ in lib], option=option)
@@ -655,14 +667,14 @@ def main():
     if match:
         _, uri, label = match
         ma("player_queues/play_media", queue_id=queue_id(), media=[uri], option=option)
-        say("Playing %s, from your library." % label)
+        say(phrase("youtube_library_instead", label=label))
         log("played from library instead:", label)
         return
 
     if kind in ("song", "related"):
         vid = song_id(query)
         if not vid:
-            say("Sorry, I couldn't find %s on YouTube." % query)
+            say(phrase("youtube_not_found", query=query))
             raise SystemExit("no search result for %r" % query)
         radio = radio_url(vid)
         if kind == "song":
@@ -672,7 +684,7 @@ def main():
             first = download(radio, "2", False, single=True)
             more = "3-%d" % (1 + MAX_ITEMS["related"])
         if not first:
-            say("Sorry, I couldn't get %s from YouTube." % query)
+            say(phrase("youtube_failed", query=query))
             raise SystemExit("nothing downloaded for %r" % query)
         ma_sync()
         play(first, option)
@@ -692,7 +704,7 @@ def main():
         numbered = kind in ("album", "playlist")
         first = download(url, "1", numbered, single=True)
         if not first:
-            say("Sorry, I couldn't get %s from YouTube." % query)
+            say(phrase("youtube_failed", query=query))
             raise SystemExit("nothing downloaded for %r" % query)
         ma_sync()
         play(first, option)

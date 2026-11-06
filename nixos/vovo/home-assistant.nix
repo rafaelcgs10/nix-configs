@@ -12,6 +12,8 @@
 let
   # The Squeezelite player as Music Assistant exposes it in Home Assistant.
   player = "media_player.vovo";
+  # Everything vovo says comes from phrases.nix (random variants).
+  p = (import ./say.nix).pick;
 in
 {
   services.home-assistant = {
@@ -162,14 +164,14 @@ in
                   conditions = "{{ trigger.id == 'up' }}";
                   sequence = [
                     { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ [current + 0.1, 1.0] | min | round(2) }}"; }
-                    { set_conversation_response = "Volume {{ ([current + 0.1, 1.0] | min * 100) | round(0) | int }} percent."; }
+                    { set_conversation_response = "{% set level = ([current + 0.1, 1.0] | min * 100) | round(0) | int %}${p "volume"}"; }
                   ];
                 }
                 {
                   conditions = "{{ trigger.id == 'down' }}";
                   sequence = [
                     { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ [current - 0.1, 0.0] | max | round(2) }}"; }
-                    { set_conversation_response = "Volume {{ ([current - 0.1, 0.0] | max * 100) | round(0) | int }} percent."; }
+                    { set_conversation_response = "{% set level = ([current - 0.1, 0.0] | max * 100) | round(0) | int %}${p "volume"}"; }
                   ];
                 }
                 {
@@ -177,7 +179,7 @@ in
                   sequence = [
                     { variables.level = "{{ [[level_num | int, 100] | min, 0] | max }}"; }
                     { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ level / 100 }}"; }
-                    { set_conversation_response = "Volume {{ level }} percent."; }
+                    { set_conversation_response = p "volume"; }
                   ];
                 }
                 {
@@ -185,14 +187,14 @@ in
                   sequence = [
                     { action = "input_boolean.turn_off"; target.entity_id = "input_boolean.vovo_resume_after_voice"; }
                     { action = "media_player.media_pause"; target.entity_id = player; }
-                    { set_conversation_response = "Paused."; }
+                    { set_conversation_response = p "paused"; }
                   ];
                 }
                 {
                   conditions = "{{ trigger.id == 'resume' }}";
                   sequence = [
                     { action = "media_player.media_play"; target.entity_id = player; }
-                    { set_conversation_response = "Okay."; }
+                    { set_conversation_response = p "resumed"; }
                   ];
                 }
                 {
@@ -208,11 +210,11 @@ in
                       "then" = [
                         { action = "input_number.set_value"; target.entity_id = "input_number.vovo_volume_before_mute"; data.value = "{{ [current, 0.05] | max }}"; }
                         { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = 0; }
-                        { set_conversation_response = "Muted."; }
+                        { set_conversation_response = p "muted"; }
                       ];
                       "else" = [
                         { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ states('input_number.vovo_volume_before_mute') | float(0.6) }}"; }
-                        { set_conversation_response = "Unmuted."; }
+                        { set_conversation_response = p "unmuted"; }
                       ];
                     }
                   ];
@@ -221,14 +223,14 @@ in
                   conditions = "{{ trigger.id in ['shuffle_on', 'shuffle_off'] }}";
                   sequence = [
                     { action = "media_player.shuffle_set"; target.entity_id = player; data.shuffle = "{{ trigger.id == 'shuffle_on' }}"; }
-                    { set_conversation_response = "{{ 'Shuffle on.' if trigger.id == 'shuffle_on' else 'Shuffle off.' }}"; }
+                    { set_conversation_response = "{% if trigger.id == 'shuffle_on' %}${p "shuffle_on"}{% else %}${p "shuffle_off"}{% endif %}"; }
                   ];
                 }
                 {
                   conditions = "{{ trigger.id.startswith('repeat_') }}";
                   sequence = [
                     { action = "media_player.repeat_set"; target.entity_id = player; data.repeat = "{{ trigger.id[7:] }}"; }
-                    { set_conversation_response = "{{ {'one': 'Repeating this song.', 'all': 'Repeat on.', 'off': 'Repeat off.'}[trigger.id[7:]] }}"; }
+                    { set_conversation_response = "{% set r = trigger.id[7:] %}{% if r == 'one' %}${p "repeat_one"}{% elif r == 'all' %}${p "repeat_all"}{% else %}${p "repeat_off"}{% endif %}"; }
                   ];
                 }
                 {
@@ -236,7 +238,7 @@ in
                   sequence = [
                     { variables.target = "{{ {'up_lot': [current + 0.2, 1.0] | min, 'down_lot': [current - 0.2, 0.05] | max, 'max': 1.0, 'min': 0.1}[trigger.id] | round(2) }}"; }
                     { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ target }}"; }
-                    { set_conversation_response = "Volume {{ (target * 100) | round(0) | int }} percent."; }
+                    { set_conversation_response = "{% set level = (target * 100) | round(0) | int %}${p "volume"}"; }
                   ];
                 }
                 {
@@ -246,14 +248,14 @@ in
                       variables.pos = "{% set p = state_attr(player, 'media_position') | float(0) %}{% set u = state_attr(player, 'media_position_updated_at') %}{{ p + ((now() - u).total_seconds() if u and is_state(player, 'playing') else 0) }}";
                     }
                     { action = "media_player.media_seek"; target.entity_id = player; data.seek_position = "{{ [pos + (30 if trigger.id == 'seek_fwd' else -15), 0] | max | int }}"; }
-                    { set_conversation_response = "{{ 'Skipping ahead.' if trigger.id == 'seek_fwd' else 'Going back a bit.' }}"; }
+                    { set_conversation_response = "{% if trigger.id == 'seek_fwd' %}${p "seek_forward"}{% else %}${p "seek_back"}{% endif %}"; }
                   ];
                 }
                 {
                   conditions = "{{ trigger.id == 'clear' }}";
                   sequence = [
                     { action = "media_player.clear_playlist"; target.entity_id = player; }
-                    { set_conversation_response = "Queue cleared."; }
+                    { set_conversation_response = p "queue_cleared"; }
                   ];
                 }
                 {
@@ -261,7 +263,7 @@ in
                   sequence = [
                     { action = "music_assistant.get_queue"; target.entity_id = player; response_variable = "q"; }
                     {
-                      set_conversation_response = "{% set n = q[player].next_item if q and player in q else none %}{% if n and n.media_item %}Next up: {{ n.media_item.name }}{% if n.media_item.artists %} by {{ n.media_item.artists | map(attribute='name') | join(' and ') }}{% endif %}.{% elif n %}Next up: {{ n.name }}.{% else %}Nothing is queued after this song.{% endif %}";
+                      set_conversation_response = "{% set n = q[player].next_item if q and player in q else none %}{% if n and n.media_item %}{% set title = n.media_item.name %}{% set artist = n.media_item.artists | map(attribute='name') | join(' and ') %}${p "next_up"}{% elif n %}{% set title = n.name %}{% set artist = '' %}${p "next_up"}{% else %}${p "nothing_next"}{% endif %}";
                     }
                   ];
                 }
@@ -269,18 +271,18 @@ in
                   conditions = "{{ trigger.id == 'restart' }}";
                   sequence = [
                     { action = "media_player.media_seek"; target.entity_id = player; data.seek_position = 0; }
-                    { set_conversation_response = "From the top."; }
+                    { set_conversation_response = p "from_the_top"; }
                   ];
                 }
                 {
                   conditions = "{{ trigger.id == 'previous' }}";
                   sequence = [
                     { action = "media_player.media_previous_track"; target.entity_id = player; }
-                    { set_conversation_response = "Previous song."; }
+                    { set_conversation_response = p "previous_song"; }
                   ];
                 }
               ];
-              default = [ { set_conversation_response = "Say a number, like: volume 40."; } ];
+              default = [ { set_conversation_response = p "volume_hint"; } ];
             }
           ];
         }
@@ -353,13 +355,13 @@ in
               choose = [
                 {
                   conditions = "{{ trigger.id == 'hello' }}";
-                  sequence = [ { set_conversation_response = "Hi! Tell me a song and I'll play it."; } ];
+                  sequence = [ { set_conversation_response = p "hello"; } ];
                 }
                 {
                   conditions = "{{ trigger.id == 'help' }}";
                   sequence = [
                     {
-                      set_conversation_response = "Say play and a song name, or play something for a random song. You can also ask what's playing, or say pause, next, or volume up.";
+                      set_conversation_response = p "help";
                     }
                   ];
                 }
@@ -367,13 +369,13 @@ in
                   conditions = "{{ trigger.id == 'now_playing' }}";
                   sequence = [
                     {
-                      set_conversation_response = "{% if is_state(player, 'playing') %}This is {{ state_attr(player, 'media_title') }} by {{ state_attr(player, 'media_artist') }}.{% else %}Nothing is playing right now.{% endif %}";
+                      set_conversation_response = "{% if is_state(player, 'playing') %}{% set title = state_attr(player, 'media_title') %}{% set artist = state_attr(player, 'media_artist') %}${p "now_playing"}{% else %}${p "nothing_playing"}{% endif %}";
                     }
                   ];
                 }
                 {
                   conditions = "{{ trigger.id == 'thanks' }}";
-                  sequence = [ { set_conversation_response = "You're welcome!"; } ];
+                  sequence = [ { set_conversation_response = p "thanks"; } ];
                 }
               ];
             }

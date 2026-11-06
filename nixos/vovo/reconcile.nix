@@ -39,7 +39,8 @@ in
     };
   };
   # Once per boot, when vovo can actually play music (HA up, player and
-  # satellite available), say hello through the speaker.
+  # satellite available), say hello through the speaker: one of the
+  # "greeting" variants in phrases.nix.
   systemd.services.vovo-greeting = {
     description = "vovo greeting once it is ready";
     wantedBy = [ "multi-user.target" ];
@@ -58,7 +59,8 @@ in
           sleep 5  # let the Bluetooth speaker settle
           curl -sf -X POST -H "Authorization: Bearer $tok" -H "Content-Type: application/json" \
             http://127.0.0.1:8123/api/services/assist_satellite/announce \
-            -d '{"entity_id": "assist_satellite.vovo", "message": "You have awakened vovo! I am ready to ruin your day. Ask me to play some music, and I am sure to find the right song."}' >/dev/null
+            -d "$(jq -n --arg m "$(jq -r '.greeting | .[now | floor % length]' ${pkgs.writeText "vovo-phrases.json" (builtins.toJSON (import ./phrases.nix))})" \
+                  '{entity_id: "assist_satellite.vovo", message: $m}')" >/dev/null
           exit 0
         fi
         sleep 5

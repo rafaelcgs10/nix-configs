@@ -47,6 +47,8 @@ let
   '';
 
   say = text: { set_conversation_response = text; };
+  # Texts come from phrases.nix (random variants).
+  p = (import ./say.nix).pick;
 
   playMedia = mediaId: mediaType: {
     action = "music_assistant.play_media";
@@ -97,7 +99,7 @@ let
       "then" = [ { action = "media_player.shuffle_set"; target.entity_id = player; data.shuffle = true; } ];
     }
     (playMedia "{{ ${res}.artists[0].uri }}" "artist")
-    (say "{{ verb }} music by {{ ${res}.artists[0].name }}.")
+    (say "{% set artist = ${res}.artists[0].name %}${p "playing_artist"}")
   ];
 
   playAlbum = res: [
@@ -106,12 +108,12 @@ let
       "then" = [ { action = "media_player.shuffle_set"; target.entity_id = player; data.shuffle = false; } ];
     }
     (playMedia "{{ ${res}.albums[0].uri }}" "album")
-    (say "{{ verb }} the album {{ ${res}.albums[0].name }} by {{ ${res}.albums[0].artists | map(attribute='name') | join(' and ') }}.")
+    (say "{% set album = ${res}.albums[0].name %}{% set artist = ${res}.albums[0].artists | map(attribute='name') | join(' and ') %}${p "playing_album"}")
   ];
 
   playTrack = res: [
     (playMedia "{{ ${res}.tracks[0].uri }}" "track")
-    (say "{{ verb }} {{ ${res}.tracks[0].name }} by {{ ${res}.tracks[0].artists | map(attribute='name') | join(' and ') }}.")
+    (say "{% set title = ${res}.tracks[0].name %}{% set artist = ${res}.tracks[0].artists | map(attribute='name') | join(' and ') %}${p "playing_track"}")
     fillQueue
   ];
 
@@ -241,11 +243,11 @@ in
         }
         {
           conditions = "{{ mode == 'previous_song' }}";
-          sequence = [ { action = "media_player.media_previous_track"; target.entity_id = player; } (say "Previous song.") ];
+          sequence = [ { action = "media_player.media_previous_track"; target.entity_id = player; } (say (p "previous_song")) ];
         }
         {
           conditions = "{{ mode == 'again' }}";
-          sequence = [ { action = "media_player.media_seek"; target.entity_id = player; data.seek_position = 0; } (say "From the top.") ];
+          sequence = [ { action = "media_player.media_seek"; target.entity_id = player; data.seek_position = 0; } (say (p "from_the_top")) ];
         }
         # --- random ----------------------------------------------------------
         {
@@ -257,7 +259,7 @@ in
               response_variable = "lib";
             }
             (playMedia "{{ lib['items'] | map(attribute='uri') | list }}" "track")
-            (say "{{ 'Shuffling your library. First up: ' ~ lib['items'][0].name ~ '.' if enqueue == 'replace' else 'Added some random songs to the queue.' }}")
+            (say "{% if enqueue == 'replace' %}{% set title = lib['items'][0].name %}${p "shuffling_library"}{% else %}${p "added_random"}{% endif %}")
           ];
         }
         # --- artist ----------------------------------------------------------
@@ -270,7 +272,7 @@ in
               "then" = playArtist "found";
               "else" = [
                 (youtube "artist" "{{ name }}")
-                (say "Let me look for music by {{ name }}. One moment.")
+                (say (p "searching_artist"))
               ];
             }
           ];
@@ -285,7 +287,7 @@ in
               "then" = playAlbum "found";
               "else" = [
                 (youtube "album" "{{ name }}")
-                (say "Let me look for the album {{ title }}. One moment.")
+                (say (p "searching_album"))
               ];
             }
           ];
@@ -295,7 +297,7 @@ in
           conditions = "{{ mode == 'mood' }}";
           sequence = [
             (youtube "mood" "{{ name }}")
-            (say "Playing some {{ name }}. One moment.")
+            (say (p "playing_mood"))
           ];
         }
         # --- playlist: YouTube only (max 20 songs) --------------------------
@@ -303,7 +305,7 @@ in
           conditions = "{{ mode == 'playlist' }}";
           sequence = [
             (youtube "playlist" "{{ name }}")
-            (say "Getting the playlist {{ name }} from YouTube. One moment.")
+            (say (p "getting_playlist"))
           ];
         }
         # --- genre / mood ("rock music", "80s music"): a YouTube playlist ----
@@ -311,7 +313,7 @@ in
           conditions = "{{ mode == 'genre' }}";
           sequence = [
             (youtube "playlist" "{{ name }} music")
-            (say "Getting a {{ name }} playlist from YouTube. One moment.")
+            (say (p "getting_genre"))
           ];
         }
       ];
@@ -335,11 +337,11 @@ in
                     {
                       "if" = cond "{{ unknown and not force_youtube }}";
                       "then" = [
-                        (say "I heard {{ name }}, but I don't know that one. Say: play {{ name }} from YouTube, to search for it anyway.")
+                        (say (p "unknown_name"))
                       ];
                       "else" = [
                         (youtube "song" "{{ name }}")
-                        (say "Let me look for {{ title }}. One moment.")
+                        (say (p "searching_song"))
                       ];
                     }
                   ];
