@@ -8,7 +8,6 @@
 
     nixpkgs-darktable.url = "github:NixOS/nixpkgs/7eea86e9c4edb957d3fa952f7454e6cbdf1721e5";
     nixpkgs-isabelle.url = "github:NixOS/nixpkgs/6a1b486ad3b39263e651cd772b4051cccf218634";
-    nixpkgs-lmstudio.url = "github:NixOS/nixpkgs/ffb547307d66d88c2af80c34818ac064d7958231";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
@@ -120,7 +119,6 @@
           pkgsUnstable = importWithConfig inputs.nixpkgs-unstable;
           pkgsDarktable = importWithConfig inputs.nixpkgs-darktable;
           pkgsIsabelle = importWithConfig inputs.nixpkgs-isabelle;
-          pkgsLmstudio = importWithConfig inputs.nixpkgs-lmstudio;
           plasmaManager = inputs.plasma-manager;
           spektrafilmPackages = inputs.spektrafilm-art-darktable.packages.${system};
         };

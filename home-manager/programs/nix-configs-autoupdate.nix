@@ -51,7 +51,7 @@ let
   # compile). Measured over 30 days those three moved 22/9/5 times and
   # caused nearly all local build time, while the inputs below are either
   # Hydra/cachix-cached or trivial to build.
-  # nixpkgs-darktable/-isabelle/-lmstudio are pinned to fixed revs in
+  # nixpkgs-darktable/-isabelle are pinned to fixed revs in
   # flake.nix, so listing them would be a no-op; they are left out.
   dailyInputs = [
     "nixpkgs"

@@ -719,22 +719,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-lmstudio": {
-      "locked": {
-        "lastModified": 1774905512,
-        "narHash": "sha256-52q/ItW93ivfWFN3vzLjoqy8fE+cTmn0jeaBWwWJ7Gc=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "ffb547307d66d88c2af80c34818ac064d7958231",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "ffb547307d66d88c2af80c34818ac064d7958231",
-        "type": "github"
-      }
-    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1793706278,
@@ -988,7 +972,6 @@
         "nixpkgs": "nixpkgs_6",
         "nixpkgs-darktable": "nixpkgs-darktable",
         "nixpkgs-isabelle": "nixpkgs-isabelle",
-        "nixpkgs-lmstudio": "nixpkgs-lmstudio",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs2511": "nixpkgs2511",
         "plasma-manager": "plasma-manager",

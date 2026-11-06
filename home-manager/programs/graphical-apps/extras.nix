@@ -1,4 +1,4 @@
-{ pkgs, lib, config, inputs, pkgsUnstable, pkgsLmstudio, spektrafilmPackages, ...}:
+{ pkgs, lib, config, inputs, pkgsUnstable, spektrafilmPackages, ...}:
 
 let
   # `darktable-spektrafilm-ai` is a symlinkJoin wrapper (it runtime-links the
@@ -214,7 +214,7 @@ in
     # the store and the wrapper points the SDK at them, so it never touches the
     # network.
     (pkgsUnstable.callPackage ./withoutbg.nix { })
-    pkgsLmstudio.lmstudio
+    pkgsUnstable.lmstudio
 
     # darktable built from upstream master (native C spektrafilm module),
     # patched to add the headless `--sync-xmp` mode driven by the systemd
