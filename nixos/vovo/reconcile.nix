@@ -59,7 +59,7 @@ in
           sleep 5  # let the Bluetooth speaker settle
           curl -sf -X POST -H "Authorization: Bearer $tok" -H "Content-Type: application/json" \
             http://127.0.0.1:8123/api/services/assist_satellite/announce \
-            -d "$(jq -n --arg m "$(jq -r '.greeting | .[now | floor % length]' ${pkgs.writeText "vovo-phrases.json" (builtins.toJSON (import ./phrases.nix))})" \
+            -d "$(jq -n --arg m "$(jq -r --argjson i "$RANDOM" '.greeting | .[$i % length]' ${pkgs.writeText "vovo-phrases.json" (builtins.toJSON (import ./phrases.nix))})" \
                   '{entity_id: "assist_satellite.vovo", message: $m}')" >/dev/null
           exit 0
         fi
