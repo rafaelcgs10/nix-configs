@@ -138,11 +138,13 @@ in
       trigger = "conversation";
       id = "replace";
       command = [
-        "play {song}"
+        # "place", "plays", "played", "playing": how the speech-to-text
+        # often hears "play" ("place some anime playlist", 2026-11-06).
+        "(play|place|plays|played|playing) {song}"
         "put on {song}"
         "I want to (hear|listen to) {song}"
         "let me (hear|listen to) {song}"
-        "can you play {song}"
+        "can you (play|place) {song}"
       ];
     }
     {
@@ -158,8 +160,8 @@ in
       trigger = "conversation";
       id = "next";
       command = [
-        "play {song} next"
-        "play {song} after this [song]"
+        "(play|place|plays) {song} next"
+        "(play|place|plays) {song} after this [song]"
       ];
     }
   ];
