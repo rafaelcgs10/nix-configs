@@ -26,6 +26,15 @@ in
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.supportedFilesystems = [ "nfs" ];
+
+  # Build aarch64 closures for the `vovo` Raspberry Pi (remote deploys)
+  # through qemu-user, as on bbstation. Nearly everything comes from
+  # cache.nixos.org; only the few uncached derivations build under emulation.
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+  programs.ssh.knownHosts.vovo = {
+    hostNames = [ "vovo" "vovo.local" "192.168.0.137" ];
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEQfaYe5GT5lzY5bfmLsZICJiZzrmNiGxZTDAAi0REl9";
+  };
   # boot.blacklistedKernelModules = [ "rtw88_8821ce" ];
 
   # services.xserver = {
