@@ -321,5 +321,15 @@
         import ./nix-shells/c++/darktable/shell.nix {
           pkgs = mkPkgs "x86_64-linux";
         };
+
+      # Refresh vovo's vendored Wikidata artist/works snapshot (name correction
+      # for voice commands, nixos/vovo/names.nix). Run from the repo root:
+      #   nix run .#vovo-names-update && git diff --stat nixos/vovo/names
+      apps.x86_64-linux.vovo-names-update = {
+        type = "app";
+        program = toString ((mkPkgs "x86_64-linux").writers.writePython3Bin "vovo-names-update"
+          { flakeIgnore = [ "E501" ]; }
+          (builtins.readFile ./nixos/vovo/names/wikidata-update.py)) + "/bin/vovo-names-update";
+      };
     };
 }

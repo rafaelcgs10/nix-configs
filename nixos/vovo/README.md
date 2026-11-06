@@ -20,6 +20,8 @@ never on the Pi.
 | `audio.nix` | PipeWire (rafael's user session), Bluetooth, Blue Yeti rules |
 | `syncthing.nix` | `~/Music`, receive-only from bbstation's `music` folder |
 | `syncthing-cert.pem` | vovo's Syncthing certificate (public half) |
+| `voice.nix` | wake word, speech-to-text (Kroko streaming), Piper, satellite |
+| `names.nix`, `names/` | artist/song name correction for "play ..." (Billboard + Wikidata catalog) |
 | `prepare-sd.sh` | flash the image and install the host key |
 | `../../home-manager/profiles/vovo.nix` | slim Home Manager profile |
 
@@ -67,7 +69,8 @@ nixos-rebuild switch --flake ~/nix-configs#vovo \
   --target-host rafael@vovo.local --sudo --no-reexec --use-substitutes
 ```
 
-bbstation evaluates and builds. `--use-substitutes` lets the Pi download
+bbstation (or the thinkpad, which also has aarch64 emulation) evaluates and
+builds. `--use-substitutes` lets the Pi download
 everything that is in cache.nixos.org itself (compressed), so only the few
 locally built paths are sent from bbstation. `--no-reexec` keeps
 nixos-rebuild from re-executing itself as the Pi's aarch64 build (which would
@@ -94,3 +97,18 @@ connected, WirePlumber routes audio to it; otherwise the 3.5 mm jack is used.
 default source and not show its headphone output. Record a test with
 `pw-record --rate 16000 --channels 1 /tmp/t.wav` and play it back with
 `pw-play /tmp/t.wav`. Set the Yeti's hardware gain knob to about half way.
+
+## Name correction catalog
+
+`names.nix` builds the list of known artists and songs that misheard names
+are matched against. Billboard is a pinned `fetchurl` (bump the commit and
+hash in `names.nix`); the Wikidata part is a vendored snapshot:
+
+```sh
+cd ~/nix-configs
+nix run .#vovo-names-update        # rewrites nixos/vovo/names/wikidata-*.csv
+git diff --stat nixos/vovo/names
+```
+
+Check what a name resolves to on the Pi (`journalctl -u vovo-names` logs every
+request and its result).

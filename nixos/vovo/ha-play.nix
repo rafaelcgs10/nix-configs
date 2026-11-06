@@ -2,6 +2,7 @@
 #
 # 1. Work out what was asked (parser below): random / artist / album /
 #    playlist / genre, or plain "play X" where X could be anything.
+#    Then correct misheard names against a big artist/song list (names.nix).
 # 2. Look in the library; plain "play X" tries, in order: an artist named
 #    exactly X, a song whose title contains X, an album named exactly X.
 # 3. Not in the library: fetch from YouTube (youtube.nix).
@@ -167,7 +168,9 @@ in
         ma_entry = "{{ config_entry_id('${player}') }}";
         # "play X next" also matches "play {song}" (which trigger wins is not
         # reliable), so a trailing "next" / "after this" is handled here too.
-        song = "{{ trigger.slots.song | regex_replace('(?i) (next|after this( song)?)$', '') | trim }}";
+        song = "{{ trigger.slots.song | regex_replace('(?i) (next|after this( song)?)$', '') | regex_replace('(?i) (from|on) youtube( music)?$', '') | trim }}";
+        # "play X from YouTube": skip the "I don't know that one" check below.
+        force_youtube = "{{ (trigger.slots.song | lower | trim) is match('.* (from|on) youtube( music)?$') }}";
         enqueue = "{{ 'next' if (trigger.slots.song | lower | trim) is match('.* (next|after this( song)?)$') else trigger.id }}";
       };
     }
@@ -181,6 +184,32 @@ in
       variables = {
         mode = "{{ req.mode }}";
         name = "{{ req.name }}";
+      };
+    }
+    # Snap misheard artist/song names onto known ones (names.nix): "Billy
+    # Gene" -> "Billie Jean by Michael Jackson", "songs by chaikovsky" ->
+    # Pyotr Ilyich Tchaikovsky. It may also turn a plain request into an
+    # artist one ("play radio ahead" -> artist Radiohead). On any failure the
+    # request goes on unchanged.
+    {
+      action = "rest_command.vovo_names";
+      data = { mode = "{{ mode }}"; name = "{{ name }}"; };
+      response_variable = "fixed";
+      continue_on_error = true;
+    }
+    {
+      variables = {
+        ok = "{{ fixed is defined and fixed.status | default(0) == 200 and fixed.content is mapping and fixed.content.changed | default(false) }}";
+        # vovo-names answered but knows nothing like it: probably misheard
+        # ("chicosy" for Tchaikovsky). Then ask instead of playing a random
+        # YouTube hit; "play X from YouTube" still searches.
+        unknown = "{{ fixed is defined and fixed.status | default(0) == 200 and fixed.content is mapping and not fixed.content.changed | default(true) and fixed.content.mode == 'plain' and ' by ' not in fixed.content.name | lower }}";
+      };
+    }
+    {
+      variables = {
+        mode = "{{ fixed.content.mode if ok else mode }}";
+        name = "{{ fixed.content.name if ok else name }}";
       };
     }
     {
@@ -247,6 +276,14 @@ in
             }
           ];
         }
+        # --- mood ("some lofi", recognised by vovo-names): moods.nix --------
+        {
+          conditions = "{{ mode == 'mood' }}";
+          sequence = [
+            (youtube "mood" "{{ name }}")
+            (say "Playing some {{ name }}. One moment.")
+          ];
+        }
         # --- playlist: YouTube only (max 20 songs) --------------------------
         {
           conditions = "{{ mode == 'playlist' }}";
@@ -281,8 +318,16 @@ in
                   "if" = cond (albumIs "as_album" "name");
                   "then" = playAlbum "as_album";
                   "else" = [
-                    (youtube "song" "{{ name }}")
-                    (say "Let me look for {{ title }}. One moment.")
+                    {
+                      "if" = cond "{{ unknown and not force_youtube }}";
+                      "then" = [
+                        (say "I heard {{ name }}, but I don't know that one. Say: play {{ name }} from YouTube, to search for it anyway.")
+                      ];
+                      "else" = [
+                        (youtube "song" "{{ name }}")
+                        (say "Let me look for {{ title }}. One moment.")
+                      ];
+                    }
                   ];
                 }
               ];

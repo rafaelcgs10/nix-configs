@@ -46,6 +46,7 @@ in
     environment = {
       HA_TOKEN_FILE = config.age.secrets.ha-token.path;
       MA_TOKEN_FILE = config.age.secrets.ma-token.path;
+      MOODS_FILE = pkgs.writeText "vovo-moods.json" (builtins.toJSON (import ./moods.nix));
     };
     serviceConfig = {
       ExecStart = "${fetcher}/bin/youtube-fetch";

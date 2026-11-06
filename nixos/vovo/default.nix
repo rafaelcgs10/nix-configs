@@ -16,6 +16,7 @@
     ./music.nix
     ./voice.nix
     ./youtube.nix
+    ./names.nix
     ./reconcile.nix
   ];
 

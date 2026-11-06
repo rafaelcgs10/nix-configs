@@ -1,12 +1,12 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 
 # Local voice pipeline, all on the Pi (it must work with bbstation off):
 #
 #   Blue Yeti -> wyoming-satellite -> openWakeWord  ("ok nabu" / "hey vovo")
 #                       |
 #                       +-> Home Assistant Assist pipeline
-#                             STT  faster-whisper tiny.en   (tcp 10300)
-#                             TTS  Piper lessac-medium      (tcp 10200)
+#                             STT  Kroko streaming (sherpa) (tcp 10300)
+#                             TTS  Piper amy-medium         (tcp 10200)
 #                       <- spoken reply played through PipeWire
 #
 # All Wyoming services listen on localhost only; Home Assistant runs here too.
@@ -38,23 +38,37 @@ let
 in
 {
   # --- speech to text -----------------------------------------------------------
+  # Streaming zipformer (Kroko, via sherpa-onnx): it decodes while you speak,
+  # so the text is ready ~0.5 s after you stop. Measured on this Pi
+  # (2026-11-06, 12 spoken music commands, audio at real-time pace):
+  #
+  #   Whisper tiny.en int8 (3.1.0)       3.1 s after speech, 8.5 s CPU, 222 MB, 7/12 exact
+  #   Kroko streaming, 4 threads         0.50 s,             4.3 s CPU, 262 MB, 10/12
+  #   Kroko streaming, 2 threads         0.41 s,             2.5 s CPU, 258 MB, 10/12
+  #   Kroko streaming, 1 thread (used)   0.57 s,             1.7 s CPU, 247 MB, 10/12
+  #   zipformer-en-20M streaming         0.19 s,             1.5 s CPU, 184 MB, cut words
+  #   Parakeet TDT (2026-11-05)          10-20 s, ~1.4 GB RAM+swap
+  #
+  # Whisper always pads to a 30 s window, so even "pause" cost ~8 s of CPU.
+  # Kroko got "Daft Punk" and "Radiohead" where Whisper heard "Daphne Punk"
+  # and "Flay Bohemian Rhapsody". It writes numbers as words ("forty
+  # percent"); the volume automation converts them.
+  # Streaming needs wyoming-faster-whisper >= 3.2 (stable 26.05 has 3.1.0).
+  # The module adds the sherpa extras itself for sttLibrary = "sherpa".
+  services.wyoming.faster-whisper.package =
+    inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.wyoming-faster-whisper;
   services.wyoming.faster-whisper.servers.vovo = {
     enable = true;
     uri = "tcp://127.0.0.1:10300";
     language = "en";
-    # `auto` would pick Parakeet (sherpa) for English. Benchmarked on this Pi
-    # (2026-11-05): far more accurate, but 10-20 s per command and ~1.4 GB
-    # RAM+swap, so it does not fit; Whisper tiny.en int8 takes ~1x realtime.
-    sttLibrary = "faster-whisper";
-    model = "tiny.en";
+    sttLibrary = "sherpa";
+    model = "sherpa-onnx-streaming-zipformer-en-kroko-2025-08-06";
     device = "cpu";
-    # Quantize on load: without this tiny.en ran at float32 and took ~430 MB
-    # (mostly pushed to swap), which starved everything else.
-    extraArgs = [ "--compute-type" "int8" ];
+    extraArgs = [ "--sherpa-streaming" "--cpu-threads" "1" ];
   };
-  # Speech-to-text is the slow step of every voice command (~1x realtime on a
-  # Pi 4). Give it first call on the CPU and keep it in RAM: with a YouTube
-  # download running, a 6 s clip went from 13 s to under 4 s (measured).
+  # Speech-to-text is the step the user waits for. Give it first call on the
+  # CPU and keep it in RAM: with a YouTube download running, a 6 s clip went
+  # from 13 s to under 4 s with Whisper (measured).
   systemd.services.wyoming-faster-whisper-vovo.serviceConfig = {
     CPUWeight = 1000;
     MemoryLow = "300M";

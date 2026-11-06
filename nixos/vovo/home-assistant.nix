@@ -19,11 +19,8 @@ in
     openFirewall = true;
 
     extraComponents = [
-      # what the onboarding wizard sets up by default (avoids errors there)
-      "met"
-      "radio_browser"
-      "shopping_list"
-      "google_translate"
+      # The onboarding wizard's defaults (met, radio_browser, shopping_list,
+      # google_translate) were removed 2026-11-06: nothing here uses them.
       "isal"
       # voice + music
       "assist_pipeline"
@@ -126,6 +123,22 @@ in
               variables = {
                 inherit player;
                 current = "{{ state_attr('${player}', 'volume_level') | float(0.3) }}";
+                # "set the volume to 40" or, as the speech-to-text writes it,
+                # "... to forty percent": the level as a number, or "" if none.
+                level_num = ''
+                  {%- set w = (trigger.slots.level | default("")) | lower | replace('-', ' ') -%}
+                  {%- set d = w | regex_findall('[0-9]+') -%}
+                  {%- if d -%}{{ d | first }}{%- else -%}
+                  {%- set units = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90} -%}
+                  {%- set ns = namespace(n=0, found=false) -%}
+                  {%- for t in w.split() -%}
+                    {%- if t in units -%}{%- set ns.n = ns.n + units[t] -%}{%- set ns.found = true -%}
+                    {%- elif t == 'hundred' -%}{%- set ns.n = [ns.n, 1] | max * 100 -%}{%- set ns.found = true -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  {{ ns.n if ns.found else "" }}
+                  {%- endif -%}
+                '';
               };
             }
             {
@@ -145,9 +158,9 @@ in
                   ];
                 }
                 {
-                  conditions = "{{ trigger.id == 'set' and (trigger.slots.level | regex_findall('[0-9]+') | count) > 0 }}";
+                  conditions = "{{ trigger.id == 'set' and level_num | string | length > 0 }}";
                   sequence = [
-                    { variables.level = "{{ [[(trigger.slots.level | regex_findall('[0-9]+') | first | int), 100] | min, 0] | max }}"; }
+                    { variables.level = "{{ [[level_num | int, 100] | min, 0] | max }}"; }
                     { action = "media_player.volume_set"; target.entity_id = player; data.volume_level = "{{ level / 100 }}"; }
                     { set_conversation_response = "Volume {{ level }} percent."; }
                   ];
