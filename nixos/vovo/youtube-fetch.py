@@ -490,24 +490,22 @@ def slug(text):
     return norm(text).replace(" ", "-") or "playlist"
 
 
-def best_summed_playlist(query):
-    """The YouTube playlist for the exact search term whose first 30 videos
-    have the most views in total (single songs only, no hour-long mixes)."""
-    q = urllib.parse.quote_plus(query)
-    hits = ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % YTPLAYLIST_CANDIDATES, "--print", "url",
-                  "https://www.youtube.com/results?search_query=%s&sp=EgIQAw%%253D%%253D" % q])
-    hits += ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % YTPLAYLIST_CANDIDATES,
-                   "--print", "url", search_url("playlist", query)])
+YTPLAYLIST_FALLBACK_VIEWS = 1_000_000  # below this, also try plain YouTube
+CHOOSER_VERSION = 2  # bump when the choice changes: cached playlists are re-chosen
+
+
+def summed_candidates(urls):
+    """(views, title, url, entries) of each single-song playlist among urls."""
     ids = {}
-    for url in hits:
+    for url in urls:
         m = re.search(r"(?:list=|browse/VL)([A-Za-z0-9_-]+)", url)
         if m:
             ids.setdefault(m.group(1), "https://www.youtube.com/playlist?list=" + m.group(1))
-    best = None
     # Read the candidates 4 at a time (each is a few seconds of yt-dlp on the Pi).
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         infos = list(pool.map(lambda u: (u, ytdlp(["-J", "--flat-playlist", "--playlist-items",
                                                    "1-%d" % MAX_ITEMS["ytplaylist"], u])), ids.values()))
+    found = []
     for url, info in infos:
         try:
             d = json.loads(info[0]) if info else None
@@ -522,9 +520,26 @@ def best_summed_playlist(query):
         ok = 0 < median <= 480
         log("playlist candidate:", d.get("title"), "%d songs" % len(entries), "views %d" % views,
             "median %ds" % median, "ok" if ok else "skip")
-        if ok and (best is None or views > best[0]):
-            best = (views, d.get("title") or query, url, entries)
-    return best
+        if ok:
+            found.append((views, d.get("title") or "", url, entries))
+    return found
+
+
+def best_summed_playlist(query):
+    """The playlist for the exact search term whose first 30 videos have the
+    most views in total (single songs only, no hour-long mixes). YouTube
+    Music's playlists first: plain YouTube search also returns video
+    playlists ("Best Anime Fights" for anime); it is only the fallback,
+    when YouTube Music has nothing suitable or nothing popular."""
+    ytm = ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % (2 * YTPLAYLIST_CANDIDATES),
+                 "--print", "url", search_url("playlist", query)])
+    found = summed_candidates(ytm)
+    if not found or max(c[0] for c in found) < YTPLAYLIST_FALLBACK_VIEWS:
+        q = urllib.parse.quote_plus(query)
+        url = "https://www.youtube.com/results?search_query=%s&sp=EgIQAw%%253D%%253D" % q
+        found += summed_candidates(ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % YTPLAYLIST_CANDIDATES,
+                                          "--print", "url", url]))
+    return max(found, key=lambda c: c[0]) if found else None
 
 
 def write_m3u(name, folder, files):
@@ -580,14 +595,20 @@ def play_ytplaylist(query, option):
     if os.path.exists(index):
         with open(index) as f:
             data = json.load(f)
-        log("cached playlist:", data.get("title"), len(data.get("entries", [])), "songs")
-    else:
+        if data.get("chooser") != CHOOSER_VERSION:  # chosen the old way: choose again
+            log("re-choosing playlist cached by an older chooser:", data.get("title"))
+            for f in os.listdir(folder):
+                os.remove(os.path.join(folder, f))
+            data = None
+        else:
+            log("cached playlist:", data.get("title"), len(data.get("entries", [])), "songs")
+    if data is None:
         best = best_summed_playlist(query)
         if not best:
             say(phrase("youtube_not_found", query=query + " playlist"))
             raise SystemExit("no playlist for %r" % query)
         views, title, url, entries = best
-        data = {"query": query, "title": title, "url": url, "views": views,
+        data = {"query": query, "title": title, "url": url, "views": views, "chooser": CHOOSER_VERSION,
                 "entries": [{"id": e["id"], "title": e.get("title") or ""} for e in entries], "files": {}}
         log("chose playlist:", title, "with %d views over %d songs" % (views, len(entries)))
     files = data.setdefault("files", {})
