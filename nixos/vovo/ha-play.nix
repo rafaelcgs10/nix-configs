@@ -212,6 +212,20 @@ in
         name = "{{ fixed.content.name if ok else name }}";
       };
     }
+    # Remember the request, so the music can continue in the same style
+    # when the queue runs out (continue.nix).
+    {
+      action = "input_text.set_value";
+      target.entity_id = "input_text.vovo_last_request";
+      data.value = "{{ (mode ~ '|' ~ name)[:255] }}";
+      continue_on_error = true;
+    }
+    {
+      action = "input_datetime.set_datetime";
+      target.entity_id = "input_datetime.vovo_last_request_at";
+      data.timestamp = "{{ now().timestamp() }}";
+      continue_on_error = true;
+    }
     {
       variables = {
         title = "{{ (name.split(' by ') | first) | trim }}";

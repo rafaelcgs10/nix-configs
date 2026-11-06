@@ -2,15 +2,18 @@
 
 Runs as rafael, one instance per request (socket-activated, see youtube.nix).
 Reads one line from stdin: "<kind> <option> <base64 query>", kind being one
-of song | artist | album | playlist | related | mood, option one of replace |
-add | next. "related" plays songs similar to the query (YouTube Music radio);
-"mood" plays random songs from the mood's playlists in MOODS_FILE (moods.nix).
+of song | artist | album | playlist | related | mood | continue, option one of
+replace | add | next. "related" plays songs similar to the query (YouTube
+Music radio); "mood" plays random songs from the mood's playlists in
+MOODS_FILE (moods.nix); "continue" (query: the last request, "mode|name")
+keeps the music going in the same style when the queue has run out.
 Downloads into ~/Music/Youtube, makes Music
 Assistant pick the files up and plays them on the vovo player: the first song
 as soon as it is there, the rest queued behind it. On failure, vovo says so.
 """
 
 import base64
+import collections
 import difflib
 import hashlib
 import json
@@ -32,7 +35,7 @@ SATELLITE = "assist_satellite.vovo"
 PLAYER_ENTITY = "media_player.vovo"
 RESUME_FLAG = "input_boolean.vovo_resume_after_voice"
 MAX_SONG_SECONDS = 15 * 60   # singles only, no hour-long mixes
-MAX_ITEMS = {"song": 1, "artist": 10, "album": 20, "playlist": 20, "related": 20, "mood": 20}
+MAX_ITEMS = {"song": 1, "artist": 10, "album": 20, "playlist": 20, "related": 20, "mood": 20, "continue": 20}
 SEARCH_FILTER = {"song": "songs", "artist": "songs", "album": "albums", "playlist": "community playlists", "related": "songs"}
 # After a single song, queue this many songs from its YouTube Music radio, so
 # the music goes on and "next" has somewhere to go.
@@ -347,7 +350,7 @@ def mood_library(artists):
     return random.sample(hits, min(MOOD_LIBRARY_SONGS, len(hits)))
 
 
-def play_mood(mood, option):
+def play_mood(mood, option, exclude=frozenset()):
     with open(os.environ["MOODS_FILE"]) as f:
         spec = json.load(f).get(mood)
     if not spec:
@@ -359,13 +362,17 @@ def play_mood(mood, option):
         log("mood from library:", len(lib), "songs")
         option = "add"
     pool = [e for url in spec["playlists"] for e in mood_entries(url)]
+    fresh = [e for e in pool if entry_key(*(e.split("\t") + ["", ""])[1:3]) not in exclude]
+    pool = fresh if len(fresh) >= MAX_ITEMS["mood"] else pool  # small lists: allow repeats
     if not pool:
         if lib:
             return
         say("Sorry, I couldn't get the %s playlist from YouTube." % mood)
         raise SystemExit("empty mood pool for %r" % mood)
     picks = random.sample(pool, min(MAX_ITEMS["mood"] - len(lib), len(pool)))
+    recent_add(entry_key(*(e.split("\t") + ["", ""])[1:3]) for e in picks)
     if lib:
+        wait_playing()
         log("queued", queue_entries(picks), "more", mood)
         return
     # The first one that downloads starts playing (with the requested queue
@@ -377,6 +384,7 @@ def play_mood(mood, option):
             ma_sync()
             play(first, option)
             log("playing", first)
+            wait_playing()
             break
     else:
         say("Sorry, I couldn't get %s songs from YouTube." % mood)
@@ -408,6 +416,143 @@ def pick_playlist(query):
         if ok_title and 0 < median <= 480:
             return url
     return hits[0] if hits else None
+
+
+# --- recently played: never repeat within the last few hundred songs ---------
+RECENT_FILE = "/home/rafael/.cache/vovo-moods/recent.json"
+RECENT_MAX = 400
+
+
+def recent_load():
+    try:
+        with open(RECENT_FILE) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return []
+
+
+def recent_add(keys):
+    keep = (recent_load() + list(keys))[-RECENT_MAX:]
+    os.makedirs(os.path.dirname(RECENT_FILE), exist_ok=True)
+    with open(RECENT_FILE + ".tmp", "w") as f:
+        json.dump(keep, f)
+    os.replace(RECENT_FILE + ".tmp", RECENT_FILE)
+
+
+def entry_key(title, artist=""):
+    return clean_title(title, artist)
+
+
+def wait_playing(timeout=20):
+    """Wait until the player is playing (queueing more checks for a stop)."""
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            if ha_state(PLAYER_ENTITY) == "playing":
+                return True
+        except Exception:
+            pass
+        time.sleep(1)
+    return False
+
+
+# --- continue: the queue ran out, more in the same style ----------------------
+CONTINUE_SEEDS = 5         # last songs that set the style
+CONTINUE_RADIO_SEEDS = 2   # of those, how many get a YouTube radio lookup
+CONTINUE_LIBRARY = 8       # library songs (instant start)
+GENERIC_GENRES = {"music", "other", "unknown", "misc", "various", "soundtrack"}
+
+
+def queue_history():
+    """Media items (tracks) of the queue that just ended, oldest first."""
+    items = ma("player_queues/items", queue_id=queue_id(), limit=500, offset=0) or []
+    return [i["media_item"] for i in items if i.get("media_item")]
+
+
+def continue_music(last, option):
+    mode, _, name = last.partition("|")
+    history = queue_history()
+    seen = {entry_key(t["name"], ", ".join(a["name"] for a in t.get("artists", []))) for t in history}
+    seen |= set(recent_load())
+    if mode == "mood" and name:
+        log("continuing mood", name)
+        play_mood(name, option, exclude=seen)
+        return
+
+    seeds = history[-CONTINUE_SEEDS:]
+    # What was asked for weighs most ("play X by Y" was followed by random
+    # library songs); the newest played song adds the current style.
+    title, _, by = name.partition(" by ")
+    ask = {"artist": name, "album": name, "genre": name + " music"}.get(mode, ("%s %s" % (title, by)).strip())
+    if not seeds and not ask:
+        log("nothing played or asked before: nothing to continue")
+        return
+    artists = collections.Counter(a["name"] for t in seeds for a in t.get("artists", []))
+    if mode == "artist" or by:
+        artists[by or name] += len(seeds) + 1  # the requested artist first
+    genre_count = collections.Counter(g.lower() for t in seeds for g in set((t.get("metadata") or {}).get("genres") or []))
+    genres = {g for g, n in genre_count.items() if n >= 2 and g not in GENERIC_GENRES}
+    log("continuing from", repr(ask), [t["name"] for t in seeds], "artists", dict(artists), "genres", genres)
+
+    # YouTube Music's related songs for the request and the newest song
+    queries = [ask] if ask else []
+    if seeds:
+        t = seeds[-1]
+        queries.append("%s %s" % (t["name"], ", ".join(a["name"] for a in t.get("artists", []))))
+    related = []
+    for q in queries[:CONTINUE_RADIO_SEEDS]:
+        vid = song_id(q)
+        if vid:
+            related += ytdlp(["--flat-playlist", "--playlist-items", "2-26", "--print",
+                              "%(id)s\t%(title)s\t%(artist,channel,uploader|)s", radio_url(vid)])
+    wanted_artists = {norm(a) for a in artists}
+    wanted_artists |= {norm((line.split("\t") + ["", "", ""])[2]) for line in related}
+    wanted_artists.discard("")
+
+    # Library songs by the same or related artists, or with the same genre
+    lib = []
+    for t in ma("music/tracks/library_items", limit=5000):
+        names = {norm(a["name"]) for a in t.get("artists", [])}
+        tgenres = {g.lower() for g in ((t.get("metadata") or {}).get("genres") or [])}
+        key = entry_key(t["name"], ", ".join(a["name"] for a in t.get("artists", [])))
+        if key not in seen and (names & wanted_artists or (genres and tgenres & genres)):
+            lib.append((t["uri"], key))
+    lib = random.sample(lib, min(CONTINUE_LIBRARY, len(lib)))
+
+    # New songs from YouTube: the related ones not played recently
+    fresh, keys = [], set()
+    for line in related:
+        vid, title, artist = (line.split("\t") + ["", "", ""])[:3]
+        key = entry_key(title, artist)
+        if key and key not in seen and key not in keys and vid not in seen:
+            fresh.append(line)
+            keys.add(key)
+    random.shuffle(fresh)
+    fresh = fresh[:MAX_ITEMS["continue"] - len(lib)]
+    log("continue: %d library songs, %d from YouTube" % (len(lib), len(fresh)))
+    if not lib and not fresh:
+        return
+
+    top = artists.most_common(1)[0][0] if artists else ""
+    if artists and artists.most_common(1)[0][1] < 2 and seeds and seeds[-1].get("artists"):
+        top = seeds[-1]["artists"][0]["name"]  # no clear favourite: the last one
+    top = top or (title if ask else "that")
+    say("Here is more music like %s." % top)
+    recent_add([k for _, k in lib] + list(keys))
+    if lib:
+        ma("player_queues/play_media", queue_id=queue_id(), media=[u for u, _ in lib], option=option)
+        wait_playing()
+        log("queued", queue_entries(fresh), "more from YouTube")
+        return
+    while fresh:
+        vid = fresh.pop(0).split("\t")[0]
+        first = download("https://www.youtube.com/watch?v=" + vid, "1", False, single=True)
+        if first:
+            ma_sync()
+            play(first, option)
+            wait_playing()
+            log("queued", queue_entries(fresh), "more from YouTube")
+            return
 
 
 def ma_uri(path):
@@ -451,7 +596,11 @@ def main():
     os.makedirs(YT_DIR, exist_ok=True)
 
     if kind == "mood":
-        play_mood(query, option)
+        play_mood(query, option, exclude=set(recent_load()))
+        ma_sync()
+        return
+    if kind == "continue":
+        continue_music(query, option)
         ma_sync()
         return
 

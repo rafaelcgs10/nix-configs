@@ -58,6 +58,19 @@ in
         initial = false;
       };
 
+      # The last "play ..." request ("mood|lofi", "artist|Daft Punk") and when
+      # it was made: used to continue the music when the queue runs out
+      # (continue.nix).
+      input_text.vovo_last_request = {
+        name = "vovo last play request";
+        max = 255;
+      };
+      input_datetime.vovo_last_request_at = {
+        name = "vovo last play request at";
+        has_date = true;
+        has_time = true;
+      };
+
       input_number.vovo_volume_before_mute = {
         name = "vovo volume before mute";
         min = 0;
@@ -79,6 +92,8 @@ in
       "automation nixos" = [
         # "play ...": see ha-play.nix
         (import ./ha-play.nix { inherit player; })
+        # queue ran out: more of the same (see continue.nix)
+        (import ./continue.nix { inherit player; })
 
         # Playback and volume, aimed at the vovo player directly (the built-in
         # media intents need the satellite and player to share an area).
