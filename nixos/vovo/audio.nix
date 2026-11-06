@@ -151,20 +151,37 @@
         '';
       in
       ''
-        # MEGABOOM 3, musiCozy
-        for mac in 10:94:97:03:B3:BE 41:42:FE:D5:9B:EF; do
+        # Priority order: MEGABOOM 3, musiCozy.
+        speakers="10:94:97:03:B3:BE 41:42:FE:D5:9B:EF"
+        connected() { bluetoothctl info "$1" | grep -q "Connected: yes"; }
+
+        # Only page when no speaker is connected. Paging an absent speaker
+        # (bluetoothctl connect) keeps the radio busy for the 5 s page
+        # timeout and starves the A2DP stream of the speaker that is
+        # playing: with this timer at 30 s, music on the MEGABOOM stuttered
+        # every 30-60 s while the musiCozy was off (measured 2026-11-06:
+        # 12 page timeouts in 10 min; stopping the timer fixed it). A speaker
+        # switched on later reconnects by itself and takes over by priority.
+        any=""
+        for mac in $speakers; do
+          if connected "$mac"; then any=1; else rm -f "/run/bluetooth-speaker-woken-''${mac//:/_}"; fi
+        done
+        if [ -z "$any" ]; then
+          for mac in $speakers; do
+            bluetoothctl --timeout 10 connect "$mac" >/dev/null 2>&1 || true
+            sleep 3
+            connected "$mac" && break
+          done
+        fi
+
+        for mac in $speakers; do
+          connected "$mac" || continue
           woken=/run/bluetooth-speaker-woken-''${mac//:/_}
           # Fixed output level per speaker (musiCozy is much quieter: 250%, a software boost).
           case "$mac" in
             41:42:FE:D5:9B:EF) vol=250% ;; # >100% = software boost (chosen by ear)
             *) vol=50% ;;
           esac
-          if ! bluetoothctl info "$mac" | grep -q "Connected: yes"; then
-            rm -f "$woken"
-            bluetoothctl --timeout 10 connect "$mac" >/dev/null 2>&1 || true
-            sleep 3
-            bluetoothctl info "$mac" | grep -q "Connected: yes" || continue
-          fi
           # Connected (by us or by the speaker itself): once per connection,
           # put its output at its fixed level (the player volume in Music Assistant is the
           # one that is controlled; this also sets the speaker's own volume via

@@ -137,8 +137,39 @@ def download_and_queue(url, items, numbered, single):
     return n
 
 
+# Words that make a video something other than the song (unless asked for).
+NOT_THE_SONG = ("trailer", "reaction", "karaoke", "tutorial", "lesson", "how to play", "interview", "behind the scenes")
+SONG_CANDIDATES = 10
+
+
 def song_id(query):
-    """YouTube video id of the top YouTube Music song result."""
+    """YouTube video id of the most-viewed matching song: of the top
+    YouTube results, those whose title/channel contain the query's words and
+    that are 45 s - 15 min long; falls back to YouTube Music's top song."""
+    want = [w for w in norm(query).split() if w not in ("the", "a", "by", "of", "and")]
+    best = None
+    for line in ytdlp(["--flat-playlist", "--print", "%(id)s\t%(view_count|0)s\t%(duration|0)s\t%(channel,uploader|)s\t%(title)s",
+                       "ytsearch%d:%s" % (SONG_CANDIDATES, query)]):
+        f = line.split("\t")
+        if len(f) < 5:
+            continue
+        vid, views, secs, channel, title = f[0], f[1], f[2], f[3], "\t".join(f[4:])
+        try:
+            views, secs = int(float(views)), float(secs)
+        except ValueError:
+            continue
+        text = norm(title + " " + channel)
+        if not 45 <= secs <= MAX_SONG_SECONDS:
+            continue
+        if any(w in text and w not in norm(query) for w in NOT_THE_SONG):
+            continue
+        if want and sum(w in text for w in want) < max(1, round(0.75 * len(want))):
+            continue
+        if best is None or views > best[0]:
+            best = (views, vid, title)
+    if best:
+        log("most viewed: %s (%d views)" % (best[2], best[0]))
+        return best[1]
     ids = ytdlp(["--flat-playlist", "--playlist-items", "1", "--print", "id", search_url("song", query)])
     return ids[0] if ids else None
 
@@ -393,28 +424,44 @@ def play_mood(mood, option, exclude=frozenset()):
 
 
 # --- playlist search: skip mixes and off-topic hits ---------------------------
-PLAYLIST_CANDIDATES = 5
+PLAYLIST_CANDIDATES = 4  # from each of YouTube Music and YouTube
 
 
 def pick_playlist(query):
-    """Best of the top community playlists for a genre/playlist name: its
-    title shares a word with the query and its songs are single songs (median
-    under 8 min), not hour-long mixes. Falls back to the top hit."""
+    """The most-viewed of the top community playlists for a genre/playlist
+    name whose title shares a word with the query and whose songs are single
+    songs (median under 8 min), not hour-long mixes. Falls back to the first
+    YouTube Music hit."""
+    q = urllib.parse.quote_plus(query)
     hits = ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % PLAYLIST_CANDIDATES,
                   "--print", "url", search_url("playlist", query)])
+    hits += ytdlp(["--flat-playlist", "--playlist-items", "1-%d" % PLAYLIST_CANDIDATES, "--print", "url",
+                   "https://www.youtube.com/results?search_query=%s&sp=EgIQAw%%253D%%253D" % q])
     want = {w for w in norm(query).split() if w not in ("music", "playlist", "songs", "some", "the", "a")}
-    for url in hits:
-        info = ytdlp(["--flat-playlist", "--playlist-items", "1-10", "--print",
-                      "%(playlist_title)s\t%(duration|0)s", url])
-        if not info:
+    best = None
+    ids = {}
+    for url in hits:  # same playlist from both searches: check it once
+        m = re.search(r"(?:list=|browse/VL)([A-Za-z0-9_-]+)", url)
+        ids.setdefault(m.group(1) if m else url, url)
+    for url in ids.values():
+        info = ytdlp(["-J", "--flat-playlist", "--playlist-items", "1-10", url])
+        try:
+            d = json.loads(info[0]) if info else None
+        except ValueError:
+            d = None
+        if not d:
             continue
-        title = norm(info[0].split("\t")[0])
-        durations = sorted(float(x.split("\t")[-1] or 0) for x in info)
-        median = durations[len(durations) // 2]
+        title = norm(d.get("title") or "")
+        durations = sorted(e.get("duration") or 0 for e in (d.get("entries") or []))
+        median = durations[len(durations) // 2] if durations else 0
+        views = d.get("view_count") or 0
         ok_title = not want or want & set(title.split()) or any(w in title.replace(" ", "") for w in want)
-        log("playlist candidate:", title, "median %ds" % median, "ok" if ok_title and 0 < median <= 480 else "skip")
-        if ok_title and 0 < median <= 480:
-            return url
+        ok = ok_title and 0 < median <= 480
+        log("playlist candidate:", title, "views %d" % views, "median %ds" % median, "ok" if ok else "skip")
+        if ok and (best is None or views > best[0]):
+            best = (views, url)
+    if best:
+        return best[1]
     return hits[0] if hits else None
 
 
