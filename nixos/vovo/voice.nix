@@ -164,6 +164,19 @@ in
       Restart = "always";
       RestartSec = 5;
       CPUWeight = 500;
+      # Microphone capture (arecord) and vovo's voice (sox | aplay) are
+      # PipeWire clients; with these limits their audio threads run
+      # real-time, like PipeWire itself (audio.nix), so a busy CPU does not
+      # drop or delay microphone samples or chop the spoken replies. The
+      # satellite itself gets ahead of background work and is never swapped.
+      # The module's hardening sets RestrictRealtime=yes, which makes
+      # PipeWire's real-time request fail (and fall back to rtkit, which
+      # refuses a headless session); the rest of the hardening stays.
+      RestrictRealtime = lib.mkForce false;
+      LimitRTPRIO = 95;
+      LimitNICE = -19;
+      Nice = -5;
+      MemorySwapMax = 0;
     };
   };
 }

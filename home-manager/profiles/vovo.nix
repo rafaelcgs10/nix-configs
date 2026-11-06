@@ -62,6 +62,10 @@ in
       ExecStartPre = "${pkgs.bash}/bin/bash -c 'for i in $(seq 12); do (exec 3<>/dev/tcp/127.0.0.1/3483) 2>/dev/null && exit 0; sleep 5; done; exit 1'";
       TimeoutStartSec = "90s";
       ExecStart = "${pkgs.squeezelite-pulse}/bin/squeezelite-pulse -n vovo -s 127.0.0.1 -C 5";
+      # Decoding must keep up with playback: ahead of background work, and
+      # never swapped out (see nixos/vovo/audio.nix, real-time audio).
+      Nice = -5;
+      MemorySwapMax = 0;
       Restart = "always";
       RestartSec = 10;
     };

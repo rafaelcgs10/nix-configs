@@ -110,6 +110,28 @@
   # devices are ready before anything asks for them.
   systemd.user.services.pipewire.wantedBy = [ "default.target" ];
 
+  # Real-time audio. PipeWire raises its audio threads to SCHED_FIFO itself
+  # (rt.prio 88, nice -11) when its resource limits allow it, and otherwise
+  # asks rtkit, which only grants that to an *active* login session. A
+  # lingering, headless session never is one, so PipeWire, WirePlumber,
+  # pipewire-pulse and squeezelite all ran at normal priority (measured
+  # 2026-11-06: RLIMIT_RTPRIO 0, every thread SCHED_OTHER), and any CPU burst
+  # (wake word, speech-to-text, Home Assistant, a YouTube download) could make
+  # music and vovo's voice stutter. The kernel allows it (no RT_GROUP_SCHED;
+  # `chrt -f -p 88` on a data-loop thread worked). Grant the limits to the
+  # user manager, which every user service inherits; the satellite (microphone
+  # and speaker) gets them in voice.nix. Needs `systemctl restart user@1000`
+  # (or a reboot) to apply to the running session.
+  systemd.services."user@".serviceConfig = {
+    LimitRTPRIO = 95;
+    LimitNICE = -19;
+  };
+  # Never swap the audio daemons out: a page fault (zram or the SD-card swap
+  # file) in the middle of playback is an audible gap.
+  systemd.user.services.pipewire.serviceConfig.MemorySwapMax = 0;
+  systemd.user.services.pipewire-pulse.serviceConfig.MemorySwapMax = 0;
+  systemd.user.services.wireplumber.serviceConfig.MemorySwapMax = 0;
+
   # Reconnect the paired speakers whenever they are on but not connected:
   # after a reboot, a PipeWire restart or when they come back into range. A
   # speaker only reconnects by itself when it is switched on, not when the Pi
