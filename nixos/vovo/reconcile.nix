@@ -57,9 +57,16 @@ in
         p=$(state media_player.vovo || true); s=$(state assist_satellite.vovo || true)
         if [ -n "$p" ] && [ "$p" != unavailable ] && [ "$s" = idle ]; then
           sleep 5  # let the Bluetooth speaker settle
+          # A random greeting, never the same as last time.
+          phrases=${pkgs.writeText "vovo-phrases.json" (builtins.toJSON (import ./phrases.nix))}
+          n=$(jq '.greeting | length' "$phrases")
+          last=$(cat /var/lib/vovo/greeting-last 2>/dev/null || echo -1)
+          i=$((RANDOM % n))
+          if [ "$i" = "$last" ] && [ "$n" -gt 1 ]; then i=$(( (i + 1 + RANDOM % (n - 1)) % n )); fi
+          echo "$i" > /var/lib/vovo/greeting-last
           curl -sf -X POST -H "Authorization: Bearer $tok" -H "Content-Type: application/json" \
             http://127.0.0.1:8123/api/services/assist_satellite/announce \
-            -d "$(jq -n --arg m "$(jq -r --argjson i "$RANDOM" '.greeting | .[$i % length]' ${pkgs.writeText "vovo-phrases.json" (builtins.toJSON (import ./phrases.nix))})" \
+            -d "$(jq -n --arg m "$(jq -r --argjson i "$i" '.greeting[$i]' "$phrases")" \
                   '{entity_id: "assist_satellite.vovo", message: $m}')" >/dev/null
           exit 0
         fi
