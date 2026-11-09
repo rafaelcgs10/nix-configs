@@ -367,7 +367,13 @@ in
   };
 
   hardware.sane.enable = true;
-  # hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
+  # Network scanning (the Canon TS3500 scans over eSCL/AirScan): sane-airscan
+  # instead of SANE's built-in "escl" backend, which discovers the printer's
+  # HTTPS endpoint and then fails to open it ("Invalid argument"), so scan
+  # apps only offered a broken scanner. Tested: airscan scans an A4 colour
+  # page at 150 dpi in ~14 s.
+  hardware.sane.extraBackends = [ pkgs.sane-airscan ];
+  hardware.sane.disabledDefaultBackends = [ "escl" ];
   users.users.rafael.extraGroups = [ "scanner" "lp" "adbusers" ];
 
   # Docker config
