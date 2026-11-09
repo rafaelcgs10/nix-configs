@@ -64,26 +64,6 @@
     user_pref("media.webrtc.camera.allow-pipewire", true);
   '';
 
-  programs.brave = {
-    enable = true;
-    # Keep Brave native on Wayland at fractional scale and enable the WebRTC
-    # PipeWire camera backend for portal/libcamera cameras.
-    commandLineArgs = [
-      "--ozone-platform-hint=auto"
-      "--enable-features=WaylandWindowDecorations,WebRtcPipeWireCamera"
-    ];
-    extensions = [
-      {id = "nngceckbapebfimnlniiiahkandclblb";} # Bitwarden
-      {id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";} # uBlock Origin
-      {id = "dbepggeogbaibhgnhhndojpepiihcmeb";} # Vimium
-      {id = "ekhagklcjbdpajgpjgmbionohlpdbjgc";} # Zotero
-      {id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";} # Dark reader
-      {id = "dphilobhebphkdjbpfohgikllaljmgbn";} # Simple login
-      {id = "oldceeleldhonbafppcapldpdifcinji";} # LanguageTool
-      {id = "mdjildafknihdffpkfmmpnpoiajfjnjd";} # Consent-O-Matic
-    ];
-  };
-
   programs.librewolf = {
     enable = true;
     settings = {

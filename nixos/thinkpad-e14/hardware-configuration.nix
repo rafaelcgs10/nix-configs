@@ -325,7 +325,46 @@ in
     defaultShared = true;
     openFirewall = true;
   };
-  # services.printing.drivers = [ pkgs.hplipWithPlugin pkgs.gutenprint pkgs.gutenprintBin pkgs.foomatic-db-ppds-withNonfreeDb pkgs.cups-drv-rastertosag-gdi pkgs.canon-cups-ufr2 ];
+  # Same drivers as bbstation (cnijfilter2: Canon PIXMA, incl. the TS3500).
+  services.printing.drivers = [ pkgs.carps-cups pkgs.gutenprint pkgs.gutenprintBin pkgs.hplip pkgs.cnijfilter2 ];
+
+  # The Canon TS3500 calls itself "BBprinter" on the network (192.168.0.124).
+  # Declared queues, instead of the one cups-browsed creates: that one failed
+  # ("No suitable destination host found by cups-browsed"), since name
+  # resolution answers first with an unscoped link-local IPv6 address.
+  hardware.printers = {
+    ensurePrinters = [
+      {
+        name = "Canon_TS3500";
+        description = "Canon TS3500 series";
+        location = "Home";
+        deviceUri = "ipp://BBprinter.local/ipp/print";
+        model = "canonts3500.ppd"; # cnijfilter2, like bbstation
+        ppdOptions.PageSize = "A4";
+      }
+    ];
+    ensureDefaultPrinter = "Canon_TS3500";
+  };
+  # Fallback queue using the printer's own driverless mode (IPP Everywhere).
+  # Creating it asks the printer for its capabilities, so it needs the
+  # printer online: kept out of hardware.printers (one failure there stops
+  # the rest) and allowed to fail; CUPS keeps the queue once it exists.
+  systemd.services.ensure-printer-driverless = {
+    description = "Ensure the driverless Canon TS3500 CUPS queue";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "cups.service" "network-online.target" ];
+    wants = [ "cups.service" "network-online.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      ${pkgs.cups}/bin/lpstat -v Canon_TS3500_driverless >/dev/null 2>&1 && exit 0
+      ${pkgs.cups}/bin/lpadmin -p Canon_TS3500_driverless -D "Canon TS3500 (driverless)" -L Home \
+        -v ipp://BBprinter.local/ipp/print -m everywhere -E \
+        || echo "printer not reachable; the driverless queue will be created on a later boot"
+    '';
+  };
 
   hardware.sane.enable = true;
   # hardware.sane.extraBackends = [ pkgs.hplipWithPlugin ];
