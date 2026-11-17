@@ -39,12 +39,25 @@ let
   # python = import ../spektrafilm/python.nix;
 
   ghc = haskellPackages.ghcWithPackages haskellDeps;
-  
+
+  # Elixir toolchain, all from one BEAM package set so Elixir, Erlang/OTP,
+  # rebar3 and the language server agree on the OTP version (28). Bump the
+  # Elixir minor here; elixir-ls is overridden to run on the same Elixir,
+  # because it compiles the project with its own runtime and a mismatch
+  # gives spurious diagnostics. (elixir-ls only patches its launch script
+  # with the Elixir path, so the override is a cheap rebuild.)
+  beam = pkgs.beam28Packages;
+  elixir = beam.elixir_1_19;
+  elixir-ls = beam.elixir-ls.override { inherit elixir; };
+
   # Darwin requires a different library path prefix
   
 in
 {
   # programs.opam.enable = true;
+
+  # Persistent IEx/erl shell history across sessions.
+  home.sessionVariables.ERL_AFLAGS = "-kernel shell_history enabled";
 
   home.packages = [
     # (pkgs.callPackage ./isabelle {
@@ -141,6 +154,20 @@ in
     # use only: https://www.dyalog.com/uploads/documents/Developer_Software_Licence.pdf).
     # (pkgs.dyalog.override { acceptLicense = true; })
 
+    # Elixir / Erlang (see `beam` above). Installed globally so Doom's eglot
+    # finds `elixir-ls` without a project flake; a project devshell that
+    # pins its own Elixir/OTP wins on PATH through direnv. Hex and rebar
+    # are fetched per user by `mix local.hex` / `mix local.rebar` into
+    # ~/.mix as usual.
+    elixir # elixir, elixirc, iex, mix
+    beam.erlang # erl, dialyzer, observer, typer
+    beam.rebar3
+    elixir-ls # LSP for Doom (lang elixir +lsp); also ships elixir-debug-adapter
+  ] ++ lib.optionals pkgs.stdenv.isLinux [
+    # File-change notifications for Elixir's file_system library: elixir-ls,
+    # `mix test --stale` watchers and Phoenix live reload use it on Linux.
+    pkgs.inotify-tools
+  ] ++ [
 
     pkgs.haskellPackages.haskell-language-server
     pkgs.haskellPackages.hlint

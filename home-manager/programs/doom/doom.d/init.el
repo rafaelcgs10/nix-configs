@@ -103,7 +103,8 @@
        ;;taskrunner        ; taskrunner for all your projects
        ;;terraform         ; infrastructure as code
        ;;tmux              ; an API for interacting with tmux
-       ;;upload            ; map local to remote projects via ssh/ftp
+       tree-sitter       ; needed by (lang +tree-sitter) flags, e.g. elixir
+       ;;upload           ; map local to remote projects via ssh/ftp
 
        :lang
        agda              ; types of types of types of types...
@@ -115,7 +116,7 @@
        (csharp +lsp +dotnet) ; .NET via eglot + csharp-ls; +dotnet adds sharper (dotnet CLI transient)
        ;;data              ; config/data formats
        ;;(dart +flutter)   ; paint ui and not much else
-       ;;elixir            ; erlang done right
+       (elixir +lsp +tree-sitter) ; erlang done right (elixir-ls via eglot, elixir-ts-mode)
        ;;elm               ; care for a cup of TEA?
        emacs-lisp        ; drown in parentheses
        ;;erlang            ; an elegant language for a more civilized age

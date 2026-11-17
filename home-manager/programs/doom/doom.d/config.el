@@ -291,6 +291,36 @@ With prefix argument (`C-u'), also kill the special buffers."
       :map (csharp-mode-map csharp-ts-mode-map)
       :desc "dotnet CLI (sharper)" "d" #'sharper-main-transient)
 
+;;; Elixir via eglot + elixir-ls. Elixir/OTP and `elixir-ls' (built against
+;; the same Elixir) come from home-manager (programs/languages); a project
+;; flake devshell wins on PATH through direnv. Doom's (elixir +lsp
+;; +tree-sitter) opens .ex/.exs in elixir-ts-mode and .heex in heex-ts-mode
+;; (grammars ship with treesit-grammars.with-all-grammars) and runs `lsp!'
+;; (-> eglot-ensure) there. eglot's built-in entry looks for
+;; `language_server.sh'/`start_lexical.sh', which the Nix package does not
+;; provide, so point it at the `elixir-ls' wrapper. elixir-ls also runs
+;; Dialyzer in the background and reports its warnings as diagnostics.
+;; Tests: exunit on <localleader> t (a all, s single, v file, r rerun).
+(after! eglot
+  (add-to-list 'eglot-server-programs
+               '((elixir-mode elixir-ts-mode heex-ts-mode) . ("elixir-ls"))))
+
+;; Format on save, in Elixir buffers only: eglot asks elixir-ls, which runs
+;; `mix format' with the project's .formatter.exs (plugins, line length).
+;; Errors are only reported, so a syntax error never blocks the save.
+(defun +elixir-format-buffer-h ()
+  "Format the buffer through eglot, without ever aborting the save."
+  (condition-case err
+      (eglot-format-buffer)
+    (error (message "mix format skipped: %s" (error-message-string err)))))
+
+(add-hook 'eglot-managed-mode-hook
+          (defun +elixir-format-on-save-h ()
+            (when (derived-mode-p 'elixir-mode 'elixir-ts-mode 'heex-ts-mode)
+              (if (eglot-managed-p)
+                  (add-hook 'before-save-hook #'+elixir-format-buffer-h nil t)
+                (remove-hook 'before-save-hook #'+elixir-format-buffer-h t)))))
+
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")
 
