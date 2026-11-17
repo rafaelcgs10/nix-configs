@@ -199,7 +199,6 @@ in
     pkgs.calibre
     pkgs.sc-controller
     pkgsUnstable.zulip
-    pkgs.pgadmin4-desktopmode
     pkgs.handbrake # ghb
     pkgs.upscayl
 
