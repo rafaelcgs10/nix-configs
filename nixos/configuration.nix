@@ -196,6 +196,31 @@ in {
   # stay in the store.
   system.extraDependencies = lib.attrValues inputs;
 
+  # Keep build-time sources alive, so a vanished upstream cannot break a
+  # rebuild of something we have already built once.
+  #
+  # `system.extraDependencies` above pins flake *inputs*, but not the sources a
+  # build fetches itself: emacs-overlay packages, for instance, fetchurl their
+  # own tarballs. On 2026-11-18 codeberg.org fell out of DNS entirely (NXDOMAIN
+  # straight from the .org registry, confirmed via Cloudflare DoH) and the whole
+  # system closure stopped building, because doom-emacs -> evil-numbers ->
+  # shift-number is fetched from there and the source had been garbage
+  # collected. Note the built-in fallback does not cover this: fetchurl retries
+  # on https://tarballs.nixos.org/sha256/<hex>, which only carries sources
+  # Hydra itself fetched — 404 for anything out of emacs-overlay.
+  #
+  # The pair works as a chain: keep-derivations makes a live output keep its
+  # .drv, keep-outputs makes a live .drv keep its outputs — so the fetchurl FOD
+  # feeding anything installed stays live and never has to be re-downloaded.
+  #
+  # Bounded, not unbounded: only derivations reachable from a live generation
+  # are held, so `--delete-older-than 5d` below still releases them. It does
+  # cost store space (92% full when this landed), and unlike ordinary garbage
+  # these paths are live, so `min-free` cannot reclaim them under pressure. If
+  # the store gets tight, drop keep-outputs first.
+  nix.settings.keep-outputs = true;
+  nix.settings.keep-derivations = true;
+
   # Auto-GC: keeps the store from growing unbounded
   nix.gc = {
     automatic = true;
