@@ -244,6 +244,34 @@ With prefix argument (`C-u'), also kill the special buffers."
               (kill-buffer buf))))))))
 
 
+;;; Diagnostics display
+;; Doom shows flycheck errors in `flycheck-popup-tip', a small tooltip that
+;; truncates multi-line messages (Dialyzer's spec mismatches run to a dozen
+;; lines). Show one-liners in the echo area instead, and anything multi-line
+;; in full in a *Flycheck error messages* popup window that can be scrolled
+;; and copied. Doom re-enables the tooltip from `flycheck-mode-hook' (via
+;; `+syntax-init-popups-h', which also resets the display function), so the
+;; hook is removed rather than overridden.
+(defun +flycheck-display-errors-full (errors)
+  "Display ERRORS: single-line messages in the echo area, multi-line in a buffer."
+  (when-let* ((errors (seq-uniq errors))
+              (text (mapconcat #'flycheck-error-format-message-and-id errors "\n\n")))
+    (if (string-search "\n" text)
+        (with-current-buffer (get-buffer-create "*Flycheck error messages*")
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert text)
+            (goto-char (point-min)))
+          (special-mode)
+          (display-buffer (current-buffer)))
+      (message "%s" text))))
+
+(remove-hook 'flycheck-mode-hook #'+syntax-init-popups-h)
+(after! flycheck
+  (setq flycheck-display-errors-function #'+flycheck-display-errors-full))
+(set-popup-rule! "^\\*Flycheck error messages\\*" :size 0.3 :select nil :quit t)
+
+
 ;;; Languages & LSP
 (add-hook 'java-ts-mode-hook 'eglot-java-mode)
 
