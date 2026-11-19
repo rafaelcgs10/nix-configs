@@ -301,6 +301,15 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;; provide, so point it at the `elixir-ls' wrapper. elixir-ls also runs
 ;; Dialyzer in the background and reports its warnings as diagnostics.
 ;; Tests: exunit on <localleader> t (a all, s single, v file, r rerun).
+;; A Mix project often sits in a subdirectory of its repository (for example
+;; Motorola-Solutions-Challenge/floor_control). project.el's VC backend would
+;; otherwise report the git root, eglot would start elixir-ls there, and with
+;; no mix.exs to build the server indexes nothing: no completion, no hover, no
+;; diagnostics, while company still offers plain word completion so it looks
+;; half-working. Treat any directory holding a mix.exs as a project root.
+(after! project
+  (add-to-list 'project-vc-extra-root-markers "mix.exs"))
+
 (after! eglot
   (add-to-list 'eglot-server-programs
                '((elixir-mode elixir-ts-mode heex-ts-mode) . ("elixir-ls"))))
