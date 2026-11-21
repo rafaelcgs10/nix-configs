@@ -227,7 +227,7 @@ in
     spektrafilmPackages.spektrafilm-art
     pkgs.vkdt
     pkgs.digikam
-    pkgs.rapidraw
+    pkgsUnstable.rapidraw
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
