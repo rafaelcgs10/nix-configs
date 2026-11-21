@@ -149,7 +149,7 @@
 
 
 ;;; Completion (company)
-(setq company-idle-delay 2
+(setq company-idle-delay 0.2
       company-minimum-prefix-length 2)
 (set-company-backend! 'text-mode
   '(:separate company-dabbrev company-yasnippet company-files company-ispell))
@@ -357,6 +357,13 @@ With prefix argument (`C-u'), also kill the special buffers."
               (if (eglot-managed-p)
                   (add-hook 'before-save-hook #'+elixir-format-buffer-h nil t)
                 (remove-hook 'before-save-hook #'+elixir-format-buffer-h t)))))
+
+;; elixir-ts-mode gives `%' word syntax, so the completion prefix of `%OpenApi'
+;; became `%Open' and filtered out every struct elixir-ls offered. As an
+;; expression prefix (like ' in Lisp) it stays outside the symbol.
+(add-hook 'elixir-ts-mode-hook
+          (defun +elixir-percent-prefix-syntax-h ()
+            (modify-syntax-entry ?% "'")))
 
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")
