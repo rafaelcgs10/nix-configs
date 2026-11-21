@@ -209,6 +209,17 @@ in
     };
   };
 
+  # The NAS at /rafael_mounts is an rclone mount (nixos/nas-rclone.nix); the
+  # kernel CIFS mount below hung the terminal and cosmic-files after leaving
+  # the home network. Password: the agenix secret smb-password.age (the
+  # password alone from smb-secrets.age), readable by rafael's user service.
+  age.secrets.smb-password = {
+    file = ../../secrets/smb-password.age;
+    owner = "rafael";
+  };
+  nasRclone.passwordFile = config.age.secrets.smb-password.path;
+  # nasRclone.cacheSize: default 20G (/ had 66 GB free, 2026-11-21).
+
   # fileSystems."/rafael_mounts" = {
   #   device = "//192.168.0.104/hdd";
   #   fsType = "cifs";

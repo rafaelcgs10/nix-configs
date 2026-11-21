@@ -245,6 +245,7 @@
           modules = [
             ./nixos/bbtablet/boot-loader.nix
             ./nixos/bbtablet/hardware-configuration.nix
+            ./nixos/nas-rclone.nix
             ./nixos/plymouth.nix
           ];
         };
@@ -255,7 +256,7 @@
             cosmicUnstableModule
             ./nixos/thinkpad-e14/boot-loader.nix
             ./nixos/thinkpad-e14/hardware-configuration.nix
-            ./nixos/thinkpad-e14/rclone.nix
+            ./nixos/nas-rclone.nix
             ./nixos/thinkpad-e14/rapidraw.nix
             ./nixos/io-performance.nix
             ./nixos/font-rendering.nix

@@ -139,37 +139,17 @@
   # swap so cold pages still have somewhere to go without hitting the disk.
   boot.kernel.sysctl."vm.swappiness" = 10;
 
-  fileSystems."/rafael_mounts" = {
-    device = "//192.168.0.104/hdd";
-    fsType = "cifs";
-    options = let
-      # Avoid blocking boot/switch/manual mount when the SMB server is unreachable.
-      # requires/after network-online: an automount trigger that lands while the
-      # network is restarting (typically mid nixos-rebuild switch) queues behind
-      # the network coming back instead of failing with "Network is unreachable"
-      # — which would mark the whole switch (and the daily nixos-upgrade) as
-      # failed. _netdev alone only orders after network.target.
-      mount_opts = "noauto,nofail,x-systemd.automount,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,x-systemd.requires=network-online.target,x-systemd.after=network-online.target";
-
-    in ["${mount_opts},credentials=/home/rafael/.smb-secrets,uid=rafael,gid=100,_netdev" "cache=loose" "vers=3" "soft" "echo_interval=15" "fsc" "actimeo=30" ];
-  };
-
-  # Back the `fsc` mount option on /rafael_mounts with a real FS-Cache backend.
-  # Without cachefilesd running, `fsc` on the CIFS mount is inert — ART re-reads
-  # every thumbnail byte over SMB on each browse. With it enabled, RAW headers
-  # and thumbnail data are cached on the local SSD (default: /var/cache/fscache)
-  # and the file browser becomes near-instant on repeat visits.
-  services.cachefilesd = {
-    enable = true;
-    extraConfig = ''
-      brun 10%
-      bcull 7%
-      bstop 3%
-      frun 10%
-      fcull 7%
-      fstop 3%
-    '';
-  };
+  # The NAS at /rafael_mounts is an rclone mount with a local cache
+  # (nixos/nas-rclone.nix), like thinkpad-e14; it replaced the kernel CIFS
+  # mount + cachefilesd (2026-11-21). This host is not an agenix recipient
+  # yet, so the password comes from a file made once by hand, like the old
+  # ~/.smb-secrets:
+  #   sed -n 's/^password=//p' ~/.smb-secrets | tr -d '\n' > ~/.smb-password
+  #   chmod 600 ~/.smb-password
+  # Once bbtablet's host key is in secrets/secrets.nix, switch to the agenix
+  # secret as on thinkpad-e14.
+  nasRclone.passwordFile = "/home/rafael/.smb-password";
+  nasRclone.cacheSize = "10G";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   # Intel microcode is enabled by the kaby-lake submodule pulled in via
