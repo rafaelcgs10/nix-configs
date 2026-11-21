@@ -32,6 +32,9 @@ in
 {
   # CIFS credentials for the //192.168.0.104 shares (username=/password= file).
   "smb-secrets.age".publicKeys = allUsers ++ allHosts;
+  # The SMB password alone (same as smb-secrets.age), for rclone on thinkpad
+  # (nixos/thinkpad-e14/rclone.nix).
+  "smb-password.age".publicKeys = allUsers ++ [ thinkpad ];
 
   # vovo (Raspberry Pi music box). bbstation is a recipient only so these can
   # be edited there: sudo agenix -e X.age -i /etc/ssh/ssh_host_ed25519_key

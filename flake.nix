@@ -255,6 +255,7 @@
             cosmicUnstableModule
             ./nixos/thinkpad-e14/boot-loader.nix
             ./nixos/thinkpad-e14/hardware-configuration.nix
+            ./nixos/thinkpad-e14/rclone.nix
             ./nixos/io-performance.nix
             ./nixos/font-rendering.nix
             ./nixos/plymouth.nix
