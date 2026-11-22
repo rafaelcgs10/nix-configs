@@ -342,21 +342,28 @@ With prefix argument (`C-u'), also kill the special buffers."
   (add-to-list 'eglot-server-programs
                '((elixir-mode elixir-ts-mode heex-ts-mode) . ("elixir-ls"))))
 
-;; Format on save, in Elixir buffers only: eglot asks elixir-ls, which runs
-;; `mix format' with the project's .formatter.exs (plugins, line length).
+;; Format on save through eglot, in these modes only:
+;; - Elixir: elixir-ls runs `mix format' with the project's .formatter.exs
+;;   (plugins, line length).
+;; - Terraform: terraform-ls runs `terraform fmt'.
+;; - YAML: yaml-language-server's built-in Prettier formatter.
 ;; Errors are only reported, so a syntax error never blocks the save.
-(defun +elixir-format-buffer-h ()
+(defvar +eglot-format-on-save-modes
+  '(elixir-mode elixir-ts-mode heex-ts-mode terraform-mode yaml-mode yaml-ts-mode)
+  "Major modes whose buffers eglot formats before every save.")
+
+(defun +eglot-format-buffer-h ()
   "Format the buffer through eglot, without ever aborting the save."
   (condition-case err
       (eglot-format-buffer)
-    (error (message "mix format skipped: %s" (error-message-string err)))))
+    (error (message "Format on save skipped: %s" (error-message-string err)))))
 
 (add-hook 'eglot-managed-mode-hook
-          (defun +elixir-format-on-save-h ()
-            (when (derived-mode-p 'elixir-mode 'elixir-ts-mode 'heex-ts-mode)
+          (defun +eglot-format-on-save-h ()
+            (when (apply #'derived-mode-p +eglot-format-on-save-modes)
               (if (eglot-managed-p)
-                  (add-hook 'before-save-hook #'+elixir-format-buffer-h nil t)
-                (remove-hook 'before-save-hook #'+elixir-format-buffer-h t)))))
+                  (add-hook 'before-save-hook #'+eglot-format-buffer-h nil t)
+                (remove-hook 'before-save-hook #'+eglot-format-buffer-h t)))))
 
 ;; elixir-ts-mode gives `%' word syntax, so the completion prefix of `%OpenApi'
 ;; became `%Open' and filtered out every struct elixir-ls offered. As an
@@ -364,6 +371,40 @@ With prefix argument (`C-u'), also kill the special buffers."
 (add-hook 'elixir-ts-mode-hook
           (defun +elixir-percent-prefix-syntax-h ()
             (modify-syntax-entry ?% "'")))
+
+;;; Terraform and Kubernetes YAML. Doom's (terraform +lsp) runs eglot with
+;; terraform-ls (completion from the providers' real schemas, hover, go to
+;; definition, validation); (yaml +lsp) runs yaml-language-server. The
+;; tools come from programs/languages; kubectl, helm and k9s are there too.
+
+;; tflint next to terraform-ls. Flycheck reports only eglot's diagnostics in
+;; eglot buffers, and the `eglot-check' chain is rebuilt (emptied) every time
+;; a buffer turns `flycheck-eglot-mode' on, so re-append flycheck's built-in
+;; `terraform-tflint' checker after each rebuild. The chain is shared by all
+;; eglot buffers, but `terraform-tflint' only accepts terraform-mode, and it
+;; runs on saved buffers only. Rules: a project's .tflint.hcl; without one,
+;; tflint's core Terraform rules.
+(add-hook 'flycheck-eglot-mode-hook
+          (defun +terraform-chain-tflint-h ()
+            (flycheck-add-next-checker 'eglot-check 'terraform-tflint 'append)))
+
+;; Kubernetes schema (field completion, hover docs, validation) for manifests
+;; in the usual folders; CRDs are validated from the datree CRDs catalog
+;; (kubernetesCRDStore). Other YAML keeps its SchemaStore schema (compose,
+;; GitHub Actions, ...); manifests elsewhere need their folder added here.
+;; kubernetesVersion follows kubectl in programs/languages (the server's own
+;; default schema is 1.32); schemas exist per patch release at
+;; github.com/yannh/kubernetes-json-schema.
+(setq-default eglot-workspace-configuration
+              '(:yaml (:kubernetesVersion "1.36.3"
+                       :schemas
+                       (:kubernetes ["**/k8s/**/*.yaml" "**/k8s/**/*.yml"
+                                     "**/kubernetes/**/*.yaml" "**/kubernetes/**/*.yml"
+                                     "**/manifests/**/*.yaml" "**/manifests/**/*.yml"
+                                     "**/deploy/**/*.yaml" "**/deploy/**/*.yml"
+                                     "**/*.k8s.yaml" "**/*.k8s.yml"])
+                       :kubernetesCRDStore (:enable t)
+                       :schemaStore (:enable t))))
 
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")

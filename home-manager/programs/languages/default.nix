@@ -188,6 +188,17 @@ in
     # mynixpkgs.coqPackages_8_15.relation-algebra
     # mynixpkgs.coqPackages_8_15.equations
 
+    # Terraform and Kubernetes, for Doom's (terraform +lsp) and (yaml +lsp)
+    # (see the Terraform / YAML section of doom.d/config.el). terraform is
+    # unfree (BSL); terraform-ls formats through it.
+    pkgs.terraform
+    pkgs.terraform-ls
+    pkgs.tflint
+    pkgs.yaml-language-server
+    pkgs.kubectl
+    pkgs.kubernetes-helm
+    pkgs.k9s
+
     # pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken
     # pkgs.ruby

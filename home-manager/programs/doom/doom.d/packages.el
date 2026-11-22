@@ -32,3 +32,9 @@
 ;; Dyalog APL: major mode and RIDE session client. On MELPA (emacs-overlay),
 ;; so no :pin needed.
 (package! dyalog-mode)
+
+;; :tools terraform adds company-terraform, which completes from a static,
+;; outdated list and, sitting ahead of company-capf, answers in nearly every
+;; context, so terraform-ls's completions (from the real provider schemas,
+;; via eglot) never showed.
+(package! company-terraform :disable t)

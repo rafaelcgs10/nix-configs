@@ -101,7 +101,7 @@
        ;;prodigy           ; FIXME managing external services & code builders
        ;;rgb               ; creating color strings
        ;;taskrunner        ; taskrunner for all your projects
-       ;;terraform         ; infrastructure as code
+       (terraform +lsp)  ; terraform-ls via eglot; tflint chained in config.el
        ;;tmux              ; an API for interacting with tmux
        tree-sitter       ; needed by (lang +tree-sitter) flags, e.g. elixir
        ;;upload           ; map local to remote projects via ssh/ftp
@@ -163,7 +163,7 @@
        ;;swift             ; who asked for emoji variables?
        ;;terra             ; Earth and Moon in alignment for performance.
        ;;web               ; the tubes
-       yaml              ; JSON, but readable
+       (yaml +lsp)       ; yaml-language-server via eglot (Kubernetes schemas in config.el)
 
        :email
        ;;(mu4e +gmail)
