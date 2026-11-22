@@ -228,6 +228,8 @@ in
     pkgs.vkdt
     pkgs.digikam
     pkgsUnstable.rapidraw
+    # greycard: official prebuilt release, repackaged (not in nixpkgs).
+    (pkgs.callPackage ./greycard.nix { })
     pkgs.focus-stack
     pkgs.hugin
     pkgs.exiftool
