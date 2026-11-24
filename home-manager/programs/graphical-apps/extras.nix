@@ -116,6 +116,11 @@ let
     };
   };
 
+  # The withoutBG matting server the GIMP plug-in below talks to. Bound here
+  # because it is referenced twice: by the systemd units at the bottom of this
+  # file and by the comment trail around them.
+  withoutbg-inference = pkgsUnstable.callPackage ./withoutbg-inference.nix { };
+
   # `dt-sync` — start the headless XMP -> library sync and show LIVE per-file
   # progress. The service logs "[crawler] synced XMP -> DB for `<file>'" per
   # image (via -d control on the unit); we count those against the number of
@@ -124,12 +129,43 @@ let
   # exact; for routine incremental runs only a few files change, so the % is a
   # loose upper bound — but those finish in seconds anyway. Ctrl-C stops watching;
   # the sync keeps running in the background (it's a systemd service).
-  # The withoutBG matting server the GIMP plug-in below talks to. Bound here
-  # because it is referenced twice: by the systemd units at the bottom of this
-  # file and by the comment trail around them.
-  withoutbg-inference = pkgsUnstable.callPackage ./withoutbg-inference.nix { };
-
+  #
+  # `dt-sync <folder> [--yes]` instead syncs one folder (not its subfolders)
+  # for edits made on another computer: images the library hasn't got are
+  # imported with their sidecars, versions it hasn't got (IMG_x_01.CR3.xmp)
+  # are added, and sidecars newer than the library's edit are loaded; a newer
+  # library edit is kept. It runs darktable headless twice: a --dry-run that
+  # prints the plan, then, after a y/N (skipped by --yes), the real run.
+  # darktable must be closed (exit 75 otherwise, from the library lock).
   dtSync = pkgs.writeShellScriptBin "dt-sync" ''
+    if [ $# -gt 0 ]; then
+      yes=0 dir=""
+      for a in "$@"; do
+        case "$a" in
+          -y|--yes) yes=1 ;;
+          -*) echo "usage: dt-sync [<folder> [--yes]]" >&2; exit 2 ;;
+          *) dir="$a" ;;
+        esac
+      done
+      [ -n "$dir" ] || { echo "usage: dt-sync [<folder> [--yes]]" >&2; exit 2; }
+      dir=$(${pkgs.coreutils}/bin/realpath -m -- "$dir")
+      [ -d "$dir" ] || { echo "dt-sync: $dir is not a folder" >&2; exit 1; }
+      dt=${darktable-xmp-sync}/bin/darktable
+      plan=$("$dt" --sync-xmp --sync-folder "$dir" --dry-run); rc=$?
+      if [ "$rc" -eq 75 ]; then
+        echo "dt-sync: darktable is open (or a sync is running); close it and try again" >&2
+        exit 75
+      fi
+      printf '%s\n' "$plan"
+      [ "$rc" -eq 0 ] || exit "$rc"
+      case "$plan" in *"nothing to change"*) exit 0 ;; esac
+      if [ "$yes" -eq 0 ]; then
+        read -r -p "Apply this to the darktable library? [y/N] " answer
+        case "$answer" in y|Y|yes) ;; *) echo "Nothing changed."; exit 0 ;; esac
+      fi
+      exec "$dt" --sync-xmp --sync-folder "$dir"
+    fi
+
     export XDG_RUNTIME_DIR="/run/user/$(${pkgs.coreutils}/bin/id -u)"
     svc="darktable-xmp-sync.service"
     lib="$HOME/.config/darktable/library.db"
@@ -448,15 +484,16 @@ in
     }
 
     if [ -f "$config_file" ] && ! ${pkgs.procps}/bin/pgrep -f 'bin/darktable$' >/dev/null; then
-      # OpenCL only on NVIDIA (bbstation). rusticl on the thinkpad's AMD
-      # iGPU hard-resets the GPU mid-render ("amdgpu: context lost", SIGABRT
-      # in darktable:cs0; gdb-confirmed 2026-09-05 while opening a duplicate
-      # in darkroom) — and its cltest probe passes anyway, so probing alone
-      # cannot be trusted on AMD. NVIDIA's proprietary OpenCL has no such
-      # history here.
+      # OpenCL on every host whose device darktable-cltest reports usable:
+      # NVIDIA on bbstation, rusticl on the thinkpad's AMD iGPU. darktable
+      # falls back to the CPU on OpenCL errors. Known risk, accepted
+      # 2026-11-24: on 2026-09-05 rusticl on the thinkpad hard-reset the GPU
+      # mid-render ("amdgpu: context lost", SIGABRT in darktable:cs0,
+      # gdb-confirmed while opening a duplicate in darkroom), which no
+      # fallback catches. If that comes back, require 'nvidia' in the probe
+      # again to keep the thinkpad on the CPU.
       cl_probe="$(darktable-cltest --conf opencl=TRUE 2>&1 || true)"
-      if printf '%s' "$cl_probe" | ${pkgs.gnugrep}/bin/grep -qi 'nvidia' \
-         && printf '%s' "$cl_probe" | ${pkgs.gnugrep}/bin/grep -q 'is AVAILABLE and ENABLED'; then
+      if printf '%s' "$cl_probe" | ${pkgs.gnugrep}/bin/grep -q 'is AVAILABLE and ENABLED'; then
         set_key opencl TRUE
       else
         set_key opencl FALSE
