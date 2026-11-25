@@ -199,6 +199,30 @@ in
     pkgs.kubernetes-helm
     pkgs.k9s
 
+    # Python, for Doom's (python +lsp) (see the Python section of
+    # doom.d/config.el): basedpyright is the language server (completion,
+    # hover docs/types, definitions, inlay hints); ruff lints and formats.
+    # A project devshell / uv venv that pins its own ruff or basedpyright
+    # wins on PATH through direnv.
+    pkgs.basedpyright
+    pkgs.ruff
+    # TypeScript/React, JSON, CSS: typescript-language-server (needs a
+    # tsserver: the project's node_modules/typescript, else this one),
+    # vscode-langservers-extracted (json/css/html/eslint servers), prettier
+    # as the fallback formatter when a project has none in node_modules.
+    pkgs.typescript-language-server
+    pkgs.typescript
+    pkgs.vscode-langservers-extracted
+    pkgs.prettier
+    # Dockerfiles: docker-langserver + hadolint (chained lint in config.el).
+    pkgs.dockerfile-language-server
+    pkgs.hadolint
+    # Nix (flakes, these configs): nil language server.
+    pkgs.nil
+    # Shell scripts: bash-language-server runs shellcheck for diagnostics.
+    pkgs.bash-language-server
+    pkgs.shellcheck
+
     # pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken
     # pkgs.ruby

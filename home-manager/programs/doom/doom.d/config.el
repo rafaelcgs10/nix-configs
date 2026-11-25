@@ -275,13 +275,17 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;; Languages & LSP
 (add-hook 'java-ts-mode-hook 'eglot-java-mode)
 
-;; Inlay hints off everywhere, except C/C++ where seeing inferred types inline
-;; is genuinely useful. Decided here (not in a mode hook) so it runs only once
-;; eglot has actually attached to the buffer.
+;; Inlay hints off everywhere, except where seeing inferred types inline is
+;; genuinely useful: C/C++, and Python/TypeScript (inferred variable and return
+;; types, from basedpyright and typescript-language-server). Decided here (not
+;; in a mode hook) so it runs only once eglot has actually attached to the
+;; buffer.
 (add-hook 'eglot-managed-mode-hook
           (lambda ()
             (eglot-inlay-hints-mode
-             (if (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
+             (if (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode
+                                 'python-mode 'python-ts-mode
+                                 'typescript-ts-mode 'tsx-ts-mode)
                  1 -1))))
 
 ;; C/C++ (darktable et al.) via eglot + clangd. Doom's (cc +lsp) module runs
@@ -404,10 +408,99 @@ With prefix argument (`C-u'), also kill the special buffers."
                                      "**/deploy/**/*.yaml" "**/deploy/**/*.yml"
                                      "**/*.k8s.yaml" "**/*.k8s.yml"])
                        :kubernetesCRDStore (:enable t)
-                       :schemaStore (:enable t))))
+                       :schemaStore (:enable t))
+                ;; basedpyright defaults to its strictest mode ("all"), which
+                ;; buries scratch scripts in errors. Default to "standard"; a
+                ;; project's [tool.basedpyright]/[tool.pyright] in
+                ;; pyproject.toml (or pyrightconfig.json) overrides this.
+                :basedpyright (:analysis (:typeCheckingMode "standard"
+                                          :diagnosticMode "openFilesOnly"
+                                          :autoImportCompletions t))))
 
 (use-package! nix-drv-mode
   :mode "\\.drv\\'")
+
+;;; Python via eglot + basedpyright; ruff for linting and formatting.
+;; basedpyright (a pyright fork, from programs/languages) gives completion,
+;; hover docs with types (K), go to definition (gd), references (gD), rename,
+;; inlay type hints and auto-import completions, and ships docstrings for
+;; compiled builtins that plain pyright lacks. It analyses with the first
+;; `python' on PATH, so a project's direnv (an .envrc that activates its uv
+;; .venv) makes it see the project's own packages. Explicit server entry: if
+;; a venv happens to contain pylsp, eglot's default list would pick that first.
+;; Tests: python-pytest on <localleader> t (a all, f file, t test at point,
+;; r repeat).
+(after! eglot
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode)
+                 . ("basedpyright-langserver" "--stdio"))))
+
+;; A Python project often sits in a subdirectory of its repository
+;; (CORTAS-Task/backend). As with mix.exs above, treat any directory holding a
+;; pyproject.toml as a project root, so eglot starts basedpyright where the
+;; pyproject.toml and its type-checker settings live.
+(after! project
+  (add-to-list 'project-vc-extra-root-markers "pyproject.toml"))
+
+;; Extra linters next to the language servers, chained after eglot's
+;; diagnostics the same way as tflint (see the Terraform section): ruff for
+;; Python, ESLint for JS/TS (only enabled when the project has an ESLint
+;; config; Doom's javascript module puts node_modules/.bin on the path), and
+;; hadolint for Dockerfiles. Each checker only accepts its own major modes and
+;; runs on saved buffers.
+(add-hook 'flycheck-eglot-mode-hook
+          (defun +chain-extra-linters-h ()
+            (dolist (checker '(python-ruff javascript-eslint dockerfile-hadolint))
+              (when (flycheck-valid-checker-p checker)
+                (flycheck-add-next-checker 'eglot-check checker 'append)))))
+
+;;; Format on save with apheleia (Doom's :editor format, enabled without
+;; +onsave), only when the file's project declares the formatter, so editing
+;; someone else's Python or TypeScript never reformats it:
+;; - Python: ruff (sort imports, then format) when a ruff.toml/.ruff.toml, or
+;;   a pyproject.toml with a [tool.ruff] table, sits above the file.
+;; - JS/TS/JSON/CSS: prettier when a prettier config, or a package.json that
+;;   mentions prettier, sits above the file. apheleia prefers the project's
+;;   node_modules/.bin/prettier.
+(after! apheleia
+  (dolist (mode '(python-mode python-ts-mode))
+    (setf (alist-get mode apheleia-mode-alist) '(ruff-isort ruff))))
+
+(defun +format--file-matches-p (file regexp)
+  "Non-nil if FILE exists and contains REGEXP."
+  (and (file-exists-p file)
+       (with-temp-buffer
+         (insert-file-contents file)
+         (re-search-forward regexp nil t))))
+
+(defun +format--project-declares-p (files &optional config regexp)
+  "Non-nil if one of FILES, or CONFIG containing REGEXP, sits above the buffer."
+  (when buffer-file-name
+    (locate-dominating-file
+     buffer-file-name
+     (lambda (dir)
+       (or (seq-some (lambda (f) (file-exists-p (expand-file-name f dir))) files)
+           (and config (+format--file-matches-p (expand-file-name config dir) regexp)))))))
+
+(defun +python-format-on-save-h ()
+  "Format Python with ruff on save when the project configures ruff."
+  (when (+format--project-declares-p '("ruff.toml" ".ruff.toml")
+                                     "pyproject.toml" "^\\[tool\\.ruff")
+    (apheleia-mode +1)))
+
+(defun +web-format-on-save-h ()
+  "Format JS/TS/JSON/CSS with prettier on save when the project uses prettier."
+  (when (+format--project-declares-p
+         '(".prettierrc" ".prettierrc.json" ".prettierrc.yaml" ".prettierrc.yml"
+           ".prettierrc.toml" ".prettierrc.js" ".prettierrc.mjs" ".prettierrc.cjs"
+           "prettier.config.js" "prettier.config.mjs" "prettier.config.cjs")
+         "package.json" "\"prettier\"")
+    (apheleia-mode +1)))
+
+(add-hook! '(python-mode-hook python-ts-mode-hook) #'+python-format-on-save-h)
+(add-hook! '(js-ts-mode-hook typescript-ts-mode-hook tsx-ts-mode-hook
+             json-ts-mode-hook css-ts-mode-hook)
+           #'+web-format-on-save-h)
 
 
 ;;; Grammar (LanguageTool, on demand)

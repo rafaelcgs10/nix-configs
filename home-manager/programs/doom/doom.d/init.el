@@ -53,6 +53,7 @@
        :editor
        (evil +everywhere); come to the dark side, we have cookies
        file-templates    ; auto-snippets for empty files
+       format            ; apheleia; format on save is opt-in per project (config.el)
        ;; fold              ; (nigh) universal code folding
        ;;(format +onsave)  ; automated prettiness
        ;;god               ; run Emacs commands without modifier keys
@@ -86,7 +87,7 @@
        ;;ansible
        ;; (debugger +lsp)          ; FIXME stepping through code, to help you add bugs
        direnv
-       docker
+       (docker +lsp +tree-sitter) ; docker-langserver via eglot; hadolint chained in config.el
        ;;editorconfig      ; let someone else argue about tabs vs spaces
        ;;ein               ; tame Jupyter notebooks with emacs
        (eval +overlay)     ; run code, run (also, repls)
@@ -129,9 +130,9 @@
        (haskell +lsp)  ; a language that's lazier than I am
        ;;hy                ; readability of scheme w/ speed of python
        ;;idris             ;
-       json              ; At least it ain't XML
+       (json +lsp +tree-sitter) ; vscode-json-language-server (SchemaStore) via eglot
        (java  +lsp) ; the poster child for carpal tunnel syndrome
-       javascript        ; all(hope(abandon(ye(who(enter(here))))))
+       (javascript +lsp +tree-sitter) ; JS/TS/TSX via typescript-language-server; ESLint chained in config.el
        ;;julia             ; a better, faster MATLAB
        ;;kotlin            ; a better, slicker Java(Script)
         latex                    ; writing papers in Emacs has never been so fun
@@ -141,13 +142,13 @@
        ;;lua               ; one-based indices? one-based indices
        markdown          ; writing docs for people to ignore
        ;;nim               ; python + lisp at the speed of c
-       nix               ; I hereby declare "nix geht mehr!"
+       (nix +lsp +tree-sitter) ; nil via eglot: flake/option completion, go to definition
        ocaml             ; an objective camel
        (org +present +pretty)         ; organize your plain life in plain text
        php               ; perl's insecure younger brother
        ;;plantuml          ; diagrams for confusing people more
        ;;purescript        ; javascript, but functional
-       (python +lsp +pyright)            ; beautiful is better than ugly
+       (python +lsp +tree-sitter) ; basedpyright via eglot, ruff for lint/format (config.el)
        ;;qt                ; the 'cutest' gui framework ever
        ;;racket            ; a DSL for DSLs
        ;;raku              ; the artist formerly known as perl6
@@ -157,7 +158,8 @@
        (rust +lsp)              ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
        ;;scala             ; java, but good
        scheme            ; a fully conniving family of lisps
-       sh                ; she sells {ba,z,fi}sh shells on the C xor
+       (sh +lsp)         ; bash-language-server (+ shellcheck) via eglot
+       rest              ; HTTP requests from .http buffers (try API endpoints)
        ;;sml
        ;;solidity          ; do you need a blockchain? No.
        ;;swift             ; who asked for emoji variables?
