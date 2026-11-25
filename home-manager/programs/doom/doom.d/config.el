@@ -275,18 +275,11 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;; Languages & LSP
 (add-hook 'java-ts-mode-hook 'eglot-java-mode)
 
-;; Inlay hints off everywhere, except where seeing inferred types inline is
-;; genuinely useful: C/C++, and Python/TypeScript (inferred variable and return
-;; types, from basedpyright and typescript-language-server). Decided here (not
-;; in a mode hook) so it runs only once eglot has actually attached to the
-;; buffer.
-(add-hook 'eglot-managed-mode-hook
-          (lambda ()
-            (eglot-inlay-hints-mode
-             (if (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode
-                                 'python-mode 'python-ts-mode
-                                 'typescript-ts-mode 'tsx-ts-mode)
-                 1 -1))))
+;; Inlay hints off in every language. Eglot turns them on when it attaches to a
+;; buffer; this hook runs right after and turns them off again. Types show in
+;; the echo area instead (eldoc, on the symbol at point). Toggle per buffer with
+;; M-x eglot-inlay-hints-mode.
+(add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1)))
 
 ;; C/C++ (darktable et al.) via eglot + clangd. Doom's (cc +lsp) module runs
 ;; eglot in c/c++ buffers; override the default clangd invocation so
@@ -423,7 +416,7 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;;; Python via eglot + basedpyright; ruff for linting and formatting.
 ;; basedpyright (a pyright fork, from programs/languages) gives completion,
 ;; hover docs with types (K), go to definition (gd), references (gD), rename,
-;; inlay type hints and auto-import completions, and ships docstrings for
+;; inlay type hints (off, see above) and auto-import completions, and ships docstrings for
 ;; compiled builtins that plain pyright lacks. It analyses with the first
 ;; `python' on PATH, so a project's direnv (an .envrc that activates its uv
 ;; .venv) makes it see the project's own packages. Explicit server entry: if
@@ -441,6 +434,16 @@ With prefix argument (`C-u'), also kill the special buffers."
 ;; pyproject.toml and its type-checker settings live.
 (after! project
   (add-to-list 'project-vc-extra-root-markers "pyproject.toml"))
+
+;; Doom puts `project-projectile' first in `project-find-functions', and it
+;; answers with the git root, so the markers above were never consulted and
+;; eglot started at the repo root (no venv, no pyproject config: every import
+;; "could not be resolved", types shown as Any). Ask `project-try-vc' first;
+;; it returns the nearest marker directory or else the git root. Projectile's
+;; own commands (SPC p ...) are unaffected.
+(after! projectile
+  (remove-hook 'project-find-functions #'project-try-vc)
+  (add-hook 'project-find-functions #'project-try-vc -50))
 
 ;; Extra linters next to the language servers, chained after eglot's
 ;; diagnostics the same way as tflint (see the Terraform section): ruff for
