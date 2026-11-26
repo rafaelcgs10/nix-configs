@@ -33,6 +33,14 @@
 ;; so no :pin needed.
 (package! dyalog-mode)
 
+;; Quint: the official major mode from the Quint repository (keyword
+;; highlighting); not published on MELPA, so fetched from the repo and pinned.
+;; The language server comes from Nix (programs/languages).
+(package! quint-mode
+  :recipe (:host github :repo "quint-co/quint"
+           :files ("editor-plugins/emacs/quint-mode.el"))
+  :pin "04cec329d28f4d28e0a025e99a0e31912258c1de")
+
 ;; :tools terraform adds company-terraform, which completes from a static,
 ;; outdated list and, sitting ahead of company-capf, answers in nearly every
 ;; context, so terraform-ls's completions (from the real provider schemas,

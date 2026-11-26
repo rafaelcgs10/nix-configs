@@ -223,6 +223,10 @@ in
     pkgs.bash-language-server
     pkgs.shellcheck
 
+    # Quint (formal specifications): its language server, for eglot in Doom
+    # (Quint section of doom.d/config.el). Not in nixpkgs; packaged here.
+    (pkgs.callPackage ./quint-language-server { })
+
     # pkgs.pythonFull
     # pkgs.pythonPackages.python-language-server marked as broken
     # pkgs.ruby

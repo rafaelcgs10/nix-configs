@@ -339,6 +339,27 @@ With prefix argument (`C-u'), also kill the special buffers."
   (add-to-list 'eglot-server-programs
                '((elixir-mode elixir-ts-mode heex-ts-mode) . ("elixir-ls"))))
 
+;;; Quint via eglot + quint-language-server. quint-mode (packages.el) only
+;; highlights keywords; the server (packaged in programs/languages) adds type
+;; errors as you type, hover, go to definition, completion, rename and
+;; document symbols. quint-mode is a generic mode, which registers .qnt only
+;; once loaded, so :mode does it here. Being generic, it derives from
+;; fundamental-mode, not prog-mode, so it also runs prog-mode-hook itself:
+;; that is where Doom enables line numbers, hl-todo, smartparens and the rest
+;; of its programming-buffer setup. The repository also ships lsp-quint.el,
+;; but it is an lsp-mode client and this config uses eglot.
+(use-package! quint-mode
+  :mode ("\\.qnt\\'" . quint-mode)
+  :config
+  (add-hook 'quint-mode-hook
+            (defun +quint-run-prog-mode-hooks-h ()
+              (run-hooks 'prog-mode-hook)))
+  (add-hook 'quint-mode-hook #'lsp!))
+
+(after! eglot
+  (add-to-list 'eglot-server-programs
+               '(quint-mode . ("quint-language-server" "--stdio"))))
+
 ;; Format on save through eglot, in these modes only:
 ;; - Elixir: elixir-ls runs `mix format' with the project's .formatter.exs
 ;;   (plugins, line length).
