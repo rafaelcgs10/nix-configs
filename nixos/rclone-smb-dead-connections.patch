@@ -1,0 +1,151 @@
+rclone smb: stop reusing dead connections (rclone 1.76.0)
+
+Two fixes in the SMB backend's connection pool.
+
+1. Deferred putConnection saw a nil error (ours, unreported upstream as of
+   2026-11-26). List, DirMove and SetModTime did
+       defer f.putConnection(&cn, err)
+   which evaluates err when the defer runs, right after getConnection, so it
+   is always nil. A connection whose ReadDir timed out was therefore put back
+   in the pool without the Echo check and handed to every later listing:
+   "read tcp ...:445: i/o timeout" on each folder, folders shown empty, until
+   the mount restarted. The calls are wrapped in closures, so the final
+   (named) err reaches putConnection, which Echo-checks and drops a dead one.
+
+2. Core of rclone PR #9388 (open, by dr1rrb; head ede530c8): connections idle
+   in the pool for longer than idle_timeout are Echo-checked when taken out,
+   and dead ones are discarded (e.g. after a suspend). Only connpool.go and
+   smb.go; the PR's filepool.go changes and tests target a newer master.
+
+diff --git a/backend/smb/connpool.go b/backend/smb/connpool.go
+index 0aad733..0a539b4 100644
+--- a/backend/smb/connpool.go
++++ b/backend/smb/connpool.go
+@@ -85,6 +85,7 @@ type conn struct {
+ 	smbSession *smb2.Session
+ 	smbShare   *smb2.Share
+ 	shareName  string
++	pooledAt   time.Time // when this connection was returned to the pool
+ }
+ 
+ // Closes the connection
+@@ -99,11 +100,17 @@ func (c *conn) close() (err error) {
+ 	return sessionLogoffErr
+ }
+ 
+-// True if it's closed
++// closed reports whether the connection is dead by sending an SMB Echo.
+ func (c *conn) closed() bool {
+ 	return c.smbSession.Echo() != nil
+ }
+ 
++// isClosed reports whether c is dead, using f.closed (which defaults
++// to (*conn).closed but can be overridden in tests).
++func (f *Fs) isClosed(c *conn) bool {
++	return f.closed(c)
++}
++
+ // Show that we are using a SMB session
+ //
+ // Call removeSession() when done
+@@ -178,6 +185,14 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
+ 	}
+ 	f.poolMu.Unlock()
+ 	if c != nil {
++		// Connections that have been idle in the pool for a long time
++		// may have died (TCP deadline expired). Check liveness via Echo
++		// outside the mutex to avoid serializing concurrent callers
++		// behind a network round-trip. If dead, discard and try again.
++		if !c.pooledAt.IsZero() && time.Since(c.pooledAt) > time.Duration(f.opt.IdleTimeout) && f.closed(c) {
++			fs.Debugf(f, "Discarding dead pooled SMB connection")
++			return f.getConnection(ctx, share)
++		}
+ 		return c, nil
+ 	}
+ 	err = f.pacer.Call(func() (bool, error) {
+@@ -208,16 +223,15 @@ func (f *Fs) putConnection(pc **conn, err error) {
+ 	if err != nil {
+ 		// If not a regular SMB error then check the connection
+ 		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
+-			echoErr := c.smbSession.Echo()
+-			if echoErr != nil {
+-				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
+-				_ = c.close()
++			if f.closed(c) {
++				fs.Debugf(f, "Connection failed, discarding: %v", err)
+ 				return
+ 			}
+ 			fs.Debugf(f, "Connection OK after error: %v", err)
+ 		}
+ 	}
+ 
++	c.pooledAt = time.Now()
+ 	f.poolMu.Lock()
+ 	f.pool = append(f.pool, c)
+ 	if f.opt.IdleTimeout > 0 {
+@@ -247,7 +261,7 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
+ 	g, _ := errgroup.WithContext(ctx)
+ 	for i, c := range f.pool {
+ 		g.Go(func() (err error) {
+-			if !c.closed() {
++			if !f.closed(c) {
+ 				err = c.close()
+ 			}
+ 			f.pool[i] = nil
+diff --git a/backend/smb/smb.go b/backend/smb/smb.go
+index b6be827..2b5a2fd 100644
+--- a/backend/smb/smb.go
++++ b/backend/smb/smb.go
+@@ -184,7 +184,8 @@ type Fs struct {
+ 	sessions atomic.Int32
+ 	poolMu   sync.Mutex
+ 	pool     []*conn
+-	drain    *time.Timer // used to drain the pool when we stop using the connections
++	drain    *time.Timer        // used to drain the pool when we stop using the connections
++	closed   func(c *conn) bool // reports whether c is dead; defaults to (*conn).closed (Echo), overridden in tests
+ 
+ 	ctx context.Context
+ }
+@@ -214,10 +215,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
+ 	root = strings.Trim(root, "/")
+ 
+ 	f := &Fs{
+-		name: name,
+-		opt:  *opt,
+-		ctx:  ctx,
+-		root: root,
++		name:   name,
++		opt:    *opt,
++		ctx:    ctx,
++		root:   root,
++		closed: (*conn).closed,
+ 	}
+ 	f.features = (&fs.Features{
+ 		CaseInsensitive:         opt.CaseInsensitive,
+@@ -452,7 +454,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
+ 	if err != nil {
+ 		return err
+ 	}
+-	defer f.putConnection(&cn, err)
++	defer func() { f.putConnection(&cn, err) }() // see err after the call, not nil from getConnection
+ 
+ 	_, err = cn.smbShare.Stat(f.toSambaPath(dstPath))
+ 	if err == nil {
+@@ -472,7 +474,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	defer f.putConnection(&cn, err)
++	defer func() { f.putConnection(&cn, err) }() // see err after the call, not nil from getConnection
+ 
+ 	if share == "" {
+ 		shares, err := cn.smbSession.ListSharenames()
+@@ -755,7 +757,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
+ 	if err != nil {
+ 		return err
+ 	}
+-	defer o.fs.putConnection(&cn, err)
++	defer func() { o.fs.putConnection(&cn, err) }() // see err after the call, not nil from getConnection
+ 
+ 	err = cn.smbShare.Chtimes(reqDir, t, t)
+ 	if err != nil {

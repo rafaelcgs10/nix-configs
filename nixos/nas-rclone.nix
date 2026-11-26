@@ -47,10 +47,31 @@ in
     # owner of the existing root-owned directory.
     systemd.tmpfiles.rules = [ "d /rafael_mounts 0755 rafael users -" ];
 
+    # Restart the mount after every resume. rclone's SMB backend keeps its
+    # pooled connections across a suspend and then reuses the dead ones: every
+    # request times out ("read tcp ...:445: i/o timeout") until the mount
+    # restarts, and folders look empty. Seen 4 times in 2026-11-23..26, each a
+    # few minutes after "PM: suspend exit". Upstream fix: rclone PR #9388
+    # (unmerged as of 2026-11-26); drop this once it ships. try-restart does
+    # nothing when the mount isn't running; sidecars not yet uploaded stay in
+    # the VFS cache and go up after the restart. --no-block: this runs inside
+    # the resume path (sleep-actions' ExecStop), which must not wait on it.
+    powerManagement.resumeCommands = ''
+      ${config.systemd.package}/bin/systemctl --machine=rafael@.host --user \
+        --no-block try-restart 'rclone-mount:hdd@synology.service' || true
+    '';
+
     home-manager.users.rafael = { pkgsUnstable, ... }: {
       programs.rclone = {
         enable = true;
-        package = pkgsUnstable.rclone; # the one home.nix installs on every host
+        # The rclone home.nix installs on every host, patched so the SMB
+        # backend drops dead connections instead of reusing them (see the
+        # patch header; rebuilt locally). hiPrio: home.nix also puts the
+        # unpatched rclone in home.packages, and this one must win there.
+        # Drop the patch once rclone ships both fixes.
+        package = lib.hiPrio (pkgsUnstable.rclone.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ./rclone-smb-dead-connections.patch ];
+        }));
         remotes.synology = {
           config = {
             type = "smb";
@@ -84,10 +105,16 @@ in
               uid = 1000;
               gid = 100;
               umask = "022";
-              # Fail fast when the NAS is unreachable (left home, NAS asleep)
-              # instead of the defaults: 1 min connect timeout x 10 retries.
+              # Fail fast when the NAS is unreachable (left home) instead of the
+              # defaults: 1 min connect timeout x 10 retries. contimeout covers
+              # new connections. `timeout` (idle time on an open connection) was
+              # 30s, but one timeout leaves rclone 1.76 reusing the dead
+              # connection for every later listing (folders look empty until a
+              # restart, 2026-11-26: a burst of folder opens right after
+              # darktable started). 2m leaves room for the NAS disks waking up;
+              # away from home a request on an old connection can wait that long.
               contimeout = "5s";
-              timeout = "30s";
+              timeout = "2m";
               low-level-retries = 2;
             };
           };
