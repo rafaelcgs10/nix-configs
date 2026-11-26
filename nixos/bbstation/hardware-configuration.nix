@@ -143,7 +143,6 @@
     # Electron / Chromium apps: use Wayland natively instead of XWayland
     NIXOS_OZONE_WL = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
-    COSMIC_DATA_CONTROL_ENABLED = "1";
     # Cursor rendering fix for NVIDIA on Wayland
     WLR_NO_HARDWARE_CURSORS = "1";
   };
@@ -289,13 +288,7 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-  # Desktop environment: KDE Plasma 6 + COSMIC greeter
-  services.xserver.enable = true;
-  services.displayManager = {
-    defaultSession = "cosmic";
-    cosmic-greeter.enable = true;
-  };
-  services.desktopManager.cosmic.enable = true;
+  # Desktop environment: KDE Plasma 6, in nixos/plasma.nix.
   services.system76-scheduler.enable = true;
 
 

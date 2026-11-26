@@ -62,8 +62,6 @@ let
     "firefox-addons"
     "nixos-hardware"
     "agenix"
-    "cos-cli"
-    "cosmic-manager"
     "plasma-manager"
     "winapps"
   ];

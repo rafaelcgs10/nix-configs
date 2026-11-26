@@ -282,8 +282,8 @@ in
 
     # Lollypop — GNOME/GTK music player for ~/Music. Indexes embedded tags into
     # its own database and leaves the files alone by default (so the Nicotine+
-    # download layout stays intact). Set as the default audio handler on these
-    # (COSMIC) hosts via xdg.mimeApps below.
+    # download layout stays intact). Installed alongside Elisa, the KDE
+    # default for audio (programs/kde).
     pkgs.lollypop
   ];
 
@@ -291,31 +291,6 @@ in
   # short name so `parabolic` works in a terminal (the launcher shows "Parabolic").
   home.shellAliases.parabolic = "org.nickvision.tubeconverter";
 
-  # Make Lollypop the default music player. This lives in extras.nix (the default
-  # profile = the COSMIC desktop hosts) rather than the shared home.nix, so the
-  # tablet — which doesn't get Lollypop — isn't pointed at a missing handler. The
-  # attrset merges with the (empty) defaultApplications in home.nix. COSMIC reads
-  # the standard XDG mimeapps.list, so this is what its "Default Applications"
-  # resolves to as well.
-  xdg.mimeApps.defaultApplications =
-    let lollypop = "org.gnome.Lollypop.desktop";
-    in lib.genAttrs [
-      "audio/mpeg"
-      "audio/mp4"
-      "audio/aac"
-      "audio/flac"
-      "audio/x-flac"
-      "audio/ogg"
-      "audio/x-vorbis+ogg"
-      "audio/opus"
-      "audio/x-opus+ogg"
-      "audio/x-m4a"
-      "audio/wav"
-      "audio/x-wav"
-      "audio/webm"
-      "audio/x-ms-wma"
-      "application/ogg"
-    ] (_: lollypop);
 
   # Film & print data pack for the darktable spektrafilm module. Newer builds
   # can download this pack from within the UI into

@@ -85,6 +85,10 @@
       # DRM playback (Widevine) always on. LibreWolf disables it by default and
       # locks the UI toggle, so it has to be set here.
       "media.eme.enabled" = true;
+      # Open/save dialogs (downloads, uploads) through the desktop portal, so
+      # they are the desktop's own: KDE's on the Plasma hosts, GNOME's on
+      # bbtablet. 1 = always.
+      "widget.use-xdg-desktop-portal.file-picker" = 1;
       "media.gmp-widevinecdm.enabled" = true;
       # Spell-check dictionaries: English (US) + Brazilian Portuguese. Firefox
       # scans this directory for hunspell .dic/.aff files.
@@ -119,5 +123,5 @@
     };
   };
 
-  # (Browser theme is handled by Stylix's firefox target / Rosé Pine below.)
+  # (Browser theme is handled by Stylix's firefox target / Catppuccin Mocha below.)
 }

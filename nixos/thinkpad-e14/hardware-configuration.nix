@@ -184,10 +184,10 @@ in
     setuid = true;
   };
 
+  # Secrets: KWallet, unlocked at login by the plasma6 module's PAM rule on
+  # `login`, which Plasma Login Manager's stack includes. (Until 2026-11 this
+  # was GNOME Keyring through SDDM; its old ~/.local/share/keyrings is unused.)
   security.pam.services = {
-    sddm.enableGnomeKeyring = true;
-    sddm.kwallet.enable = false;
-    login.kwallet.enable = lib.mkForce false;
 
     login.rules.auth.ecryptfs = {
       order = 11800;
@@ -540,7 +540,6 @@ in
   environment.sessionVariables = {
     # Wayland for Electron
     NIXOS_OZONE_WL = "1";
-    COSMIC_DATA_CONTROL_ENABLED = "1";
   };
 
   # virtualisation.virtualbox.host.enable = true;
@@ -549,16 +548,7 @@ in
 
   users.extraGroups.vboxusers.members = [ "rafael" ];
 
-  # Desktop environment: COSMIC + SDDM
-  services.xserver.enable = true;
-  services.displayManager = {
-    defaultSession = "cosmic";
-    sddm = {
-      enable = true;
-      wayland.enable = true;
-    };
-  };
-  services.desktopManager.cosmic.enable = true;
+  # Desktop environment: KDE Plasma 6, in nixos/plasma.nix.
   services.system76-scheduler.enable = true;
 
   # Firmware updates (BIOS, SSD, etc.) from LVFS: fwupdmgr get-updates / update

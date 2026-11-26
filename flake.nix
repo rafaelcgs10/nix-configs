@@ -18,8 +18,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Declarative KDE Plasma settings (home-manager module): theme, fonts,
+    # shortcuts, panels, input, window rules. Only declared keys are written;
+    # monitors, brightness and GUI tweaks stay Plasma's (programs/kde).
     plasma-manager = {
-      url = "github:pjones/plasma-manager/552888403867ba9cfd170c1e7edddabe54ef4342";
+      url = "github:nix-community/plasma-manager";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
@@ -34,11 +37,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # CLI for COSMIC toplevel management (scratchpad chat toggles).
-    # Unofficial but source-reviewed at this pin: no network/exec/fs access.
-    cos-cli.url = "github:estin/cos-cli/fe8c52016888302d6239ef53f1dbf876d8552dc2";
-
-    # Stylix: system-wide base16 theming (Rosé Pine) across supported programs
+    # Stylix: system-wide base16 theming (Catppuccin Mocha) across supported programs
     # (neovim, fzf, tmux, gtk, qt, btop, fuzzel, opencode, ...).
     stylix = {
       url = "github:nix-community/stylix/release-26.05";  # match home-manager
@@ -49,14 +48,6 @@
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Declarative COSMIC desktop configuration (used to apply the Rosé Pine
-    # COSMIC theme, since Stylix has no COSMIC target).
-    cosmic-manager = {
-      url = "github:HeitorAugustoLN/cosmic-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
     };
 
     # Affinity (Photo/Designer/Publisher) on Wine. Intentionally NOT following
@@ -119,7 +110,6 @@
           pkgsUnstable = importWithConfig inputs.nixpkgs-unstable;
           pkgsDarktable = importWithConfig inputs.nixpkgs-darktable;
           pkgsIsabelle = importWithConfig inputs.nixpkgs-isabelle;
-          plasmaManager = inputs.plasma-manager;
           spektrafilmPackages = inputs.spektrafilm-art-darktable.packages.${system};
         };
 
@@ -133,7 +123,7 @@
         ./home-manager/home.nix
         homeProfiles.${profile}
         inputs.stylix.homeModules.stylix
-        inputs.cosmic-manager.homeManagerModules.cosmic-manager
+        inputs.plasma-manager.homeModules.plasma-manager
         inputs.nix-doom-emacs-unstraightened.homeModule
       ];
 
@@ -157,10 +147,23 @@
         };
       };
 
-      cosmicUnstableModule = { ... }: {
-        # Keep the stable NixOS module API, but replace its hard-coded COSMIC
-        # packages as one suite. Importing the unstable module would reference
-        # NixOS options that do not exist on the stable release.
+      plasmaUnstableModule = { ... }: {
+        # KDE Plasma from nixpkgs-unstable (Plasma 6.8 vs 6.6 on the stable
+        # release): swap the whole kdePackages set (Plasma, Frameworks, Gear
+        # and its Qt 6) for unstable's, which is on the binary cache, and use
+        # unstable's plasma6 NixOS module with it. The stable module lists
+        # kwin-x11, which 6.8 no longer has (no X11 session), and lacks 6.8's
+        # Union style; otherwise the two are the same (checked 2026-11-26).
+        # Packages outside kdePackages keep stable Qt.
+        disabledModules = [ "services/desktop-managers/plasma6.nix" ];
+        imports = [ "${inputs.nixpkgs-unstable}/nixos/modules/services/desktop-managers/plasma6.nix" ];
+        #
+        # Stable packages built against kdePackages would otherwise be
+        # recompiled locally against unstable's (hours: krita, digikam, obs,
+        # telegram, pcsx2...), so those come from unstable as well, prebuilt
+        # and on the same Qt as the desktop. Found with
+        #   nix build --dry-run .#nixosConfigurations.<host>.config.system.build.toplevel
+        # (anything big under "will be built"); add new ones here.
         nixpkgs.overlays = [
           (_final: prev:
             let
@@ -168,38 +171,47 @@
                 inherit (prev.stdenv.hostPlatform) system;
                 config = nixpkgsConfig;
               };
-              cosmicPackages = [
-                "cosmic-applets"
-                "cosmic-bg"
-                "cosmic-comp"
-                "cosmic-edit"
-                "cosmic-files"
-                "cosmic-greeter"
-                "cosmic-icons"
-                "cosmic-idle"
-                "cosmic-initial-setup"
-                "cosmic-launcher"
-                "cosmic-notifications"
-                "cosmic-osd"
-                "cosmic-panel"
-                "cosmic-player"
-                "cosmic-randr"
-                "cosmic-reader"
-                "cosmic-screenshot"
-                "cosmic-session"
-                "cosmic-settings"
-                "cosmic-settings-daemon"
-                "cosmic-store"
-                "cosmic-term"
-                "cosmic-wallpapers"
-                "cosmic-workspaces-epoch"
-                "xdg-desktop-portal-cosmic"
+              withUnstableQt = [
+                # would recompile against unstable's kdePackages
+                "digikam"
+                "eden"
+                "kid3"
+                "krita"
+                "lollypop"
+                "ludusavi"
+                "melonDS"
+                "obs-studio"
+                "pcsx2"
+                "pinentry-qt"
+                "steam"
+                "steam-run"
+                "telegram-desktop"
+                # stable Qt 6 apps: Plasma's Qt plugins (KDE style, colours,
+                # file dialog) are built for unstable's newer Qt, which an
+                # older Qt refuses to load, so these would look and pick
+                # files unlike the rest of the desktop. (simple64 is gone
+                # from unstable and stays on stable.)
+                "anki"
+                "calibre"
+                "dolphin-emu"
+                "qalculate-qt"
+                "rmg"
+                "scribus"
+                "zoom-us"
               ];
             in
-            prev.lib.genAttrs cosmicPackages (name: unstable.${name}) // {
-              # The stable module still uses the old attribute name.
-              cosmic-applibrary = unstable.cosmic-app-library;
-            })
+            {
+              kdePackages = unstable.kdePackages;
+              # Qt 5's KDE Frameworks (whose KIO plugins the plasma6 module
+              # links for Qt 5 apps) take kdePackages (extra-cmake-modules,
+              # plasma-wayland-protocols) from the top level; hand the Qt 5 set
+              # stable's so its packages stay the cached stable builds.
+              libsForQt5 = prev.libsForQt5.overrideScope (_: super: {
+                inherit (prev) kdePackages;
+                __internalKF5 = super.__internalKF5.override { inherit (prev) kdePackages; };
+              });
+            }
+            // prev.lib.genAttrs withUnstableQt (name: unstable.${name}))
         ];
       };
 
@@ -231,9 +243,10 @@
         bbstation = mkHost {
           homeProfile = "default";
           modules = [
-            cosmicUnstableModule
+            plasmaUnstableModule
             ./nixos/bbstation/boot-loader.nix
             ./nixos/bbstation/hardware-configuration.nix
+            ./nixos/plasma.nix
             ./nixos/io-performance.nix
             ./nixos/font-rendering.nix
             ./nixos/plymouth.nix
@@ -253,9 +266,10 @@
         thinkpad-e14 = mkHost {
           homeProfile = "default";
           modules = [
-            cosmicUnstableModule
+            plasmaUnstableModule
             ./nixos/thinkpad-e14/boot-loader.nix
             ./nixos/thinkpad-e14/hardware-configuration.nix
+            ./nixos/plasma.nix
             ./nixos/nas-rclone.nix
             ./nixos/thinkpad-e14/rapidraw.nix
             ./nixos/io-performance.nix
