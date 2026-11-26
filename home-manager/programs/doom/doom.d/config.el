@@ -28,26 +28,19 @@
 ;; cost is a larger memory footprint. See the variable's docstring.
 (setq inhibit-compacting-font-caches t)
 
-;; doom-themes-based Rosé Pine ships separate dark/light theme *symbols*
-;; (doom-rose-pine = dark, doom-rose-pine-dawn = light); toggle by swapping.
-;; load-theme searches `custom-theme-load-path', and an external doom-theme
-;; package's directory isn't added there automatically, which caused the
-;; "Unable to find theme file for 'doom-rose-pine'" startup error. Add it
-;; explicitly (the package is on load-path, so locate-library finds it).
+;; Catppuccin (catppuccin-theme): one theme whose flavour is a variable;
+;; Mocha (dark) by default, C-c C-t switches to Latte (light) and back,
+;; matching the desktop's Catppuccin day/night themes.
 (setq custom-safe-themes t)
-(dolist (thm '("doom-rose-pine-theme" "doom-rose-pine-dawn-theme"))
-  (when-let ((lib (locate-library thm)))
-    (add-to-list 'custom-theme-load-path (file-name-directory lib))))
-(setq doom-theme 'doom-rose-pine)        ; dark default
+(setq catppuccin-flavor 'mocha)
+(setq doom-theme 'catppuccin)
 
-(defun my/toggle-rose-pine ()
-  "Toggle Rosé Pine between dark and light (dawn)."
+(defun my/toggle-catppuccin ()
+  "Toggle Catppuccin between Mocha (dark) and Latte (light)."
   (interactive)
-  (if (custom-theme-enabled-p 'doom-rose-pine)
-      (progn (disable-theme 'doom-rose-pine) (load-theme 'doom-rose-pine-dawn t))
-    (progn (disable-theme 'doom-rose-pine-dawn) (load-theme 'doom-rose-pine t)))
-  (message "Rosé Pine: %s"
-           (if (custom-theme-enabled-p 'doom-rose-pine) "dark" "dawn (light)")))
+  (setq catppuccin-flavor (if (eq catppuccin-flavor 'mocha) 'latte 'mocha))
+  (load-theme 'catppuccin t)
+  (message "Catppuccin: %s" catppuccin-flavor))
 
 ;; Bind C-c C-t on a *global minor-mode* keymap, not the global map. Minor-mode
 ;; maps override major-mode maps, so the key keeps working in org-mode,
@@ -56,12 +49,12 @@
 ;; gets shadowed by those major modes.
 (defvar my/theme-toggle-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-t") #'my/toggle-rose-pine)
+    (define-key map (kbd "C-c C-t") #'my/toggle-catppuccin)
     map)
   "Keymap holding the global theme-toggle binding.")
 
 (define-minor-mode my/theme-toggle-mode
-  "Global minor mode that provides the Rosé Pine dark/light toggle key."
+  "Global minor mode that provides the Catppuccin dark/light toggle key."
   :global t
   :keymap my/theme-toggle-map)
 (my/theme-toggle-mode 1)

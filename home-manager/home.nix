@@ -8,14 +8,15 @@ in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
-  # Stylix: system-wide Rosé Pine (base16) theming. It auto-themes neovim, fzf,
-  # tmux, gtk, qt, btop, bat, fuzzel and more. Starship keeps its hand-built
-  # powerline (palette swapped to Rosé Pine); Doom Emacs and COSMIC are themed
-  # separately since Stylix has no COSMIC target.
+  # Stylix: system-wide Catppuccin Mocha (base16) theming. It auto-themes
+  # neovim, fzf, tmux, gtk, qt, btop, bat and more. Starship keeps its
+  # hand-built Catppuccin powerline; Doom Emacs, the KDE desktop and Ghostty
+  # use Catppuccin's own themes, which switch Latte/Mocha by day/night
+  # (programs/kde, doom config.el). Stylix itself has one scheme only.
   stylix = {
     enable = true;
     polarity = "dark";
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/rose-pine.yaml";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     # App theming needs no real wallpaper; use a solid base00 pixel.
     image = config.lib.stylix.pixel "base00";
     # Keep the Nerd Font so terminal/powerline glyphs render.
@@ -33,10 +34,10 @@ in {
   };
 
   # opencode is a custom package (not programs.opencode), so Stylix can't theme
-  # it; point it at its built-in rose-pine theme directly.
+  # it; point it at its built-in catppuccin theme directly.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
-    theme = "rose-pine";
+    theme = "catppuccin";
   };
 
   # These programs are enabled so Stylix themes them:
@@ -52,12 +53,12 @@ in {
   programs.delta = {              # git diffs (Stylix has no delta target)
     enable = true;
     enableGitIntegration = true;
-    # Rosé Pine-tinted added/removed line backgrounds.
+    # Catppuccin Mocha added/removed line backgrounds (catppuccin/delta).
     options = {
-      minus-style = "normal \"#3d2530\"";
-      minus-emph-style = "normal \"#5a3644\"";
-      plus-style = "normal \"#20352e\"";
-      plus-emph-style = "normal \"#2f5045\"";
+      minus-style = "normal \"#53394c\"";
+      minus-emph-style = "normal \"#694559\"";
+      plus-style = "normal \"#394545\"";
+      plus-emph-style = "normal \"#4e6356\"";
     };
   };
 

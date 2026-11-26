@@ -17,8 +17,8 @@
 
     # zsh-syntax-highlighting colours expressed via ANSI palette slots (names,
     # not hex) so the command line renders in the terminal's *current*
-    # Catppuccin flavour and follows the COSMIC day/night auto-switch (Latte by
-    # day, Mocha by night) instead of being pinned to one flavour.
+    # Catppuccin colours (Konsole's Catppuccin Mocha) instead of fixed hex
+    # values, and would follow a terminal that switches flavour.
     syntaxHighlighting = {
       enable = true;
       styles = {
@@ -100,15 +100,15 @@
   # Starship: fast (Rust), actively maintained, and free of p10k's
   # resize/redraw separator bug.
   #
-  # The starship "powerline" preset layout, repainted with the Rosé Pine
-  # palette (Stylix's starship target is disabled so this custom look stays).
+  # The starship "powerline" preset layout with the Catppuccin Mocha palette
+  # (Stylix's starship target is disabled so this custom look stays).
   # Read straight from the TOML so the Nerd Font glyphs stay byte-exact. The
   # powerline separators only render with a Nerd Font terminal font (Hack Nerd
-  # Font Mono, set as the default monospace in nixos/configuration.nix and the
-  # COSMIC Terminal config).
+  # Font Mono, set as the default monospace in nixos/configuration.nix and in
+  # Konsole's profile, programs/kde).
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
-    settings = builtins.fromTOML (builtins.readFile ./rose-pine-powerline.toml);
+    settings = builtins.fromTOML (builtins.readFile ./catppuccin-powerline.toml);
   };
 }
