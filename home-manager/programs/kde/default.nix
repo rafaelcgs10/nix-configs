@@ -152,6 +152,14 @@ in
         (lib.range 1 10));
     };
 
+    # Lock screen wallpaper: the desktop's photo, through Plasma's image
+    # plugin. Declared because the kscreenlockerrc left from 2024 named the
+    # "Wallpaper Engine for KDE" plugin, which isn't installed: the greeter
+    # crashed loading it (UnlockApp::loadWallpaperPlugin), leaving KWin's
+    # "screen locker is broken" screen after every suspend (2026-11-26).
+    kscreenlocker.appearance.wallpaper =
+      "/home/rafael/SynologyPhotos/processed_photos/wallpapers/IMG_1677_01.jpg";
+
     # Ten virtual desktops in two rows, as already set in System Settings.
     kwin.virtualDesktops = {
       number = 10;
